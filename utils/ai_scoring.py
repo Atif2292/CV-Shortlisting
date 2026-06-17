@@ -242,7 +242,8 @@ def rank_candidates_batch(candidates: list, job_context: dict) -> list:
         return results
     except Exception as exc:
         print(f"[ai_scoring] Batch ranking error: {exc}")
-        return []
+        # Re-raise so the UI can display the real error message to the user
+        raise RuntimeError(str(exc)) from exc
 
 
 # ─────────────────────────────────────────────────────────────────────────────
