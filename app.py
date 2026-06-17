@@ -679,11 +679,7 @@ with col3:
 </div>""", unsafe_allow_html=True)
 
             if len(results) > 5:
-                st.markdown(
-                    f'<div class="iq-view-link">View Full Results &nbsp;&rarr;</div>',
-                    unsafe_allow_html=True,
-                )
-                if st.button("View all results ↓", use_container_width=True, key="view_full_btn"):
+                if st.button("View Full Results →", use_container_width=True, key="view_full_btn"):
                     st.session_state.show_full = True
 
         elif st.session_state.processed and not st.session_state.results:
