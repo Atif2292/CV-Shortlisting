@@ -295,18 +295,103 @@ label, .stFileUploader label {
 .iq-tpn    { font-weight:700; font-size:.83rem; color:#0B1120; }
 .iq-tpc    { font-size:.77rem; color:#64748B; }
 
-/* ── Footer CTA ── */
-.iq-fcta { text-align:center; padding:3.5rem 1rem 3rem; border-top:1px solid #E2E8F0; }
-.iq-fi   { font-size:2.4rem; margin-bottom:.9rem; }
-.iq-fh   { font-size:2.3rem; font-weight:900; color:#0B1120; line-height:1.14; margin-bottom:.8rem; letter-spacing:-1px; }
-.iq-fh b { color:#2563EB; font-weight:900; }
-.iq-fs   { font-size:.98rem; color:#64748B; margin-bottom:2rem; max-width:420px; margin-left:auto; margin-right:auto; line-height:1.7; }
-.iq-fck  { font-size:.82rem; color:#94A3B8; margin-top:.9rem; }
+/* ── Hero CTA buttons — force white text on <a> tags ── */
+.iq-bp, .iq-bp:link, .iq-bp:visited, .iq-bp:hover, .iq-bp:active {
+    color: #fff !important;
+    text-decoration: none !important;
+}
+.iq-bs, .iq-bs:link, .iq-bs:visited { text-decoration: none !important; }
+
+/* ── Pricing ── */
+.iq-pricing-sec { margin: 3rem 0 2rem; }
+.iq-pricing-hdr { text-align:center; margin-bottom:2.8rem; }
+.iq-pricing-title {
+    font-size:2.2rem; font-weight:900; color:#0B1120;
+    letter-spacing:-1px; margin-bottom:.5rem; line-height:1.15;
+}
+.iq-pricing-sub { font-size:.97rem; color:#64748B; line-height:1.7; }
+.iq-pg {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:1.3rem; align-items:start;
+}
+.iq-pc {
+    background:#FFFFFF; border:1.5px solid #E2E8F0;
+    border-radius:18px; padding:1.9rem 1.6rem 1.7rem;
+    display:flex; flex-direction:column; gap:0;
+    transition:box-shadow .2s;
+}
+.iq-pc:hover { box-shadow:0 8px 28px rgba(10,20,60,.1); }
+.iq-pc-feat {
+    background: linear-gradient(160deg,#1D4ED8 0%,#2563EB 40%,#3B82F6 100%);
+    border-color:#2563EB;
+    box-shadow:0 12px 36px rgba(37,99,235,.38);
+    transform:translateY(-6px);
+    color:#fff;
+}
+.iq-pc-feat:hover { box-shadow:0 16px 44px rgba(37,99,235,.48); }
+.iq-ptag {
+    display:inline-block; font-size:.68rem; font-weight:700;
+    letter-spacing:.12em; text-transform:uppercase;
+    background:rgba(255,255,255,.22); color:#fff;
+    border-radius:99px; padding:.28rem .8rem; margin-bottom:.85rem;
+    width:fit-content;
+}
+.iq-pname {
+    font-size:1.25rem; font-weight:800; color:#0B1120;
+    letter-spacing:-.3px; margin-bottom:.3rem;
+}
+.iq-pc-feat .iq-pname { color:#fff; }
+.iq-price {
+    font-size:2.6rem; font-weight:900; color:#2563EB;
+    letter-spacing:-1.5px; line-height:1;
+}
+.iq-pc-feat .iq-price { color:#fff; }
+.iq-price-mo { font-size:.9rem; color:#94A3B8; margin-bottom:1.1rem; }
+.iq-pc-feat .iq-price-mo { color:rgba(255,255,255,.7); }
+.iq-pdiv { border:none; border-top:1px solid #E2E8F0; margin:.9rem 0 1rem; }
+.iq-pc-feat .iq-pdiv { border-top-color:rgba(255,255,255,.2); }
+.iq-prow {
+    display:flex; align-items:center; gap:.6rem;
+    font-size:.87rem; color:#374151; padding:.32rem 0;
+}
+.iq-pc-feat .iq-prow { color:rgba(255,255,255,.9); }
+.iq-prow-label { flex:1; }
+.iq-prow-val { font-weight:600; font-size:.84rem; color:#0B1120; flex-shrink:0; }
+.iq-pc-feat .iq-prow-val { color:#fff; }
+.iq-pck { color:#10B981; font-size:1rem; flex-shrink:0; }
+.iq-pcx { color:#EF4444; font-size:1rem; flex-shrink:0; }
+.iq-pc-feat .iq-pck { color:#86EFAC; }
+.iq-pc-feat .iq-pcx { color:rgba(255,255,255,.45); }
+.iq-pbtn {
+    display:block; width:100%; margin-top:1.4rem;
+    background:#2563EB; color:#fff !important; font-weight:700;
+    font-size:.93rem; border:none; border-radius:10px;
+    padding:.72rem 0; cursor:pointer; text-align:center;
+    box-shadow:0 4px 14px rgba(37,99,235,.3);
+    transition:background .18s, box-shadow .18s, transform .12s;
+    text-decoration:none !important;
+}
+.iq-pbtn:hover { background:#1D4ED8; box-shadow:0 6px 20px rgba(37,99,235,.4); transform:translateY(-1px); }
+.iq-pc-feat .iq-pbtn {
+    background:#fff; color:#2563EB !important;
+    box-shadow:0 4px 16px rgba(0,0,0,.15);
+}
+.iq-pc-feat .iq-pbtn:hover { background:#EFF6FF; }
+.iq-pfooter {
+    text-align:center; padding-top:1.5rem;
+    font-size:.8rem; color:#94A3B8;
+}
+
+/* ── Footer bar ── */
+.iq-foot { text-align:center; padding:2rem 0 1.5rem; border-top:1px solid #E2E8F0; margin-top:2rem; }
+.iq-foot-txt { font-size:.78rem; color:#94A3B8; }
 
 /* ── Responsive ── */
 @media(max-width:900px) {
-    .iq-h1 { font-size:2.8rem; letter-spacing:-1.8px; }
-    .iq-tg { grid-template-columns:1fr; }
+    .iq-h1  { font-size:2.8rem; letter-spacing:-1.8px; }
+    .iq-tg  { grid-template-columns:1fr; }
+    .iq-pg  { grid-template-columns:1fr; }
+    .iq-pc-feat { transform:none; }
 }
 @media(max-width:640px) {
     [data-testid="block-container"] { padding:0 1rem 3rem!important; }
@@ -318,8 +403,10 @@ label, .stFileUploader label {
     .iq-steps { flex-direction:column; align-items:center; gap:.4rem; padding:2rem 0; }
     .iq-arr   { transform:rotate(90deg); margin:0; }
     .iq-step  { width:100%; max-width:260px; }
-    .iq-fh    { font-size:1.8rem; }
     .iq-ts-sec { padding:2rem 1.2rem; }
+    .iq-pg  { grid-template-columns:1fr; }
+    .iq-pc-feat { transform:none; }
+    .iq-pricing-title { font-size:1.8rem; }
 }
 
 hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
@@ -832,21 +919,78 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────── Footer CTA ──────────────────────────────────────
+# ─────────────────────────── Pricing ─────────────────────────────────────────
 st.markdown("""
-<div class="iq-fcta">
-  <div class="iq-fi">👥</div>
-  <div class="iq-fh">Stop Reading CVs.<br><b>Start Making Placements.</b></div>
-  <div class="iq-fs">Book a 15-minute demo and see how TalentIQ can save your team hours every single day.</div>
-  <button style="background:#2563EB;color:#fff;font-weight:700;font-size:1rem;border:none;
-    border-radius:10px;padding:.8rem 2.2rem;cursor:pointer;
-    box-shadow:0 4px 16px rgba(37,99,235,.38);">
-    Book a 15-Minute Demo &nbsp;&rarr;
-  </button>
-  <div class="iq-fck">&#10003; No credit card required &nbsp;&nbsp;&#10003; Cancel anytime</div>
+<div class="iq-pricing-sec">
+  <div class="iq-pricing-hdr">
+    <div class="iq-eye" style="margin-bottom:.75rem">Simple, Transparent Pricing</div>
+    <div class="iq-pricing-title">Choose Your Plan</div>
+    <div class="iq-pricing-sub">Start screening CVs today. No contracts &mdash; cancel anytime.</div>
+  </div>
+
+  <div class="iq-pg">
+
+    <!-- Starter -->
+    <div class="iq-pc">
+      <div class="iq-pname">Starter</div>
+      <div class="iq-price">$19</div>
+      <div class="iq-price-mo">per month</div>
+      <hr class="iq-pdiv">
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">CV Screening</span><span class="iq-prow-val">50 CVs/mo</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Job Descriptions</span><span class="iq-prow-val">Unlimited</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">AI Match Score</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Candidate Ranking</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">AI Candidate Summaries</span></div>
+      <div class="iq-prow"><span class="iq-pcx">&#10005;</span><span class="iq-prow-label">Bulk CV Uploads</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Team Members</span><span class="iq-prow-val">1 User</span></div>
+      <div class="iq-prow"><span class="iq-pcx">&#10005;</span><span class="iq-prow-label">Report Exports</span></div>
+      <div class="iq-prow"><span class="iq-pcx">&#10005;</span><span class="iq-prow-label">Priority Support</span></div>
+      <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
+    </div>
+
+    <!-- Growing (featured) -->
+    <div class="iq-pc iq-pc-feat">
+      <div class="iq-ptag">&#11088; Most Popular</div>
+      <div class="iq-pname">Growing</div>
+      <div class="iq-price">$49</div>
+      <div class="iq-price-mo">per month</div>
+      <hr class="iq-pdiv">
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">CV Screening</span><span class="iq-prow-val">500 CVs/mo</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Job Descriptions</span><span class="iq-prow-val">Unlimited</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">AI Match Score</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Candidate Ranking</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">AI Candidate Summaries</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Bulk CV Uploads</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Team Members</span><span class="iq-prow-val">5 Users</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Report Exports</span></div>
+      <div class="iq-pcx iq-prow"><span class="iq-pcx">&#10005;</span><span class="iq-prow-label">Priority Support</span></div>
+      <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
+    </div>
+
+    <!-- Unlimited -->
+    <div class="iq-pc">
+      <div class="iq-pname">Unlimited</div>
+      <div class="iq-price">$99</div>
+      <div class="iq-price-mo">per month</div>
+      <hr class="iq-pdiv">
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">CV Screening</span><span class="iq-prow-val">Unlimited</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Job Descriptions</span><span class="iq-prow-val">Unlimited</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">AI Match Score</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Candidate Ranking</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">AI Candidate Summaries</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Bulk CV Uploads</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Team Members</span><span class="iq-prow-val">Unlimited</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Report Exports</span></div>
+      <div class="iq-prow"><span class="iq-pck">&#10003;</span><span class="iq-prow-label">Priority Support</span></div>
+      <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
+    </div>
+
+  </div>
+  <div class="iq-pfooter">&#10003; No credit card required &nbsp;&nbsp;&#10003; Cancel anytime</div>
 </div>
+
 <hr>
-<div style="text-align:center;color:#94A3B8;font-size:.78rem;padding-bottom:1.5rem">
-  TalentIQ &middot; AI CV Screening &middot; Built with Streamlit &amp; GPT-4o
+<div class="iq-foot">
+  <div class="iq-foot-txt">TalentIQ &middot; AI CV Screening &middot; Built with Streamlit &amp; GPT-4o</div>
 </div>
 """, unsafe_allow_html=True)
