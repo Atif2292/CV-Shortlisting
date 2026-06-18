@@ -930,7 +930,6 @@ st.markdown("""
 
   <div class="iq-pg">
 
-    <!-- Starter -->
     <div class="iq-pc">
       <div class="iq-pname">Starter</div>
       <div class="iq-price">$19</div>
@@ -948,7 +947,6 @@ st.markdown("""
       <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
     </div>
 
-    <!-- Growing (featured) -->
     <div class="iq-pc iq-pc-feat">
       <div class="iq-ptag">&#11088; Most Popular</div>
       <div class="iq-pname">Growing</div>
@@ -967,7 +965,6 @@ st.markdown("""
       <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
     </div>
 
-    <!-- Unlimited -->
     <div class="iq-pc">
       <div class="iq-pname">Unlimited</div>
       <div class="iq-price">$99</div>
