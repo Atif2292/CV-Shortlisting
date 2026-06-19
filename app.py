@@ -453,17 +453,19 @@ label, .stFileUploader label {
 .iq-pcx { color:#EF4444; font-size:1rem; flex-shrink:0; }
 .iq-pc-feat .iq-pck { color:#86EFAC; }
 .iq-pc-feat .iq-pcx { color:rgba(255,255,255,.4); }
-.iq-pbtn {
+.iq-pbtn, .iq-pbtn:link, .iq-pbtn:visited, .iq-pbtn:active {
     display:block; width:100%; margin-top:1.4rem;
     background:#2563EB; color:#fff !important; font-weight:700;
     font-size:.93rem; border:none; border-radius:10px;
     padding:.72rem 0; cursor:pointer; text-align:center;
     box-shadow:0 4px 14px rgba(37,99,235,.3);
     transition:background .18s, box-shadow .18s, transform .12s;
+    text-decoration:none !important; box-sizing:border-box;
 }
-.iq-pbtn:hover { background:#1D4ED8; box-shadow:0 6px 20px rgba(37,99,235,.4); transform:translateY(-1px); }
-.iq-pc-feat .iq-pbtn { background:#fff; color:#2563EB !important; box-shadow:0 4px 16px rgba(0,0,0,.15); }
-.iq-pc-feat .iq-pbtn:hover { background:#EFF6FF; }
+.iq-pbtn:hover { background:#1D4ED8 !important; box-shadow:0 6px 20px rgba(37,99,235,.4) !important; transform:translateY(-1px); color:#fff !important; text-decoration:none !important; }
+.iq-pc-feat .iq-pbtn, .iq-pc-feat .iq-pbtn:link, .iq-pc-feat .iq-pbtn:visited { background:#fff !important; color:#2563EB !important; box-shadow:0 4px 16px rgba(0,0,0,.15) !important; }
+.iq-pc-feat .iq-pbtn:hover { background:#EFF6FF !important; color:#2563EB !important; }
+.iq-nav-demo, .iq-nav-demo:link, .iq-nav-demo:visited, .iq-nav-demo:active { text-decoration:none !important; }
 .iq-pfooter { text-align:center; padding-top:1.5rem; font-size:.8rem; color:#94A3B8; }
 
 /* ── Footer bar ── */
@@ -772,7 +774,7 @@ def _exp_subtitle(text: str) -> str:
 st.markdown("""
 <div class="iq-nav">
   <div class="iq-logo">Talent<b>IQ</b></div>
-  <button class="iq-nav-demo">Book a Demo &nbsp;&rarr;</button>
+  <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -786,7 +788,7 @@ st.markdown("""
   <div class="iq-sub">Upload a job description and candidate CVs. TalentIQ automatically
   scores, ranks and summarises candidates, helping recruiters find the best talent faster.</div>
   <div class="iq-btns">
-    <a class="iq-bp">Book a Demo &nbsp;&rarr;</a>
+    <a class="iq-bp" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
     <a class="iq-bs"><span class="iq-play">&#9654;</span> See How It Works</a>
   </div>
 </div>
@@ -1394,6 +1396,8 @@ st.markdown("""
 
 _pc1, _pc2, _pc3 = st.columns(3, gap="large")
 
+_WA = "https://wa.me/447379975532"
+
 with _pc1:
     st.markdown(f"""
 <div class="iq-pc">
@@ -1401,16 +1405,16 @@ with _pc1:
   <div class="iq-price">$19</div>
   <div class="iq-price-mo">per month</div>
   {_DIV}
-  {_prow(True,  "CV Screening",           "50 CVs/mo")}
-  {_prow(True,  "Job Descriptions",        "Unlimited")}
+  {_prow(True,  "CV Screening",                          "50 CVs/mo")}
+  {_prow(True,  "Job Descriptions",                      "Unlimited")}
   {_prow(True,  "AI Match Score")}
   {_prow(True,  "Candidate Ranking")}
-  {_prow(True,  "AI Candidate Summaries")}
+  {_prow(True,  "Team Members",                          "1 User")}
+  {_prow(False, "Email Automation — Top 5 Shortlisted")}
   {_prow(False, "Bulk CV Uploads")}
-  {_prow(True,  "Team Members",            "1 User")}
   {_prow(False, "Report Exports")}
   {_prow(False, "Priority Support")}
-  <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
+  <a class="iq-pbtn" href="{_WA}" target="_blank">Get Started &nbsp;&rarr;</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1422,16 +1426,16 @@ with _pc2:
   <div class="iq-price">$49</div>
   <div class="iq-price-mo">per month</div>
   {_DIV}
-  {_prow(True,  "CV Screening",           "500 CVs/mo")}
-  {_prow(True,  "Job Descriptions",        "Unlimited")}
+  {_prow(True,  "CV Screening",                          "500 CVs/mo")}
+  {_prow(True,  "Job Descriptions",                      "Unlimited")}
   {_prow(True,  "AI Match Score")}
   {_prow(True,  "Candidate Ranking")}
-  {_prow(True,  "AI Candidate Summaries")}
   {_prow(True,  "Bulk CV Uploads")}
-  {_prow(True,  "Team Members",            "5 Users")}
+  {_prow(True,  "Team Members",                          "5 Users")}
   {_prow(True,  "Report Exports")}
+  {_prow(True,  "Email Automation — Top 5 Shortlisted")}
   {_prow(False, "Priority Support")}
-  <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
+  <a class="iq-pbtn" href="{_WA}" target="_blank">Get Started &nbsp;&rarr;</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1442,16 +1446,16 @@ with _pc3:
   <div class="iq-price">$99</div>
   <div class="iq-price-mo">per month</div>
   {_DIV}
-  {_prow(True, "CV Screening",            "Unlimited")}
-  {_prow(True, "Job Descriptions",         "Unlimited")}
+  {_prow(True, "CV Screening",                           "Unlimited")}
+  {_prow(True, "Job Descriptions",                       "Unlimited")}
   {_prow(True, "AI Match Score")}
   {_prow(True, "Candidate Ranking")}
-  {_prow(True, "AI Candidate Summaries")}
   {_prow(True, "Bulk CV Uploads")}
-  {_prow(True, "Team Members",             "Unlimited")}
+  {_prow(True, "Team Members",                           "Unlimited")}
   {_prow(True, "Report Exports")}
+  {_prow(True, "Email Automation — Top 5 Shortlisted")}
   {_prow(True, "Priority Support")}
-  <button class="iq-pbtn">Get Started &nbsp;&rarr;</button>
+  <a class="iq-pbtn" href="{_WA}" target="_blank">Get Started &nbsp;&rarr;</a>
 </div>
 """, unsafe_allow_html=True)
 
