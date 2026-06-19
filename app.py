@@ -151,7 +151,7 @@ label, .stFileUploader label {
     padding: 1.1rem 0 1rem; border-bottom: 1px solid #E2E8F0;
     margin-bottom: 0; background: #F5F7FB;
 }
-.iq-logo { font-size: 1.45rem; font-weight: 900; color: #0B1120; letter-spacing: -.5px; }
+.iq-logo { font-size: 1.45rem; font-weight: 900; color: #2563EB; letter-spacing: -.5px; }
 .iq-logo b { color: #2563EB; font-weight: 900; }
 .iq-nav-demo {
     font-size: .875rem; font-weight: 600; color: #fff; background: #2563EB;
@@ -169,8 +169,8 @@ label, .stFileUploader label {
     border-radius: 99px; border: 1px solid rgba(37,99,235,.15); margin-bottom: 1.1rem;
 }
 .iq-h1 {
-    font-size: 3.6rem; font-weight: 900; line-height: 1.06;
-    color: #0B1120; margin-bottom: 1.1rem; letter-spacing: -2.5px;
+    font-size: 5rem; font-weight: 900; line-height: 1.03;
+    color: #0B1120; margin-bottom: 1.1rem; letter-spacing: -3.5px;
 }
 .iq-h1 .bl { color: #2563EB; }
 .iq-sub {
@@ -366,29 +366,168 @@ label, .stFileUploader label {
 .iq-foot-txt { font-size:.78rem; color:#94A3B8; }
 
 /* ── Responsive ── */
+@media(max-width:1050px) {
+    .iq-h1  { font-size:3.8rem; letter-spacing:-2.5px; }
+    .iq-dskills { display:none; }
+}
 @media(max-width:900px) {
-    .iq-h1  { font-size:2.8rem; letter-spacing:-1.8px; }
+    .iq-h1  { font-size:3.2rem; letter-spacing:-2px; }
     .iq-tg  { grid-template-columns:1fr; }
     .iq-pg  { grid-template-columns:1fr; }
     .iq-pc-feat { transform:none; }
+    .iq-fbar { flex-wrap:wrap; }
+    .iq-fbar-item { min-width:50%; border-bottom:1px solid #E2E8F0; }
+    .iq-fbar-item:nth-child(2) { border-right:none; }
+    .iq-fbar-item:nth-child(3) { border-bottom:none; }
+    .iq-fbar-item:nth-child(4) { border-right:none; border-bottom:none; }
+    .iq-dskills { display:none; }
+    .iq-drec-cell { display:none; }
 }
 @media(max-width:640px) {
     [data-testid="block-container"] { padding:0 1rem 3rem!important; }
     .iq-hero { padding:2.8rem .5rem 2rem; }
-    .iq-h1   { font-size:2.1rem; letter-spacing:-1.2px; }
+    .iq-h1   { font-size:2.6rem; letter-spacing:-1.5px; }
     .iq-sub  { font-size:.93rem; }
-    .iq-btns { flex-direction:column; align-items:stretch; max-width:260px; margin:0 auto; }
+    .iq-btns { flex-direction:column; align-items:stretch; max-width:270px; margin:0 auto; }
     .iq-bp, .iq-bs { text-align:center; }
-    .iq-steps { flex-direction:column; align-items:center; gap:.4rem; padding:2rem 0; }
-    .iq-arr   { transform:rotate(90deg); margin:0; }
-    .iq-step  { width:100%; max-width:260px; }
     .iq-ts-sec { padding:2rem 1.2rem; }
     .iq-pg  { grid-template-columns:1fr; }
     .iq-pc-feat { transform:none; }
     .iq-pricing-title { font-size:1.8rem; }
+    .iq-fbar { display:none; }
+    .iq-dash-outer { padding:1.3rem 1.3rem 0; }
+    .iq-dash-sidebar { width:120px; }
+    .iq-dnavitem span.iq-dnavtxt { display:none; }
+    .iq-dskills { display:none; }
+    .iq-drec-cell { display:none; }
 }
 
 hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
+
+/* ── Play button circle in secondary CTA ── */
+.iq-play {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border-radius:50%;
+    border:1.5px solid #CBD5E1; font-size:.52rem;
+    flex-shrink:0; vertical-align:middle; margin-right:.4rem;
+    color:#0B1120; transition:border-color .18s, color .18s;
+}
+.iq-bs:hover .iq-play { border-color:#2563EB; color:#2563EB; }
+
+/* ── Feature bar ── */
+.iq-fbar {
+    display:flex; background:#fff;
+    border:1px solid #E2E8F0; border-radius:16px;
+    margin:2.2rem 0 2.5rem; overflow:hidden;
+}
+.iq-fbar-item {
+    flex:1; display:flex; align-items:center; gap:.85rem;
+    padding:1.1rem 1.4rem; border-right:1px solid #E2E8F0;
+}
+.iq-fbar-item:last-child { border-right:none; }
+.iq-fbar-icon {
+    width:42px; height:42px; border-radius:50%;
+    background:rgba(37,99,235,.08);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; flex-shrink:0;
+}
+.iq-fbar-t1 { font-size:.88rem; font-weight:700; color:#0B1120; line-height:1.35; }
+.iq-fbar-t2 { font-size:.78rem; color:#64748B; line-height:1.35; }
+
+/* ── Dashboard mockup ── */
+.iq-dash-outer {
+    background:linear-gradient(175deg,#EEF4FF 0%,#F5F7FB 65%);
+    border-radius:22px; padding:2.2rem 2.2rem 0;
+    border:1px solid #DBEAFE;
+    margin-bottom:3rem; overflow:hidden;
+}
+.iq-dash-card {
+    background:#fff; border-radius:14px 14px 0 0;
+    box-shadow:0 24px 64px rgba(10,20,60,.14);
+    display:flex; overflow:hidden;
+    border:1px solid #E2E8F0; border-bottom:none;
+}
+.iq-dash-sidebar {
+    width:175px; flex-shrink:0;
+    padding:1.4rem 1rem;
+    border-right:1px solid #F1F5F9;
+    background:#FAFBFF;
+}
+.iq-dlogo {
+    font-size:1.05rem; font-weight:900; color:#2563EB;
+    letter-spacing:-.3px; margin-bottom:1.5rem; padding:0 .3rem;
+}
+.iq-dnavitem {
+    display:flex; align-items:center; gap:.52rem;
+    font-size:.8rem; color:#94A3B8; font-weight:500;
+    padding:.44rem .58rem; border-radius:8px; margin-bottom:.12rem;
+}
+.iq-dnavitem.iq-active { background:#EFF6FF; color:#2563EB; font-weight:700; }
+.iq-dnavico { width:15px; text-align:center; flex-shrink:0; font-size:.8rem; }
+.iq-dash-content { flex:1; padding:1.4rem 1.6rem; overflow:hidden; min-width:0; }
+.iq-dtopbar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:1.1rem;
+}
+.iq-dtitle { font-size:1.05rem; font-weight:800; color:#0B1120; }
+.iq-dtopactions { display:flex; gap:.5rem; align-items:center; }
+.iq-dsearch {
+    font-size:.73rem; color:#94A3B8; background:#F8FAFC;
+    border:1px solid #E2E8F0; border-radius:7px;
+    padding:.32rem .8rem; min-width:138px;
+}
+.iq-dfilter {
+    font-size:.73rem; color:#64748B; font-weight:600;
+    border:1px solid #E2E8F0; border-radius:7px;
+    padding:.32rem .72rem; background:#fff;
+}
+.iq-dtheader {
+    display:flex; align-items:center; gap:.65rem;
+    padding:.35rem 0 .5rem;
+    border-bottom:1.5px solid #F1F5F9;
+}
+.iq-dth {
+    font-size:.63rem; font-weight:700; letter-spacing:.07em;
+    text-transform:uppercase; color:#94A3B8; flex:1;
+}
+.iq-drow {
+    display:flex; align-items:center; gap:.65rem;
+    padding:.7rem 0; border-bottom:1px solid #F8FAFC;
+}
+.iq-drank {
+    width:21px; height:21px; border-radius:50%;
+    background:#2563EB; color:#fff; font-weight:800;
+    font-size:.63rem; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0;
+}
+.iq-davatar {
+    width:37px; height:37px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:.78rem; color:#fff;
+}
+.iq-dav1 { background:linear-gradient(135deg,#6366F1,#8B5CF6); }
+.iq-dav2 { background:linear-gradient(135deg,#EC4899,#F97316); }
+.iq-dav3 { background:linear-gradient(135deg,#0EA5E9,#14B8A6); }
+.iq-dinfo { flex:1.5; min-width:0; }
+.iq-dname { font-size:.83rem; font-weight:700; color:#0B1120; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.iq-drole { font-size:.72rem; color:#64748B; }
+.iq-dexp  { font-size:.67rem; color:#94A3B8; }
+.iq-dscore-cell { flex:.85; }
+.iq-dpct { font-size:1.18rem; font-weight:900; color:#10B981; line-height:1; margin-bottom:3px; }
+.iq-dbar { height:3px; background:#E2E8F0; border-radius:99px; overflow:hidden; width:78%; }
+.iq-dbarfill { height:100%; background:linear-gradient(90deg,#10B981,#34D399); border-radius:99px; }
+.iq-drec-cell { flex:1.1; }
+.iq-drec { font-size:.69rem; font-weight:700; padding:.24rem .65rem; border-radius:6px; white-space:nowrap; display:inline-block; }
+.iq-drec-strong { background:#D1FAE5; color:#065F46; }
+.iq-drec-good   { background:#DCFCE7; color:#166534; }
+.iq-dskills { flex:1.5; display:flex; flex-wrap:wrap; gap:.28rem; align-items:center; }
+.iq-dsk { font-size:.66rem; background:#EFF6FF; color:#2563EB; border-radius:4px; padding:.2rem .52rem; font-weight:600; white-space:nowrap; }
+.iq-dskmore { font-size:.66rem; background:#F1F5F9; color:#64748B; border-radius:4px; padding:.2rem .52rem; font-weight:600; }
+.iq-dviewall {
+    text-align:center; padding:.9rem 0;
+    font-size:.83rem; font-weight:700; color:#2563EB;
+    border-top:1px solid #F1F5F9; cursor:pointer;
+}
 </style>"""
 
 st.markdown(build_css(), unsafe_allow_html=True)
@@ -452,7 +591,7 @@ def _extract_from_upload(f) -> str:
 st.markdown("""
 <div class="iq-nav">
   <div class="iq-logo">Talent<b>IQ</b></div>
-  <button class="iq-nav-demo">Book a Demo</button>
+  <button class="iq-nav-demo">Book a Demo &nbsp;&rarr;</button>
 </div>
 """, unsafe_allow_html=True)
 
@@ -461,37 +600,129 @@ st.markdown("""
 # All "headings" use <div> — Streamlit adds anchor icons to actual h1/h2/h3 tags
 st.markdown("""
 <div class="iq-hero">
-  <div class="iq-eye">AI-Powered CV Screening for Recruitment Agencies</div>
-  <div class="iq-h1">Screen <span class="bl">100</span> CVs in<br>minutes not hours.</div>
-  <div class="iq-sub">TalentIQ analyses CVs, ranks candidates, generates summaries
-  and helps recruiters shortlist top talent in minutes.</div>
+  <div class="iq-eye">&#10022; &nbsp;AI-Powered CV Screening for Recruitment Agencies</div>
+  <div class="iq-h1">Shortlist Top Talent<br>in <span class="bl">Seconds.</span></div>
+  <div class="iq-sub">Upload a job description and candidate CVs. TalentIQ automatically
+  scores, ranks and summarises candidates, helping recruiters find the best talent faster.</div>
   <div class="iq-btns">
-    <a class="iq-bp">Try TalentIQ Free &nbsp;&rarr;</a>
-    <a class="iq-bs">How it works &nbsp;&#9654;</a>
+    <a class="iq-bp">Book a Demo &nbsp;&rarr;</a>
+    <a class="iq-bs"><span class="iq-play">&#9654;</span> See How It Works</a>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────── Steps row ───────────────────────────────────────
+# ─────────────────────────── Feature bar ─────────────────────────────────────
 st.markdown("""
-<div class="iq-steps">
-  <div class="iq-step">
-    <div class="iq-snum">1</div>
-    <div class="iq-st">Upload Job Description</div>
-    <div class="iq-ss">Paste or upload the job description</div>
+<div class="iq-fbar">
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#128196;</div>
+    <div><div class="iq-fbar-t1">Screen 100s of CVs</div><div class="iq-fbar-t2">in minutes</div></div>
   </div>
-  <div class="iq-arr">&nbsp;- - -&nbsp;&rarr;</div>
-  <div class="iq-step">
-    <div class="iq-snum">2</div>
-    <div class="iq-st">Upload CVs</div>
-    <div class="iq-ss">Upload any CV format. No friction.</div>
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#11088;</div>
+    <div><div class="iq-fbar-t1">AI-Powered Scoring</div><div class="iq-fbar-t2">and Ranking</div></div>
   </div>
-  <div class="iq-arr">&nbsp;- - -&nbsp;&rarr;</div>
-  <div class="iq-step">
-    <div class="iq-snum">3</div>
-    <div class="iq-st">Get Ranked Results</div>
-    <div class="iq-ss">AI ranks and scores the best matches</div>
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#128200;</div>
+    <div><div class="iq-fbar-t1">Identify Top Talent</div><div class="iq-fbar-t2">Faster</div></div>
+  </div>
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#9201;</div>
+    <div><div class="iq-fbar-t1">Save Hours</div><div class="iq-fbar-t2">Every Week</div></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────── Dashboard mockup ────────────────────────────────
+st.markdown("""
+<div class="iq-dash-outer">
+  <div class="iq-dash-card">
+    <div class="iq-dash-sidebar">
+      <div class="iq-dlogo">TalentIQ</div>
+      <div class="iq-dnavitem iq-active"><span class="iq-dnavico">&#8962;</span> <span class="iq-dnavtxt">Dashboard</span></div>
+      <div class="iq-dnavitem"><span class="iq-dnavico">&#9636;</span> <span class="iq-dnavtxt">Jobs</span></div>
+      <div class="iq-dnavitem"><span class="iq-dnavico">&#128101;</span> <span class="iq-dnavtxt">Candidates</span></div>
+      <div class="iq-dnavitem"><span class="iq-dnavico">&#9998;</span> <span class="iq-dnavtxt">Shortlists</span></div>
+      <div class="iq-dnavitem"><span class="iq-dnavico">&#128202;</span> <span class="iq-dnavtxt">Reports</span></div>
+      <div class="iq-dnavitem"><span class="iq-dnavico">&#9881;</span> <span class="iq-dnavtxt">Settings</span></div>
+    </div>
+    <div class="iq-dash-content">
+      <div class="iq-dtopbar">
+        <div class="iq-dtitle">Candidate Rankings</div>
+        <div class="iq-dtopactions">
+          <div class="iq-dsearch">&#128269;&nbsp; Search candidates...</div>
+          <div class="iq-dfilter">&#9660;&nbsp; Filter</div>
+        </div>
+      </div>
+      <div class="iq-dtheader">
+        <div style="flex:2.8;min-width:0"></div>
+        <div class="iq-dth">MATCH SCORE</div>
+        <div class="iq-dth">RECOMMENDATION</div>
+        <div class="iq-dth">KEY SKILLS</div>
+      </div>
+      <div class="iq-drow">
+        <div class="iq-drank">1</div>
+        <div class="iq-davatar iq-dav1">JS</div>
+        <div class="iq-dinfo">
+          <div class="iq-dname">John Smith</div>
+          <div class="iq-drole">Senior SAP Consultant</div>
+          <div class="iq-dexp">10+ years experience</div>
+        </div>
+        <div class="iq-dscore-cell">
+          <div class="iq-dpct">94%</div>
+          <div class="iq-dbar"><div class="iq-dbarfill" style="width:94%"></div></div>
+        </div>
+        <div class="iq-drec-cell"><span class="iq-drec iq-drec-strong">Strongly Recommend</span></div>
+        <div class="iq-dskills">
+          <span class="iq-dsk">SAP SuccessFactors</span>
+          <span class="iq-dsk">UK Experience</span>
+          <span class="iq-dsk">Reporting &amp; Analytics</span>
+          <span class="iq-dskmore">+2</span>
+        </div>
+      </div>
+      <div class="iq-drow">
+        <div class="iq-drank">2</div>
+        <div class="iq-davatar iq-dav2">SJ</div>
+        <div class="iq-dinfo">
+          <div class="iq-dname">Sarah Johnson</div>
+          <div class="iq-drole">SAP HCM Consultant</div>
+          <div class="iq-dexp">8+ years experience</div>
+        </div>
+        <div class="iq-dscore-cell">
+          <div class="iq-dpct">91%</div>
+          <div class="iq-dbar"><div class="iq-dbarfill" style="width:91%"></div></div>
+        </div>
+        <div class="iq-drec-cell"><span class="iq-drec iq-drec-good">Recommend</span></div>
+        <div class="iq-dskills">
+          <span class="iq-dsk">SAP SuccessFactors</span>
+          <span class="iq-dsk">Implementation</span>
+          <span class="iq-dsk">HR Transformation</span>
+          <span class="iq-dskmore">+1</span>
+        </div>
+      </div>
+      <div class="iq-drow">
+        <div class="iq-drank">3</div>
+        <div class="iq-davatar iq-dav3">DB</div>
+        <div class="iq-dinfo">
+          <div class="iq-dname">David Brown</div>
+          <div class="iq-drole">HR Systems Analyst</div>
+          <div class="iq-dexp">7+ years experience</div>
+        </div>
+        <div class="iq-dscore-cell">
+          <div class="iq-dpct">87%</div>
+          <div class="iq-dbar"><div class="iq-dbarfill" style="width:87%"></div></div>
+        </div>
+        <div class="iq-drec-cell"><span class="iq-drec iq-drec-good">Recommend</span></div>
+        <div class="iq-dskills">
+          <span class="iq-dsk">SAP HCM</span>
+          <span class="iq-dsk">Reporting</span>
+          <span class="iq-dsk">Data Analysis</span>
+          <span class="iq-dskmore">+2</span>
+        </div>
+      </div>
+      <div class="iq-dviewall">View All Candidates &nbsp;&rarr;</div>
+    </div>
   </div>
 </div>
 <div class="iq-div"></div>
