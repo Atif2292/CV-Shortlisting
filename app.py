@@ -262,15 +262,30 @@ label, .stFileUploader label {
 .iq-stars { font-size: .8rem; color: #F59E0B; line-height: 1.4; }
 
 /* ── Detailed candidate card ── */
-.iq-det { background: #FAFBFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.3rem; }
-.iq-tag { display:inline-block; background:rgba(37,99,235,.07); color:#2563EB; border:1px solid rgba(37,99,235,.15); border-radius:6px; padding:3px 9px; font-size:.77rem; margin:2px; font-weight:500; }
+.iq-det {
+    background:#fff; border:1px solid #E2E8F0;
+    border-radius:14px; padding:1.6rem 1.8rem;
+}
+.iq-det-name  { font-weight:800; font-size:1.1rem; color:#0B1120; margin-bottom:.15rem; }
+.iq-det-email { font-size:.82rem; color:#94A3B8; margin-bottom:1.1rem; }
+.iq-det-score-row { display:flex; align-items:baseline; gap:.35rem; margin-bottom:1.1rem; }
+.iq-det-num   { font-size:3rem; font-weight:900; color:#2563EB; line-height:1; letter-spacing:-2px; }
+.iq-det-denom { font-size:1rem; color:#94A3B8; font-weight:500; }
+.iq-det-stars { font-size:1.1rem; color:#F59E0B; }
+.iq-det-divider { height:1px; background:#E2E8F0; margin:.8rem 0 1rem; }
+.iq-det-lbl {
+    font-size:.68rem; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:#94A3B8; margin-bottom:.55rem;
+}
+.iq-det-tags  { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.9rem; }
+.iq-tag { display:inline-flex; align-items:center; gap:.28rem; background:rgba(37,99,235,.06); color:#2563EB; border:1px solid rgba(37,99,235,.14); border-radius:6px; padding:4px 10px; font-size:.78rem; font-weight:600; }
 .iq-tag-g { background:rgba(5,150,105,.07); color:#059669; border-color:rgba(5,150,105,.15); }
 .iq-tag-m { background:rgba(100,116,139,.07); color:#64748B; border-color:rgba(100,116,139,.15); }
-.iq-tag-r { background:rgba(220,38,38,.07); color:#DC2626; border-color:rgba(220,38,38,.15); }
-.rec-highly      { background:#DCFCE7; color:#15803D; border-radius:7px; padding:4px 12px; font-size:.82rem; font-weight:600; display:inline-block; }
-.rec-recommended { background:#DBEAFE; color:#1D4ED8; border-radius:7px; padding:4px 12px; font-size:.82rem; font-weight:600; display:inline-block; }
-.rec-review      { background:#FEF3C7; color:#92400E; border-radius:7px; padding:4px 12px; font-size:.82rem; font-weight:600; display:inline-block; }
-.rec-unsuitable  { background:#F3F4F6; color:#6B7280; border-radius:7px; padding:4px 12px; font-size:.82rem; font-weight:600; display:inline-block; }
+.iq-tag-r { background:rgba(220,38,38,.06); color:#DC2626; border-color:rgba(220,38,38,.12); }
+.rec-highly      { background:#DCFCE7; color:#15803D; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
+.rec-recommended { background:#DBEAFE; color:#1D4ED8; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
+.rec-review      { background:#FEF3C7; color:#92400E; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
+.rec-unsuitable  { background:#F3F4F6; color:#6B7280; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
 
 /* ── View full results link ── */
 .iq-view-link {
@@ -632,99 +647,6 @@ st.markdown("""
     <div><div class="iq-fbar-t1">Save Hours</div><div class="iq-fbar-t2">Every Week</div></div>
   </div>
 </div>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────── Dashboard mockup ────────────────────────────────
-st.markdown("""
-<div class="iq-dash-outer">
-  <div class="iq-dash-card">
-    <div class="iq-dash-sidebar">
-      <div class="iq-dlogo">TalentIQ</div>
-      <div class="iq-dnavitem iq-active"><span class="iq-dnavico">&#8962;</span> <span class="iq-dnavtxt">Dashboard</span></div>
-      <div class="iq-dnavitem"><span class="iq-dnavico">&#9636;</span> <span class="iq-dnavtxt">Jobs</span></div>
-      <div class="iq-dnavitem"><span class="iq-dnavico">&#128101;</span> <span class="iq-dnavtxt">Candidates</span></div>
-      <div class="iq-dnavitem"><span class="iq-dnavico">&#9998;</span> <span class="iq-dnavtxt">Shortlists</span></div>
-      <div class="iq-dnavitem"><span class="iq-dnavico">&#128202;</span> <span class="iq-dnavtxt">Reports</span></div>
-      <div class="iq-dnavitem"><span class="iq-dnavico">&#9881;</span> <span class="iq-dnavtxt">Settings</span></div>
-    </div>
-    <div class="iq-dash-content">
-      <div class="iq-dtopbar">
-        <div class="iq-dtitle">Candidate Rankings</div>
-        <div class="iq-dtopactions">
-          <div class="iq-dsearch">&#128269;&nbsp; Search candidates...</div>
-          <div class="iq-dfilter">&#9660;&nbsp; Filter</div>
-        </div>
-      </div>
-      <div class="iq-dtheader">
-        <div style="flex:2.8;min-width:0"></div>
-        <div class="iq-dth">MATCH SCORE</div>
-        <div class="iq-dth">RECOMMENDATION</div>
-        <div class="iq-dth">KEY SKILLS</div>
-      </div>
-      <div class="iq-drow">
-        <div class="iq-drank">1</div>
-        <div class="iq-davatar iq-dav1">JS</div>
-        <div class="iq-dinfo">
-          <div class="iq-dname">John Smith</div>
-          <div class="iq-drole">Senior SAP Consultant</div>
-          <div class="iq-dexp">10+ years experience</div>
-        </div>
-        <div class="iq-dscore-cell">
-          <div class="iq-dpct">94%</div>
-          <div class="iq-dbar"><div class="iq-dbarfill" style="width:94%"></div></div>
-        </div>
-        <div class="iq-drec-cell"><span class="iq-drec iq-drec-strong">Strongly Recommend</span></div>
-        <div class="iq-dskills">
-          <span class="iq-dsk">SAP SuccessFactors</span>
-          <span class="iq-dsk">UK Experience</span>
-          <span class="iq-dsk">Reporting &amp; Analytics</span>
-          <span class="iq-dskmore">+2</span>
-        </div>
-      </div>
-      <div class="iq-drow">
-        <div class="iq-drank">2</div>
-        <div class="iq-davatar iq-dav2">SJ</div>
-        <div class="iq-dinfo">
-          <div class="iq-dname">Sarah Johnson</div>
-          <div class="iq-drole">SAP HCM Consultant</div>
-          <div class="iq-dexp">8+ years experience</div>
-        </div>
-        <div class="iq-dscore-cell">
-          <div class="iq-dpct">91%</div>
-          <div class="iq-dbar"><div class="iq-dbarfill" style="width:91%"></div></div>
-        </div>
-        <div class="iq-drec-cell"><span class="iq-drec iq-drec-good">Recommend</span></div>
-        <div class="iq-dskills">
-          <span class="iq-dsk">SAP SuccessFactors</span>
-          <span class="iq-dsk">Implementation</span>
-          <span class="iq-dsk">HR Transformation</span>
-          <span class="iq-dskmore">+1</span>
-        </div>
-      </div>
-      <div class="iq-drow">
-        <div class="iq-drank">3</div>
-        <div class="iq-davatar iq-dav3">DB</div>
-        <div class="iq-dinfo">
-          <div class="iq-dname">David Brown</div>
-          <div class="iq-drole">HR Systems Analyst</div>
-          <div class="iq-dexp">7+ years experience</div>
-        </div>
-        <div class="iq-dscore-cell">
-          <div class="iq-dpct">87%</div>
-          <div class="iq-dbar"><div class="iq-dbarfill" style="width:87%"></div></div>
-        </div>
-        <div class="iq-drec-cell"><span class="iq-drec iq-drec-good">Recommend</span></div>
-        <div class="iq-dskills">
-          <span class="iq-dsk">SAP HCM</span>
-          <span class="iq-dsk">Reporting</span>
-          <span class="iq-dsk">Data Analysis</span>
-          <span class="iq-dskmore">+2</span>
-        </div>
-      </div>
-      <div class="iq-dviewall">View All Candidates &nbsp;&rarr;</div>
-    </div>
-  </div>
-</div>
 <div class="iq-div"></div>
 """, unsafe_allow_html=True)
 
@@ -1049,22 +971,27 @@ if st.session_state.get("show_full") and st.session_state.results:
         s_lbl, s_stars = _fmt_score(score)
         c_cls = "iq-tag-m" if score >= 70 else "iq-tag-r"
 
-        str_html = " ".join(f'<span class="iq-tag iq-tag-g">✓ {s}</span>' for s in strengths)
-        con_html = " ".join(f'<span class="iq-tag {c_cls}">✗ {c}</span>' for c in concerns)
+        str_html = "".join(f'<span class="iq-tag iq-tag-g">&#10003; {s}</span>' for s in strengths) \
+                   or '<span class="iq-tag iq-tag-m">None noted</span>'
+        con_html = "".join(f'<span class="iq-tag {c_cls}">&#10007; {c}</span>' for c in concerns) \
+                   or '<span class="iq-tag iq-tag-m">None noted</span>'
 
         with st.expander(f"#{rank} — {name}  ·  {s_lbl}/10  {s_stars}", expanded=(rank == 1)):
             st.markdown(f"""
 <div class="iq-det">
-  <div style="font-weight:700;font-size:.98rem;color:#0B1120">{name}</div>
-  <div style="font-size:.81rem;color:#64748B;margin-bottom:.85rem">{email}</div>
-  <span style="font-size:1.85rem;font-weight:900;color:#2563EB">{s_lbl}</span>
-  <span style="font-size:.93rem;color:#64748B">/10 &nbsp;{s_stars}</span>
-  <hr style="margin:.7rem 0">
-  <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:5px">Strengths</div>
-  {str_html or '<span style="color:#94A3B8;font-size:.85rem">None noted</span>'}
-  <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin:.75rem 0 5px">Concerns</div>
-  {con_html or '<span style="color:#94A3B8;font-size:.85rem">None noted</span>'}
-  <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin:.75rem 0 5px">Recommendation</div>
+  <div class="iq-det-name">{name}</div>
+  <div class="iq-det-email">{email}</div>
+  <div class="iq-det-score-row">
+    <span class="iq-det-num">{s_lbl}</span>
+    <span class="iq-det-denom">/10</span>
+    <span class="iq-det-stars">{s_stars}</span>
+  </div>
+  <div class="iq-det-divider"></div>
+  <div class="iq-det-lbl">Strengths</div>
+  <div class="iq-det-tags">{str_html}</div>
+  <div class="iq-det-lbl">Concerns</div>
+  <div class="iq-det-tags">{con_html}</div>
+  <div class="iq-det-lbl">Recommendation</div>
   {_rec_badge(rec)}
 </div>""", unsafe_allow_html=True)
 
