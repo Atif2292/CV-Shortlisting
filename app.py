@@ -178,23 +178,25 @@ label, .stFileUploader label {
     border-radius:12px; padding:.65rem 1rem; margin-bottom:1rem;
 }
 .iq-filter-bar .iq-fi { font-size:.85rem; color:#94A3B8; flex-shrink:0; }
-/* ── Download button ── */
-[data-testid="stDownloadButton"] > button {
-    background: linear-gradient(135deg,#1E40AF,#2563EB) !important;
-    color: #fff !important; border: none !important;
-    border-radius: 12px !important;
-    padding: .9rem 1.5rem !important;
-    font-size: .97rem !important; font-weight: 700 !important;
-    letter-spacing: -.01em !important;
-    box-shadow: 0 4px 18px rgba(37,99,235,.28) !important;
-    transition: transform .15s, box-shadow .15s !important;
+/* ── Download button (pure HTML anchor) ── */
+.iq-dl-btn {
+    display: block; width: 100%; text-align: center; box-sizing: border-box;
+    background: linear-gradient(135deg, #1E40AF, #2563EB);
+    color: #fff !important; text-decoration: none !important;
+    border-radius: 12px; padding: 1rem 1.5rem;
+    font-size: .97rem; font-weight: 700; letter-spacing: -.01em;
+    box-shadow: 0 4px 18px rgba(37,99,235,.28);
+    transition: transform .15s, box-shadow .15s;
+    cursor: pointer;
 }
-[data-testid="stDownloadButton"] > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 7px 24px rgba(37,99,235,.38) !important;
-    background: linear-gradient(135deg,#1D4ED8,#3B82F6) !important;
+.iq-dl-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 26px rgba(37,99,235,.4);
+    background: linear-gradient(135deg, #1D4ED8, #3B82F6);
+    color: #fff !important; text-decoration: none !important;
 }
-[data-testid="stDownloadButton"] > button:active { transform: translateY(0) !important; }
+.iq-dl-btn:active { transform: translateY(0); }
+.iq-dl-wrap { margin-top: 1.5rem; margin-bottom: .5rem; }
 /* ── Results section heading ── */
 .iq-results-hdr {
     display:flex; align-items:center; justify-content:space-between;
@@ -1274,9 +1276,9 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div style="margin-top:.5rem">{_rec_badge(rec)}</div>
 </div>""", unsafe_allow_html=True)
 
-    # ── Download CSV ─────────────────────────────────────────────────
-    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
-    csv = pd.DataFrame([
+    # ── Download CSV (pure HTML anchor — full CSS control) ───────────
+    import base64 as _b64
+    _csv_str = pd.DataFrame([
         {
             "Rank":           i + 1,
             "Name":           r.get("candidate_name", ""),
@@ -1288,12 +1290,13 @@ if st.session_state.get("show_full") and st.session_state.results:
         }
         for i, r in enumerate(results)
     ]).to_csv(index=False)
-
-    st.download_button(
-        "⬇️  Download Results CSV",
-        data=csv, file_name="talentiq_results.csv",
-        mime="text/csv", use_container_width=True,
-        key="dl_csv",
+    _csv_b64 = _b64.b64encode(_csv_str.encode()).decode()
+    st.markdown(
+        f'<div class="iq-dl-wrap">'
+        f'<a class="iq-dl-btn" href="data:text/csv;base64,{_csv_b64}" '
+        f'download="talentiq_results.csv">⬇️&nbsp;&nbsp;Download Results CSV</a>'
+        f'</div>',
+        unsafe_allow_html=True,
     )
 
 
