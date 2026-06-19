@@ -148,23 +148,66 @@ label, .stFileUploader label {
     border-radius: 14px !important;
     background: #fff !important;
     overflow: hidden !important;
-    box-shadow: 0 1px 6px rgba(10,20,60,.05) !important;
-    margin-bottom: .55rem !important;
-    transition: box-shadow .2s !important;
+    box-shadow: 0 2px 8px rgba(10,20,60,.06) !important;
+    margin-bottom: .6rem !important;
+    transition: box-shadow .2s, border-color .2s !important;
 }
-.stExpander:hover { box-shadow:0 3px 14px rgba(10,20,60,.09) !important; }
+.stExpander:hover {
+    box-shadow: 0 4px 18px rgba(37,99,235,.11) !important;
+    border-color: #BFDBFE !important;
+}
 .stExpander summary {
-    font-size: .92rem !important;
-    font-weight: 600 !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
     color: #0B1120 !important;
-    padding: .9rem 1.2rem !important;
-    background: #FAFBFF !important;
+    padding: 1.05rem 1.4rem !important;
+    background: linear-gradient(to right, #EFF6FF, #FAFBFF) !important;
     border-bottom: 1px solid transparent !important;
+    letter-spacing: -.01em !important;
     transition: background .15s !important;
 }
+.stExpander:hover summary { background: linear-gradient(to right,#DBEAFE,#EFF6FF) !important; }
 .stExpander details[open] > summary {
-    border-bottom-color: #E2E8F0 !important;
-    background: #F5F8FF !important;
+    border-bottom-color: #DBEAFE !important;
+    background: linear-gradient(to right, #EBF2FF, #F0F6FF) !important;
+}
+/* ── Search / filter bar ── */
+.iq-filter-bar {
+    display:flex; align-items:center; gap:.75rem;
+    background:#F8FAFF; border:1.5px solid #E2E8F0;
+    border-radius:12px; padding:.65rem 1rem; margin-bottom:1rem;
+}
+.iq-filter-bar .iq-fi { font-size:.85rem; color:#94A3B8; flex-shrink:0; }
+/* ── Download button ── */
+[data-testid="stDownloadButton"] > button {
+    background: linear-gradient(135deg,#1E40AF,#2563EB) !important;
+    color: #fff !important; border: none !important;
+    border-radius: 12px !important;
+    padding: .9rem 1.5rem !important;
+    font-size: .97rem !important; font-weight: 700 !important;
+    letter-spacing: -.01em !important;
+    box-shadow: 0 4px 18px rgba(37,99,235,.28) !important;
+    transition: transform .15s, box-shadow .15s !important;
+}
+[data-testid="stDownloadButton"] > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 7px 24px rgba(37,99,235,.38) !important;
+    background: linear-gradient(135deg,#1D4ED8,#3B82F6) !important;
+}
+[data-testid="stDownloadButton"] > button:active { transform: translateY(0) !important; }
+/* ── Results section heading ── */
+.iq-results-hdr {
+    display:flex; align-items:center; justify-content:space-between;
+    margin:1.2rem 0 .8rem;
+}
+.iq-results-hdr-title {
+    font-size:.7rem; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:#94A3B8;
+}
+.iq-results-count {
+    font-size:.75rem; font-weight:600; color:#2563EB;
+    background:#EFF6FF; border:1px solid #DBEAFE;
+    border-radius:20px; padding:2px 10px;
 }
 
 /* ── Navbar ── */
@@ -1114,14 +1157,63 @@ if st.session_state.get("show_full") and st.session_state.results:
     avg = sum(r.get("match_score", 0) for r in results) / len(results)
     m3.metric("Avg Score", f"{round(avg / 10, 1)}/10")
 
+    # ── Search + Filter bar ──────────────────────────────────────────
+    _fc1, _fc2 = st.columns([3, 2])
+    with _fc1:
+        _search = st.text_input(
+            "", placeholder="🔍  Search by name or email…",
+            label_visibility="collapsed", key="res_search"
+        )
+    with _fc2:
+        _filter = st.selectbox(
+            "",
+            ["All Candidates", "Highly Recommended", "Recommended", "Consider", "Not Recommended"],
+            label_visibility="collapsed", key="res_filter"
+        )
+
+    # ── Filter logic ─────────────────────────────────────────────────
+    _ranked = [(i + 1, results[i]) for i in range(min(10, len(results)))]
+    if _search:
+        _sq = _search.strip().lower()
+        _ranked = [
+            (rk, r) for rk, r in _ranked
+            if _sq in r.get("candidate_name", "").lower()
+            or _sq in r.get("email", "").lower()
+        ]
+    _fv = _filter if "_filter" in dir() else "All Candidates"
+    if _fv == "Highly Recommended":
+        _ranked = [(rk, r) for rk, r in _ranked if "highly" in r.get("recommendation", "").lower()]
+    elif _fv == "Recommended":
+        _ranked = [(rk, r) for rk, r in _ranked
+                   if "recommended" in r.get("recommendation", "").lower()
+                   and "highly" not in r.get("recommendation", "").lower()]
+    elif _fv == "Consider":
+        _ranked = [(rk, r) for rk, r in _ranked if "consider" in r.get("recommendation", "").lower()]
+    elif _fv == "Not Recommended":
+        _ranked = [(rk, r) for rk, r in _ranked
+                   if "not recommended" in r.get("recommendation", "").lower()
+                   or "unsuitable" in r.get("recommendation", "").lower()]
+
+    # ── Section header ───────────────────────────────────────────────
     st.markdown(
-        '<div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;'
-        'text-transform:uppercase;color:#94A3B8;margin:1.2rem 0 .8rem">'
-        '📋 All Candidate Profiles</div>',
+        f'<div class="iq-results-hdr">'
+        f'<span class="iq-results-hdr-title">📋 All Candidate Profiles</span>'
+        f'<span class="iq-results-count">{len(_ranked)} shown</span>'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
-    for rank, r in enumerate(results[:10], 1):
+    if not _ranked:
+        st.markdown(
+            '<div style="text-align:center;padding:2.5rem 1rem;color:#94A3B8;'
+            'font-size:.92rem;background:#F8FAFF;border:1.5px dashed #E2E8F0;'
+            'border-radius:12px;margin:.5rem 0">No candidates match your filter.</div>',
+            unsafe_allow_html=True,
+        )
+
+    _MEDALS = {1: "🥇", 2: "🥈", 3: "🥉"}
+
+    for rank, r in _ranked:
         score     = r.get("match_score", 0)
         name      = r.get("candidate_name", "Unknown")
         email     = r.get("email", "—")
@@ -1134,12 +1226,25 @@ if st.session_state.get("show_full") and st.session_state.results:
         score_level = "hi" if score >= 80 else ("mid" if score >= 60 else "lo")
         accent_col  = "#10B981" if score >= 80 else ("#F59E0B" if score >= 60 else "#EF4444")
 
+        rec_lower = rec.lower()
+        if "highly" in rec_lower:
+            rec_short = "✦ Highly Rec."
+        elif "recommended" in rec_lower:
+            rec_short = "✓ Recommended"
+        elif "consider" in rec_lower:
+            rec_short = "◎ Consider"
+        else:
+            rec_short = "✗ Not Rec."
+
+        medal = _MEDALS.get(rank, f"#{rank}")
+        exp_label = f"{medal}  {name}   ·   {s_lbl}/10  {s_stars}   ·   {rec_short}"
+
         str_html = "".join(f'<span class="iq-tag iq-tag-g">&#10003; {s}</span>' for s in strengths) \
                    or '<span class="iq-tag iq-tag-m">None noted</span>'
         con_html = "".join(f'<span class="iq-tag {c_cls}">&#10007; {c}</span>' for c in concerns) \
                    or '<span class="iq-tag iq-tag-m">None noted</span>'
 
-        with st.expander(f"#{rank} — {name}  ·  {s_lbl}/10  {s_stars}", expanded=(rank == 1)):
+        with st.expander(exp_label, expanded=(rank == 1)):
             st.markdown(f"""
 <div class="iq-det" style="border-left:4px solid {accent_col}">
   <div class="iq-det-hrow">
@@ -1169,25 +1274,14 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div style="margin-top:.5rem">{_rec_badge(rec)}</div>
 </div>""", unsafe_allow_html=True)
 
-    st.markdown("---")
-    df = pd.DataFrame([
-        {
-            "Rank":           i + 1,
-            "Candidate":      r.get("candidate_name", ""),
-            "Score":          f"{_fmt_score(r.get('match_score',0))[0]}/10",
-            "Email":          r.get("email", ""),
-            "Recommendation": r.get("recommendation", ""),
-        }
-        for i, r in enumerate(results)
-    ])
-    st.dataframe(df, use_container_width=True, hide_index=True)
-
+    # ── Download CSV ─────────────────────────────────────────────────
+    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
     csv = pd.DataFrame([
         {
             "Rank":           i + 1,
             "Name":           r.get("candidate_name", ""),
             "Email":          r.get("email", ""),
-            "Score":          f"{_fmt_score(r.get('match_score',0))[0]}/10",
+            "Score":          f"{_fmt_score(r.get('match_score', 0))[0]}/10",
             "Strengths":      "; ".join(r.get("strengths", [])),
             "Concerns":       "; ".join(r.get("concerns", [])),
             "Recommendation": r.get("recommendation", ""),
@@ -1196,9 +1290,10 @@ if st.session_state.get("show_full") and st.session_state.results:
     ]).to_csv(index=False)
 
     st.download_button(
-        "⬇️ Download Results CSV",
+        "⬇️  Download Results CSV",
         data=csv, file_name="talentiq_results.csv",
         mime="text/csv", use_container_width=True,
+        key="dl_csv",
     )
 
 
