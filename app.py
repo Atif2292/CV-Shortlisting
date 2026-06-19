@@ -3,11 +3,17 @@ TalentIQ — AI-Powered CV Screening
 """
 
 import os
+import io
+import base64
 import tempfile
 import streamlit as st
 import pandas as pd
 from pathlib import Path
 from dotenv import load_dotenv
+from openpyxl.styles import (
+    PatternFill as _PFill, Font as _Font,
+    Alignment as _Align, Border as _Border, Side as _Side,
+)
 
 load_dotenv()
 
@@ -1277,13 +1283,6 @@ if st.session_state.get("show_full") and st.session_state.results:
 </div>""", unsafe_allow_html=True)
 
     # ── Download — styled Excel (.xlsx) ─────────────────────────────
-    import io as _io
-    import base64 as _b64
-    from openpyxl.styles import (
-        PatternFill as _PFill, Font as _Font,
-        Alignment as _Align, Border as _Border, Side as _Side,
-    )
-
     _rows = [
         {
             "Rank":           i + 1,
@@ -1297,7 +1296,7 @@ if st.session_state.get("show_full") and st.session_state.results:
         for i, r in enumerate(results)
     ]
     _df_xl = pd.DataFrame(_rows)
-    _buf   = _io.BytesIO()
+    _buf   = io.BytesIO()
 
     with pd.ExcelWriter(_buf, engine="openpyxl") as _xw:
         _df_xl.to_excel(_xw, index=False, sheet_name="TalentIQ Results")
@@ -1339,7 +1338,7 @@ if st.session_state.get("show_full") and st.session_state.results:
         _ws.freeze_panes = "A2"
 
     _buf.seek(0)
-    _xl_b64 = _b64.b64encode(_buf.read()).decode()
+    _xl_b64 = base64.b64encode(_buf.read()).decode()
     _mime    = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     st.markdown(
         f'<div class="iq-dl-wrap">'
