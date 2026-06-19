@@ -143,7 +143,29 @@ label, .stFileUploader label {
     background: rgba(37,99,235,.03) !important;
 }
 .stDataFrame { border-radius: 12px; overflow: hidden; border: 1px solid #E2E8F0 !important; }
-.stExpander  { border: 1px solid #E2E8F0 !important; border-radius: 12px !important; background:#FFFFFF!important; }
+.stExpander {
+    border: 1.5px solid #E2E8F0 !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 6px rgba(10,20,60,.05) !important;
+    margin-bottom: .55rem !important;
+    transition: box-shadow .2s !important;
+}
+.stExpander:hover { box-shadow:0 3px 14px rgba(10,20,60,.09) !important; }
+.stExpander summary {
+    font-size: .92rem !important;
+    font-weight: 600 !important;
+    color: #0B1120 !important;
+    padding: .9rem 1.2rem !important;
+    background: #FAFBFF !important;
+    border-bottom: 1px solid transparent !important;
+    transition: background .15s !important;
+}
+.stExpander details[open] > summary {
+    border-bottom-color: #E2E8F0 !important;
+    background: #F5F8FF !important;
+}
 
 /* ── Navbar ── */
 .iq-nav {
@@ -264,28 +286,45 @@ label, .stFileUploader label {
 /* ── Detailed candidate card ── */
 .iq-det {
     background:#fff; border:1px solid #E2E8F0;
-    border-radius:14px; padding:1.6rem 1.8rem;
+    border-left:4px solid #2563EB;
+    border-radius:14px; padding:1.55rem 1.7rem;
 }
-.iq-det-name  { font-weight:800; font-size:1.1rem; color:#0B1120; margin-bottom:.15rem; }
-.iq-det-email { font-size:.82rem; color:#94A3B8; margin-bottom:1.1rem; }
-.iq-det-score-row { display:flex; align-items:baseline; gap:.35rem; margin-bottom:1.1rem; }
-.iq-det-num   { font-size:3rem; font-weight:900; color:#2563EB; line-height:1; letter-spacing:-2px; }
-.iq-det-denom { font-size:1rem; color:#94A3B8; font-weight:500; }
-.iq-det-stars { font-size:1.1rem; color:#F59E0B; }
-.iq-det-divider { height:1px; background:#E2E8F0; margin:.8rem 0 1rem; }
+.iq-det-hrow {
+    display:flex; align-items:center;
+    justify-content:space-between; gap:1rem; margin-bottom:.95rem;
+}
+.iq-det-hinfo { flex:1; min-width:0; }
+.iq-det-name  { font-weight:800; font-size:1.12rem; color:#0B1120; margin-bottom:.18rem; }
+.iq-det-email { font-size:.82rem; color:#94A3B8; }
+.iq-det-badge {
+    flex-shrink:0; width:78px; height:78px; border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:.05rem;
+}
+.iq-det-badge-hi  { background:linear-gradient(135deg,#D1FAE5,#A7F3D0); }
+.iq-det-badge-mid { background:linear-gradient(135deg,#FEF3C7,#FDE68A); }
+.iq-det-badge-lo  { background:linear-gradient(135deg,#FEE2E2,#FECACA); }
+.iq-det-badgenum  { font-size:1.45rem; font-weight:900; line-height:1.1; letter-spacing:-1px; color:#0B1120; }
+.iq-det-badge-hi  .iq-det-badgenum  { color:#065F46; }
+.iq-det-badge-mid .iq-det-badgenum  { color:#92400E; }
+.iq-det-badge-lo  .iq-det-badgenum  { color:#991B1B; }
+.iq-det-badgedenom { font-size:.65rem; color:#64748B; font-weight:600; }
+.iq-det-badgestars { font-size:.7rem; color:#F59E0B; line-height:1.4; }
+.iq-det-divider { height:1px; background:#F1F5F9; margin:.85rem 0 .95rem; }
 .iq-det-lbl {
-    font-size:.68rem; font-weight:700; letter-spacing:.12em;
-    text-transform:uppercase; color:#94A3B8; margin-bottom:.55rem;
+    font-size:.66rem; font-weight:700; letter-spacing:.13em;
+    text-transform:uppercase; color:#94A3B8; margin-bottom:.5rem;
 }
-.iq-det-tags  { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.9rem; }
-.iq-tag { display:inline-flex; align-items:center; gap:.28rem; background:rgba(37,99,235,.06); color:#2563EB; border:1px solid rgba(37,99,235,.14); border-radius:6px; padding:4px 10px; font-size:.78rem; font-weight:600; }
+.iq-det-cols { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; margin-bottom:.2rem; }
+.iq-det-tags { display:flex; flex-wrap:wrap; gap:.38rem; }
+.iq-tag { display:inline-flex; align-items:center; gap:.28rem; background:rgba(37,99,235,.06); color:#2563EB; border:1px solid rgba(37,99,235,.14); border-radius:6px; padding:4px 10px; font-size:.77rem; font-weight:600; }
 .iq-tag-g { background:rgba(5,150,105,.07); color:#059669; border-color:rgba(5,150,105,.15); }
 .iq-tag-m { background:rgba(100,116,139,.07); color:#64748B; border-color:rgba(100,116,139,.15); }
 .iq-tag-r { background:rgba(220,38,38,.06); color:#DC2626; border-color:rgba(220,38,38,.12); }
-.rec-highly      { background:#DCFCE7; color:#15803D; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
-.rec-recommended { background:#DBEAFE; color:#1D4ED8; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
-.rec-review      { background:#FEF3C7; color:#92400E; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
-.rec-unsuitable  { background:#F3F4F6; color:#6B7280; border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; display:inline-block; }
+.rec-highly      { background:#DCFCE7; color:#15803D; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(5,150,105,.15); }
+.rec-recommended { background:#DBEAFE; color:#1D4ED8; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(37,99,235,.15); }
+.rec-review      { background:#FEF3C7; color:#92400E; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(245,158,11,.2); }
+.rec-unsuitable  { background:#F3F4F6; color:#6B7280; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid #E2E8F0; }
 
 /* ── View full results link ── */
 .iq-view-link {
@@ -1092,6 +1131,9 @@ if st.session_state.get("show_full") and st.session_state.results:
         s_lbl, s_stars = _fmt_score(score)
         c_cls = "iq-tag-m" if score >= 70 else "iq-tag-r"
 
+        score_level = "hi" if score >= 80 else ("mid" if score >= 60 else "lo")
+        accent_col  = "#10B981" if score >= 80 else ("#F59E0B" if score >= 60 else "#EF4444")
+
         str_html = "".join(f'<span class="iq-tag iq-tag-g">&#10003; {s}</span>' for s in strengths) \
                    or '<span class="iq-tag iq-tag-m">None noted</span>'
         con_html = "".join(f'<span class="iq-tag {c_cls}">&#10007; {c}</span>' for c in concerns) \
@@ -1099,21 +1141,32 @@ if st.session_state.get("show_full") and st.session_state.results:
 
         with st.expander(f"#{rank} — {name}  ·  {s_lbl}/10  {s_stars}", expanded=(rank == 1)):
             st.markdown(f"""
-<div class="iq-det">
-  <div class="iq-det-name">{name}</div>
-  <div class="iq-det-email">{email}</div>
-  <div class="iq-det-score-row">
-    <span class="iq-det-num">{s_lbl}</span>
-    <span class="iq-det-denom">/10</span>
-    <span class="iq-det-stars">{s_stars}</span>
+<div class="iq-det" style="border-left:4px solid {accent_col}">
+  <div class="iq-det-hrow">
+    <div class="iq-det-hinfo">
+      <div class="iq-det-name">{name}</div>
+      <div class="iq-det-email">{email}</div>
+    </div>
+    <div class="iq-det-badge iq-det-badge-{score_level}">
+      <div class="iq-det-badgenum">{s_lbl}</div>
+      <div class="iq-det-badgedenom">/10</div>
+      <div class="iq-det-badgestars">{s_stars}</div>
+    </div>
   </div>
   <div class="iq-det-divider"></div>
-  <div class="iq-det-lbl">Strengths</div>
-  <div class="iq-det-tags">{str_html}</div>
-  <div class="iq-det-lbl">Concerns</div>
-  <div class="iq-det-tags">{con_html}</div>
+  <div class="iq-det-cols">
+    <div>
+      <div class="iq-det-lbl">Strengths</div>
+      <div class="iq-det-tags">{str_html}</div>
+    </div>
+    <div>
+      <div class="iq-det-lbl">Concerns</div>
+      <div class="iq-det-tags">{con_html}</div>
+    </div>
+  </div>
+  <div class="iq-det-divider"></div>
   <div class="iq-det-lbl">Recommendation</div>
-  {_rec_badge(rec)}
+  <div style="margin-top:.5rem">{_rec_badge(rec)}</div>
 </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
