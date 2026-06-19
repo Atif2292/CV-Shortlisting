@@ -419,6 +419,73 @@ label, .stFileUploader label {
 
 hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 
+/* ── Candidate Rankings panel ── */
+.iq-cr-head {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:.9rem;
+}
+.iq-cr-title { font-size:1.05rem; font-weight:800; color:#0B1120; }
+.iq-cr-tools { display:flex; gap:.4rem; align-items:center; }
+.iq-cr-search {
+    font-size:.7rem; color:#94A3B8; background:#F8FAFC;
+    border:1px solid #E2E8F0; border-radius:7px; padding:.28rem .7rem;
+}
+.iq-cr-filter {
+    font-size:.7rem; color:#374151; font-weight:600;
+    border:1px solid #E2E8F0; border-radius:7px; padding:.28rem .65rem; background:#fff;
+}
+.iq-cr-cols {
+    display:flex; align-items:center; gap:.4rem;
+    padding:.25rem 0 .5rem; border-bottom:1.5px solid #F1F5F9; margin-bottom:.5rem;
+}
+.iq-cr-col-sp { flex:1.8; }
+.iq-cr-col {
+    font-size:.6rem; font-weight:700; letter-spacing:.09em;
+    text-transform:uppercase; color:#94A3B8; flex:1;
+}
+.iq-cr-row {
+    display:flex; align-items:flex-start; gap:.45rem;
+    padding:.65rem .5rem; border:1px solid #EAEFF6;
+    border-radius:12px; margin-bottom:.45rem; background:#fff;
+    transition:box-shadow .15s, border-color .15s;
+}
+.iq-cr-row:hover { box-shadow:0 2px 12px rgba(10,20,60,.09); border-color:#DBEAFE; }
+.iq-cr-rank {
+    width:21px; height:21px; border-radius:50%;
+    background:#2563EB; color:#fff; font-weight:800;
+    font-size:.62rem; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0; margin-top:2px;
+}
+.iq-cr-av {
+    width:38px; height:38px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:.84rem; color:#fff;
+}
+.iq-cr-av1 { background:linear-gradient(135deg,#6366F1,#8B5CF6); }
+.iq-cr-av2 { background:linear-gradient(135deg,#EC4899,#F97316); }
+.iq-cr-av3 { background:linear-gradient(135deg,#0EA5E9,#14B8A6); }
+.iq-cr-av4 { background:linear-gradient(135deg,#F59E0B,#EF4444); }
+.iq-cr-av5 { background:linear-gradient(135deg,#10B981,#3B82F6); }
+.iq-cr-main { flex:1; min-width:0; }
+.iq-cr-toprow { display:flex; align-items:center; gap:.35rem; margin-bottom:.4rem; }
+.iq-cr-info   { flex:1; min-width:0; }
+.iq-cr-name   { font-size:.84rem; font-weight:700; color:#0B1120; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.iq-cr-sub    { font-size:.7rem; color:#94A3B8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.iq-cr-sc     { flex-shrink:0; min-width:52px; }
+.iq-cr-pct    { font-size:1.15rem; font-weight:900; color:#10B981; line-height:1; margin-bottom:3px; }
+.iq-cr-bar    { height:3px; background:#E2E8F0; border-radius:99px; overflow:hidden; width:88%; }
+.iq-cr-barfill { height:100%; background:linear-gradient(90deg,#10B981,#34D399); border-radius:99px; }
+.iq-cr-rec    { flex-shrink:0; }
+.iq-cr-rbadge { font-size:.67rem; font-weight:700; padding:.26rem .65rem; border-radius:6px; white-space:nowrap; display:inline-block; }
+.iq-cr-rb-strong { background:#D1FAE5; color:#065F46; }
+.iq-cr-rb-good   { background:#DCFCE7; color:#166534; }
+.iq-cr-rb-ok     { background:#FEF3C7; color:#92400E; }
+.iq-cr-rb-no     { background:#F3F4F6; color:#6B7280; }
+.iq-cr-sk-row    { display:flex; flex-wrap:wrap; gap:.28rem; }
+.iq-cr-sk    { font-size:.65rem; background:#EFF6FF; color:#2563EB; border:1px solid #DBEAFE; border-radius:5px; padding:.18rem .5rem; font-weight:600; white-space:nowrap; }
+.iq-cr-skmore { font-size:.65rem; background:#F1F5F9; color:#64748B; border-radius:5px; padding:.18rem .5rem; font-weight:600; }
+.iq-cr-footer { border-top:1px solid #F1F5F9; margin-top:.4rem; padding-top:.6rem; }
+
 /* ── Play button circle in secondary CTA ── */
 .iq-play {
     display:inline-flex; align-items:center; justify-content:center;
@@ -601,6 +668,15 @@ def _extract_from_upload(f) -> str:
         Path(path).unlink(missing_ok=True)
 
 
+def _exp_subtitle(text: str) -> str:
+    """Extract a short subtitle from relevant_experience text."""
+    import re as _re
+    m = _re.search(r'(\d+)\+?\s+years?', text, _re.I)
+    if m:
+        return f"{m.group(1)}+ years experience"
+    return text[:44].rstrip() + ("…" if len(text) > 44 else "")
+
+
 # ─────────────────────────── Navbar ──────────────────────────────────────────
 # No login button, no night mode — clean product nav
 st.markdown("""
@@ -765,12 +841,10 @@ with col2:
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
+_AV_CLS = ["iq-cr-av1","iq-cr-av2","iq-cr-av3","iq-cr-av4","iq-cr-av5"]
+
 with col3:
     with st.container(border=True):
-        st.markdown("""
-<div class="iq-phead">
-  <div class="iq-pnum">3</div>Top Candidates
-</div>""", unsafe_allow_html=True)
 
         # ── Trigger screening ────────────────────────────────────────────────
         if run_btn:
@@ -875,37 +949,84 @@ with col3:
         if st.session_state.processed and st.session_state.results:
             results = st.session_state.results
 
+            # Header with decorative search/filter
+            st.markdown("""
+<div class="iq-cr-head">
+  <div class="iq-cr-title">Candidate Rankings</div>
+  <div class="iq-cr-tools">
+    <div class="iq-cr-search">&#128269; Search candidates...</div>
+    <div class="iq-cr-filter">&#9661; Filter</div>
+  </div>
+</div>
+<div class="iq-cr-cols">
+  <div class="iq-cr-col-sp"></div>
+  <div class="iq-cr-col">Match Score</div>
+  <div class="iq-cr-col">Recommendation</div>
+</div>""", unsafe_allow_html=True)
+
             for rank, r in enumerate(results[:5], 1):
                 score    = r.get("match_score", 0)
                 name     = r.get("candidate_name", "Unknown")
-                email    = r.get("email", "")
-                s_lbl, s_stars = _fmt_score(score)
+                rec      = r.get("recommendation", "")
+                skills   = r.get("skills_match", "") or ""
+                exp_text = r.get("relevant_experience", "")
                 initials = "".join(w[0].upper() for w in name.split()[:2]) or "?"
+                av_cls   = _AV_CLS[(rank - 1) % len(_AV_CLS)]
+                sub      = _exp_subtitle(exp_text)
+
+                # Skill tags (max 3 visible + overflow)
+                skill_list = [s.strip() for s in skills.split(",") if s.strip()]
+                extra = max(0, len(skill_list) - 3)
+                sk_html = "".join(f'<span class="iq-cr-sk">{s}</span>' for s in skill_list[:3])
+                if extra:
+                    sk_html += f'<span class="iq-cr-skmore">+{extra}</span>'
+
+                # Recommendation badge
+                rec_l = rec.lower()
+                if "strongly" in rec_l or "highly" in rec_l:
+                    rb_cls, rb_txt = "iq-cr-rb-strong", "Strongly Recommend"
+                elif "not" in rec_l and ("suit" in rec_l or "recommend" in rec_l):
+                    rb_cls, rb_txt = "iq-cr-rb-no", "Not Suitable"
+                elif "recommend" in rec_l:
+                    rb_cls, rb_txt = "iq-cr-rb-good", "Recommend"
+                elif "review" in rec_l:
+                    rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
+                else:
+                    rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
 
                 st.markdown(f"""
-<div class="iq-rc">
-  <div class="iq-rcl">
-    <div class="iq-av">{initials}</div>
-    <div>
-      <div class="iq-rn">{name}</div>
-      <div class="iq-rr">{email}</div>
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">{rank}</div>
+  <div class="iq-cr-av {av_cls}">{initials}</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">{name}</div>
+        <div class="iq-cr-sub">{sub}</div>
+      </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">{score}%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge {rb_cls}">{rb_txt}</span></div>
     </div>
-  </div>
-  <div class="iq-scr">
-    <div><span class="iq-sv">{s_lbl}</span><span class="iq-sd">/10</span></div>
-    <div class="iq-stars">{s_stars}</div>
+    <div class="iq-cr-sk-row">{sk_html}</div>
   </div>
 </div>""", unsafe_allow_html=True)
 
-            if len(results) > 5:
-                if st.button("View Full Results →", use_container_width=True, key="view_full_btn"):
-                    st.session_state.show_full = True
+            st.markdown('<div class="iq-cr-footer"></div>', unsafe_allow_html=True)
+            if st.button("View All Candidates →", use_container_width=True, key="view_full_btn"):
+                st.session_state.show_full = True
 
         elif st.session_state.processed and not st.session_state.results:
             st.error("❌ No candidates processed. Check your CV files.")
 
         else:
-            # Idle state — mirroring what a results panel looks like
+            # Idle state — show panel header + skeleton
+            st.markdown("""
+<div class="iq-phead">
+  <div class="iq-pnum">3</div>Top Candidates
+</div>""", unsafe_allow_html=True)
             st.markdown("""
 <div style="text-align:center;padding:2.5rem 1rem 1rem">
   <div style="font-size:2.5rem;margin-bottom:.8rem">📊</div>
