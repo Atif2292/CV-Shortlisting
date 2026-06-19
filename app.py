@@ -1190,18 +1190,13 @@ if st.session_state.get("show_full") and st.session_state.results:
         ]
     _fv = _filter if "_filter" in dir() else "All Candidates"
     if _fv == "Highly Recommended":
-        _ranked = [(rk, r) for rk, r in _ranked if "highly" in r.get("recommendation", "").lower()]
+        _ranked = [(rk, r) for rk, r in _ranked if r.get("match_score", 0) >= 80]
     elif _fv == "Recommended":
-        _ranked = [(rk, r) for rk, r in _ranked
-                   if "recommended" in r.get("recommendation", "").lower()
-                   and "highly" not in r.get("recommendation", "").lower()
-                   and "not recommended" not in r.get("recommendation", "").lower()]
+        _ranked = [(rk, r) for rk, r in _ranked if 60 <= r.get("match_score", 0) < 80]
     elif _fv == "Consider":
-        _ranked = [(rk, r) for rk, r in _ranked if "consider" in r.get("recommendation", "").lower()]
+        _ranked = [(rk, r) for rk, r in _ranked if 40 <= r.get("match_score", 0) < 60]
     elif _fv == "Not Recommended":
-        _ranked = [(rk, r) for rk, r in _ranked
-                   if "not recommended" in r.get("recommendation", "").lower()
-                   or "unsuitable" in r.get("recommendation", "").lower()]
+        _ranked = [(rk, r) for rk, r in _ranked if r.get("match_score", 0) < 40]
 
     # ── Section header ───────────────────────────────────────────────
     st.markdown(
@@ -1235,14 +1230,11 @@ if st.session_state.get("show_full") and st.session_state.results:
         score_level = "hi" if score >= 80 else ("mid" if score >= 60 else "lo")
         accent_col  = "#10B981" if score >= 80 else ("#F59E0B" if score >= 60 else "#EF4444")
 
-        rec_lower = rec.lower()
-        if "highly" in rec_lower:
+        if score >= 80:
             rec_short = "✦ Highly Rec."
-        elif "not recommended" in rec_lower or "unsuitable" in rec_lower:
-            rec_short = "✗ Not Rec."
-        elif "recommended" in rec_lower:
+        elif score >= 60:
             rec_short = "✓ Recommended"
-        elif "consider" in rec_lower:
+        elif score >= 40:
             rec_short = "◎ Consider"
         else:
             rec_short = "✗ Not Rec."
