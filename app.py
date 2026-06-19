@@ -1194,7 +1194,8 @@ if st.session_state.get("show_full") and st.session_state.results:
     elif _fv == "Recommended":
         _ranked = [(rk, r) for rk, r in _ranked
                    if "recommended" in r.get("recommendation", "").lower()
-                   and "highly" not in r.get("recommendation", "").lower()]
+                   and "highly" not in r.get("recommendation", "").lower()
+                   and "not recommended" not in r.get("recommendation", "").lower()]
     elif _fv == "Consider":
         _ranked = [(rk, r) for rk, r in _ranked if "consider" in r.get("recommendation", "").lower()]
     elif _fv == "Not Recommended":
@@ -1237,6 +1238,8 @@ if st.session_state.get("show_full") and st.session_state.results:
         rec_lower = rec.lower()
         if "highly" in rec_lower:
             rec_short = "✦ Highly Rec."
+        elif "not recommended" in rec_lower or "unsuitable" in rec_lower:
+            rec_short = "✗ Not Rec."
         elif "recommended" in rec_lower:
             rec_short = "✓ Recommended"
         elif "consider" in rec_lower:
