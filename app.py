@@ -1276,9 +1276,15 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div style="margin-top:.5rem">{_rec_badge(rec)}</div>
 </div>""", unsafe_allow_html=True)
 
-    # ── Download CSV (pure HTML anchor — full CSS control) ───────────
+    # ── Download — styled Excel (.xlsx) ─────────────────────────────
+    import io as _io
     import base64 as _b64
-    _csv_str = pd.DataFrame([
+    from openpyxl.styles import (
+        PatternFill as _PFill, Font as _Font,
+        Alignment as _Align, Border as _Border, Side as _Side,
+    )
+
+    _rows = [
         {
             "Rank":           i + 1,
             "Name":           r.get("candidate_name", ""),
@@ -1289,12 +1295,57 @@ if st.session_state.get("show_full") and st.session_state.results:
             "Recommendation": r.get("recommendation", ""),
         }
         for i, r in enumerate(results)
-    ]).to_csv(index=False)
-    _csv_b64 = _b64.b64encode(_csv_str.encode()).decode()
+    ]
+    _df_xl = pd.DataFrame(_rows)
+    _buf   = _io.BytesIO()
+
+    with pd.ExcelWriter(_buf, engine="openpyxl") as _xw:
+        _df_xl.to_excel(_xw, index=False, sheet_name="TalentIQ Results")
+        _ws = _xw.sheets["TalentIQ Results"]
+
+        # ── Header row style ─────────────────────────────────────────
+        _hfill = _PFill("solid", fgColor="2563EB")
+        _hfont = _Font(bold=True, color="FFFFFF", size=11, name="Calibri")
+        _halign = _Align(horizontal="center", vertical="center")
+        for _cell in _ws[1]:
+            _cell.fill   = _hfill
+            _cell.font   = _hfont
+            _cell.alignment = _halign
+        _ws.row_dimensions[1].height = 28
+
+        # ── Alternating rows ─────────────────────────────────────────
+        _fill_even = _PFill("solid", fgColor="EFF6FF")
+        _fill_odd  = _PFill("solid", fgColor="FFFFFF")
+        _body_font = _Font(size=10, name="Calibri", color="0B1120")
+        _thin_side = _Side(style="thin", color="E2E8F0")
+        _thin_border = _Border(
+            left=_thin_side, right=_thin_side,
+            top=_thin_side,  bottom=_thin_side,
+        )
+        for _ri, _row in enumerate(_ws.iter_rows(min_row=2), start=2):
+            _fill = _fill_even if _ri % 2 == 0 else _fill_odd
+            for _cell in _row:
+                _cell.fill      = _fill
+                _cell.font      = _body_font
+                _cell.border    = _thin_border
+                _cell.alignment = _Align(wrap_text=True, vertical="top")
+            _ws.row_dimensions[_ri].height = 52
+
+        # ── Column widths ─────────────────────────────────────────────
+        for _col, _w in zip("ABCDEFG", [8, 22, 28, 10, 38, 38, 55]):
+            _ws.column_dimensions[_col].width = _w
+
+        # ── Freeze header row ─────────────────────────────────────────
+        _ws.freeze_panes = "A2"
+
+    _buf.seek(0)
+    _xl_b64 = _b64.b64encode(_buf.read()).decode()
+    _mime    = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     st.markdown(
         f'<div class="iq-dl-wrap">'
-        f'<a class="iq-dl-btn" href="data:text/csv;base64,{_csv_b64}" '
-        f'download="talentiq_results.csv">⬇️&nbsp;&nbsp;Download Results CSV</a>'
+        f'<a class="iq-dl-btn" href="data:{_mime};base64,{_xl_b64}" '
+        f'download="talentiq_results.xlsx">'
+        f'⬇️&nbsp;&nbsp;Download Results (.xlsx)</a>'
         f'</div>',
         unsafe_allow_html=True,
     )
