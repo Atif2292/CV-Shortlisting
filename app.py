@@ -739,25 +739,12 @@ for _k, _v in [
     if _k not in st.session_state:
         st.session_state[_k] = _v
 
-# ── Admin sidebar login ───────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("#### 🔐 Admin Access")
-    _pw_in = st.text_input(
-        "", type="password", key="admin_pw_input",
-        placeholder="Enter admin password…", label_visibility="collapsed"
-    )
-    if st.button("Login", key="admin_login_btn", use_container_width=True):
-        _correct = os.getenv("ADMIN_PASSWORD", "TalentIQ@2025")
-        if _pw_in == _correct:
-            st.session_state.is_admin = True
-            st.rerun()
-        else:
-            st.error("Incorrect password")
-    if st.session_state.is_admin:
-        st.success("✓ Admin mode active")
-        if st.button("Logout", key="admin_logout_btn", use_container_width=True):
-            st.session_state.is_admin = False
-            st.rerun()
+# ── Admin auth — query param auto-login ──────────────────────────────────────
+# Bookmark: https://your-app-url/?key=TalentIQ@2025
+_ADMIN_PW = os.getenv("ADMIN_PASSWORD", "TalentIQ@2025")
+_qp = st.query_params
+if _qp.get("key") == _ADMIN_PW:
+    st.session_state.is_admin = True
 
 
 # ─────────────────────────── Helpers ─────────────────────────────────────────
@@ -1438,3 +1425,28 @@ st.markdown("""
   <div class="iq-foot-txt">TalentIQ &middot; AI CV Screening &middot; Built with Streamlit &amp; GPT-4o</div>
 </div>
 """, unsafe_allow_html=True)
+
+# ── Admin login panel (subtle, at bottom) ────────────────────────────────────
+st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+with st.expander("🔐", expanded=False):
+    _pw_in = st.text_input(
+        "Admin password", type="password",
+        key="admin_pw_input", label_visibility="collapsed",
+        placeholder="Admin password…"
+    )
+    _acol1, _acol2 = st.columns(2)
+    with _acol1:
+        if st.button("Login", key="admin_login_btn", use_container_width=True):
+            if _pw_in == _ADMIN_PW:
+                st.session_state.is_admin = True
+                st.rerun()
+            else:
+                st.error("Incorrect password")
+    with _acol2:
+        if st.session_state.is_admin:
+            if st.button("Logout", key="admin_logout_btn", use_container_width=True):
+                st.session_state.is_admin = False
+                st.query_params.clear()
+                st.rerun()
+    if st.session_state.is_admin:
+        st.success("✓ Admin mode active")
