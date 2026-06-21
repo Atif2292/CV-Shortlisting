@@ -49,6 +49,10 @@ html, body, [class*="css"] {
     padding: 0 2rem 4rem !important;
     max-width: 1280px;
 }
+/* Kill Streamlit's default top padding on the main content area */
+.main > div:first-child { padding-top: 0 !important; }
+section[data-testid="stMain"] > div { padding-top: 0 !important; }
+.stMainBlockContainer { padding-top: 0 !important; }
 
 /* Kill Streamlit anchor-link icons injected into h-tags */
 [data-testid="stMarkdownContainer"] [data-testid="stHeaderActionElements"] { display:none!important; }
@@ -465,7 +469,10 @@ label, .stFileUploader label {
 .iq-pbtn:hover { background:#1D4ED8 !important; box-shadow:0 6px 20px rgba(37,99,235,.4) !important; transform:translateY(-1px); color:#fff !important; text-decoration:none !important; }
 .iq-pc-feat .iq-pbtn, .iq-pc-feat .iq-pbtn:link, .iq-pc-feat .iq-pbtn:visited { background:#fff !important; color:#2563EB !important; box-shadow:0 4px 16px rgba(0,0,0,.15) !important; }
 .iq-pc-feat .iq-pbtn:hover { background:#EFF6FF !important; color:#2563EB !important; }
-.iq-nav-demo, .iq-nav-demo:link, .iq-nav-demo:visited, .iq-nav-demo:active { text-decoration:none !important; }
+.iq-nav-demo, .iq-nav-demo:link, .iq-nav-demo:visited, .iq-nav-demo:active {
+    color: #fff !important; text-decoration: none !important;
+}
+.iq-nav-demo:hover { color: #fff !important; }
 .iq-pfooter { text-align:center; padding-top:1.5rem; font-size:.8rem; color:#94A3B8; }
 
 /* ── Footer bar ── */
