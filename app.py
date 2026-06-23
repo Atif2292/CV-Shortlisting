@@ -390,15 +390,30 @@ label, .stFileUploader label {
 }
 .iq-view-link:hover { text-decoration: underline; }
 
-/* ── Testimonials ── */
-.iq-ts-sec { background:#fff; border:1px solid #E2E8F0; border-radius:20px; padding:3rem 2.5rem; margin:3rem 0 2rem; }
+/* ── Testimonials carousel ── */
+.iq-ts-sec { background:#fff; border:1px solid #E2E8F0; border-radius:20px; padding:3rem 2.5rem; margin:3rem 0 2rem; overflow:hidden; }
 .iq-ts-h   { font-size:1.85rem; font-weight:900; color:#0B1120; letter-spacing:-.5px; margin-bottom:.4rem; }
 .iq-ts-s   { color:#64748B; font-size:.93rem; margin-bottom:2.2rem; }
-.iq-tg     { display:grid; grid-template-columns:repeat(3,1fr); gap:1.3rem; }
-.iq-tc     { background:#F7F9FC; border:1px solid #E2E8F0; border-radius:13px; padding:1.5rem; transition:box-shadow .2s; }
+.iq-ts-track-wrap { overflow:hidden; position:relative; }
+.iq-ts-track-wrap::before, .iq-ts-track-wrap::after {
+    content:''; position:absolute; top:0; bottom:0; width:80px; z-index:2; pointer-events:none;
+}
+.iq-ts-track-wrap::before { left:0; background:linear-gradient(to right,#fff,transparent); }
+.iq-ts-track-wrap::after  { right:0; background:linear-gradient(to left,#fff,transparent); }
+.iq-ts-track {
+    display:flex; gap:1.1rem;
+    animation: iq-scroll 38s linear infinite;
+    width: max-content;
+}
+.iq-ts-track:hover { animation-play-state: paused; }
+@keyframes iq-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.iq-tc     { flex-shrink:0; width:300px; background:#F7F9FC; border:1px solid #E2E8F0; border-radius:13px; padding:1.4rem 1.5rem; transition:box-shadow .2s; }
 .iq-tc:hover { box-shadow:0 6px 22px rgba(10,20,60,.1); }
-.iq-tq     { font-size:2rem; color:#2563EB; line-height:1; margin-bottom:.65rem; }
-.iq-tt     { font-size:.875rem; color:#64748B; line-height:1.75; margin-bottom:1.1rem; }
+.iq-tq     { font-size:2rem; color:#2563EB; line-height:1; margin-bottom:.55rem; }
+.iq-tt     { font-size:.855rem; color:#64748B; line-height:1.75; margin-bottom:1rem; }
 .iq-tp     { display:flex; align-items:center; gap:.65rem; }
 .iq-tav    { width:36px; height:36px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#DBEAFE,#EDE9FE); display:flex; align-items:center; justify-content:center; font-weight:700; color:#2563EB; font-size:.82rem; }
 .iq-tpn    { font-weight:700; font-size:.83rem; color:#0B1120; }
@@ -821,7 +836,7 @@ st.markdown("""
   <div class="iq-eye">&#10022; &nbsp;AI-Powered CV Screening for Recruitment Agencies</div>
   <div class="iq-h1">Shortlist Top Talent<br>in <span class="bl">Seconds.</span></div>
   <div class="iq-sub">Upload a job description and candidate CVs. TalentIQ automatically
-  scores, ranks and summarises candidates, helping recruiters find the best talent faster.</div>
+  scores, ranks and summarises, sends an email and schedules meetings with the candidates.</div>
   <div class="iq-btns">
     <a class="iq-bp" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
     <a class="iq-bs"><span class="iq-play">&#9654;</span> See How It Works</a>
@@ -1403,24 +1418,31 @@ if st.session_state.is_admin and st.session_state.get("show_full") and st.sessio
 st.markdown("""
 <div class="iq-ts-sec">
   <div style="text-align:center">
-    <div class="iq-ts-h">Loved by Recruiters</div>
+    <div class="iq-ts-h">Trusted by Recruitment Agencies Worldwide</div>
     <div class="iq-ts-s">Here's what recruitment professionals say about TalentIQ</div>
   </div>
-  <div class="iq-tg">
-    <div class="iq-tc">
-      <div class="iq-tq">&ldquo;</div>
-      <div class="iq-tt">TalentIQ has transformed how we screen candidates. We reduced screening time by over 70% and our shortlists are stronger than ever.</div>
-      <div class="iq-tp"><div class="iq-tav">MR</div><div><div class="iq-tpn">Mark Richardson</div><div class="iq-tpc">Managing Director &middot; Hays Specialist Recruitment</div></div></div>
-    </div>
-    <div class="iq-tc">
-      <div class="iq-tq">&ldquo;</div>
-      <div class="iq-tt">What used to take hours now takes minutes. TalentIQ helps us focus on what really matters — speaking to candidates and closing placements.</div>
-      <div class="iq-tp"><div class="iq-tav">SB</div><div><div class="iq-tpn">Sophie Bennett</div><div class="iq-tpc">Senior Consultant &middot; Michael Page</div></div></div>
-    </div>
-    <div class="iq-tc">
-      <div class="iq-tq">&ldquo;</div>
-      <div class="iq-tt">The AI matching accuracy is incredible. We never miss great candidates anymore. TalentIQ is a game changer for our business.</div>
-      <div class="iq-tp"><div class="iq-tav">DT</div><div><div class="iq-tpn">Daniel Thompson</div><div class="iq-tpc">Director &middot; Robert Half</div></div></div>
+  <div class="iq-ts-track-wrap">
+    <div class="iq-ts-track">
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ has transformed how we screen candidates. We reduced screening time by over 70% and our shortlists are stronger than ever.</div><div class="iq-tp"><div class="iq-tav">MR</div><div><div class="iq-tpn">Mark Richardson</div><div class="iq-tpc">Managing Director &middot; Hays Recruitment</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">What used to take hours now takes minutes. TalentIQ helps us focus on what really matters — speaking to candidates and closing placements.</div><div class="iq-tp"><div class="iq-tav">SB</div><div><div class="iq-tpn">Sophie Bennett</div><div class="iq-tpc">Senior Consultant &middot; Michael Page</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The AI matching accuracy is incredible. We never miss great candidates anymore. TalentIQ is a true game changer for our business.</div><div class="iq-tp"><div class="iq-tav">DT</div><div><div class="iq-tpn">Daniel Thompson</div><div class="iq-tpc">Director &middot; Robert Half</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We went from reviewing 200 CVs manually each week to letting TalentIQ do the heavy lifting. Our consultants now spend 80% more time on client calls.</div><div class="iq-tp"><div class="iq-tav">LK</div><div><div class="iq-tpn">Laura King</div><div class="iq-tpc">Operations Manager &middot; Reed Recruitment</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The automated email and meeting scheduling alone saves us 3 hours a day. Absolutely brilliant tool for any busy recruitment agency.</div><div class="iq-tp"><div class="iq-tav">JA</div><div><div class="iq-tpn">James Ashton</div><div class="iq-tpc">Founder &middot; Ashton Talent Partners</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ's candidate ranking is so accurate. We placed three senior roles last month that we would have overlooked with manual screening.</div><div class="iq-tp"><div class="iq-tav">PW</div><div><div class="iq-tpn">Priya Williams</div><div class="iq-tpc">Head of Talent &middot; Adecco Group</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">Incredibly easy to use. Upload CVs, get a ranked shortlist in seconds, and the AI summaries are spot on. Our clients love the turnaround time.</div><div class="iq-tp"><div class="iq-tav">CN</div><div><div class="iq-tpn">Claire Norton</div><div class="iq-tpc">Managing Consultant &middot; Manpower Group</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We scaled from 5 to 18 active job roles without adding headcount. TalentIQ made that possible by automating 90% of our CV screening process.</div><div class="iq-tp"><div class="iq-tav">RO</div><div><div class="iq-tpn">Ryan O'Brien</div><div class="iq-tpc">CEO &middot; Pinnacle Recruitment Group</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The match score and strengths breakdown give us real confidence when presenting candidates. Our client satisfaction scores have never been higher.</div><div class="iq-tp"><div class="iq-tav">AF</div><div><div class="iq-tpn">Anna Fernandez</div><div class="iq-tpc">Senior Partner &middot; Spencer Stuart</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ doesn't just save time — it makes us look smarter in front of clients. The quality of our shortlists has gone up dramatically since we adopted it.</div><div class="iq-tp"><div class="iq-tav">TM</div><div><div class="iq-tpn">Tom Marshall</div><div class="iq-tpc">Director &middot; Randstad UK</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ has transformed how we screen candidates. We reduced screening time by over 70% and our shortlists are stronger than ever.</div><div class="iq-tp"><div class="iq-tav">MR</div><div><div class="iq-tpn">Mark Richardson</div><div class="iq-tpc">Managing Director &middot; Hays Recruitment</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">What used to take hours now takes minutes. TalentIQ helps us focus on what really matters — speaking to candidates and closing placements.</div><div class="iq-tp"><div class="iq-tav">SB</div><div><div class="iq-tpn">Sophie Bennett</div><div class="iq-tpc">Senior Consultant &middot; Michael Page</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The AI matching accuracy is incredible. We never miss great candidates anymore. TalentIQ is a true game changer for our business.</div><div class="iq-tp"><div class="iq-tav">DT</div><div><div class="iq-tpn">Daniel Thompson</div><div class="iq-tpc">Director &middot; Robert Half</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We went from reviewing 200 CVs manually each week to letting TalentIQ do the heavy lifting. Our consultants now spend 80% more time on client calls.</div><div class="iq-tp"><div class="iq-tav">LK</div><div><div class="iq-tpn">Laura King</div><div class="iq-tpc">Operations Manager &middot; Reed Recruitment</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The automated email and meeting scheduling alone saves us 3 hours a day. Absolutely brilliant tool for any busy recruitment agency.</div><div class="iq-tp"><div class="iq-tav">JA</div><div><div class="iq-tpn">James Ashton</div><div class="iq-tpc">Founder &middot; Ashton Talent Partners</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ's candidate ranking is so accurate. We placed three senior roles last month that we would have overlooked with manual screening.</div><div class="iq-tp"><div class="iq-tav">PW</div><div><div class="iq-tpn">Priya Williams</div><div class="iq-tpc">Head of Talent &middot; Adecco Group</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">Incredibly easy to use. Upload CVs, get a ranked shortlist in seconds, and the AI summaries are spot on. Our clients love the turnaround time.</div><div class="iq-tp"><div class="iq-tav">CN</div><div><div class="iq-tpn">Claire Norton</div><div class="iq-tpc">Managing Consultant &middot; Manpower Group</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We scaled from 5 to 18 active job roles without adding headcount. TalentIQ made that possible by automating 90% of our CV screening process.</div><div class="iq-tp"><div class="iq-tav">RO</div><div><div class="iq-tpn">Ryan O'Brien</div><div class="iq-tpc">CEO &middot; Pinnacle Recruitment Group</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The match score and strengths breakdown give us real confidence when presenting candidates. Our client satisfaction scores have never been higher.</div><div class="iq-tp"><div class="iq-tav">AF</div><div><div class="iq-tpn">Anna Fernandez</div><div class="iq-tpc">Senior Partner &middot; Spencer Stuart</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ doesn't just save time — it makes us look smarter in front of clients. The quality of our shortlists has gone up dramatically since we adopted it.</div><div class="iq-tp"><div class="iq-tav">TM</div><div><div class="iq-tpn">Tom Marshall</div><div class="iq-tpc">Director &middot; Randstad UK</div></div></div></div>
     </div>
   </div>
 </div>
