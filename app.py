@@ -426,6 +426,32 @@ label, .stFileUploader label {
 }
 .iq-bs, .iq-bs:link, .iq-bs:visited { text-decoration: none !important; }
 
+/* ── Free Trial Badge & Banner ── */
+.iq-trial-tag {
+    display: inline-flex; align-items: center; gap: .55rem;
+    background: #EFF6FF; border: 1px solid #BFDBFE;
+    padding: .4rem 1.15rem; border-radius: 99px;
+    font-size: .86rem; color: #1E40AF; margin-bottom: 1.6rem;
+    box-shadow: 0 2px 6px rgba(37,99,235,.08);
+}
+.iq-trial-pill {
+    background: #2563EB; color: #fff; font-size: .68rem;
+    font-weight: 800; letter-spacing: .08em; padding: .2rem .55rem;
+    border-radius: 99px; text-transform: uppercase;
+}
+.iq-trial-info {
+    background: #EFF6FF; border: 1px solid #DBEAFE;
+    border-radius: 10px; padding: .65rem .85rem;
+    font-size: .8rem; color: #1E40AF; line-height: 1.5;
+    margin-bottom: .6rem;
+}
+.iq-trial-upgrade {
+    margin-top: 1.8rem;
+    background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+    border: 1.5px solid #DBEAFE; border-radius: 16px;
+    padding: 1.7rem 2rem; text-align: center;
+}
+
 /* ── Pricing ── */
 .iq-pricing-sec { margin: 3rem 0 2rem; }
 .iq-pricing-hdr { text-align:center; margin-bottom:2.8rem; }
@@ -833,13 +859,17 @@ st.markdown("""
 # All "headings" use <div> — Streamlit adds anchor icons to actual h1/h2/h3 tags
 st.markdown("""
 <div class="iq-hero">
-  <div class="iq-eye">&#10022; &nbsp;AI-Powered CV Screening for Recruitment Agencies</div>
+  <div class="iq-eye">&#10022; &nbsp;AI-Powered CV Screening for HR &amp; Recruitment Teams</div>
   <div class="iq-h1">Shortlist Top Talent<br>in <span class="bl">Seconds.</span></div>
   <div class="iq-sub">Upload a job description and candidate CVs. TalentIQ automatically
-  scores, ranks and summarises, sends an email and schedules meetings with the candidates.</div>
+  scores, ranks, and summarises candidates with actionable match insights.</div>
+  <div class="iq-trial-tag">
+    <span class="iq-trial-pill">🎁 FREE TRIAL</span>
+    <span>Screen up to <b>10 CVs free</b> &mdash; test instant AI matching on your open roles</span>
+  </div>
   <div class="iq-btns">
-    <a class="iq-bp" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
-    <a class="iq-bs"><span class="iq-play">&#9654;</span> See How It Works</a>
+    <a class="iq-bp" href="#screening-workspace">Try Free (10 CVs) &nbsp;&darr;</a>
+    <a class="iq-bs" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -870,223 +900,230 @@ st.markdown("""
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
-if not st.session_state.is_admin:
-    st.markdown("""
-<div class="iq-gate">
-  <div class="iq-gate-icon">🔒</div>
-  <div class="iq-gate-title">CV Screening — By Demo Only</div>
-  <div class="iq-gate-sub">
-    This tool is available exclusively through a personalised demo.<br>
-    Book a free session with our team — we'll walk you through the platform
-    and get you set up in minutes.
-  </div>
-  <a class="iq-gate-btn" href="https://wa.me/447379975532" target="_blank">
-    &#128241;&nbsp; Book a Demo on WhatsApp &nbsp;&rarr;
-  </a>
-  <div class="iq-gate-note">Typically replies within 1 hour &middot; Mon&ndash;Fri</div>
-</div>
-""", unsafe_allow_html=True)
-else:
-    col1, col2, col3 = st.columns([1, 1, 1.15], gap="large")
+st.markdown('<div id="screening-workspace"></div>', unsafe_allow_html=True)
+if st.session_state.is_admin:
+    st.caption("🔑 **Admin Mode Active:** Screening batch limit increased to 100 CVs.")
+col1, col2, col3 = st.columns([1, 1, 1.15], gap="large")
 
-    # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
-    with col1:
-        with st.container(border=True):
-            st.markdown("""
-    <div class="iq-phead">
-      <div class="iq-pnum">1</div>Job Description
-    </div>""", unsafe_allow_html=True)
-    
-            tab_paste, tab_file = st.tabs(["Paste Text", "Upload File"])
-    
-            jd_text = ""
-    
-            with tab_paste:
-                jd_input = st.text_area(
-                    "",
-                    placeholder=(
-                        "We are looking for a Senior SAP SuccessFactors Consultant "
-                        "with strong experience in Employee Central, Core HR, reporting "
-                        "and end-to-end implementation projects…"
-                    ),
-                    height=270,
-                    max_chars=5000,
-                    key="jd_paste",
-                    label_visibility="collapsed",
-                )
-                char_count = len(jd_input)
-                st.markdown(
-                    f'<div class="iq-char">'
-                    f'<span>{char_count:,} / 5,000</span>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-                if jd_input.strip():
-                    jd_text = jd_input.strip()
-    
-            with tab_file:
-                jd_file = st.file_uploader(
-                    "Upload your JD",
-                    type=["pdf", "docx", "txt"],
-                    key="jd_file_up",
-                    label_visibility="collapsed",
-                )
-                if jd_file:
-                    extracted = _extract_from_upload(jd_file)
-                    if extracted.strip():
-                        jd_text = extracted.strip()
-                        st.caption(f"✅ Extracted {len(jd_text):,} characters from {jd_file.name}")
-    
-            # Status badge
-            if jd_text:
-                st.markdown('<div class="iq-status-ok">✅ Job description added</div>', unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="iq-status-wait">⏳ Waiting for job description…</div>', unsafe_allow_html=True)
-    
-    
-    # ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
-    with col2:
-        with st.container(border=True):
-            st.markdown("""
-    <div class="iq-phead">
-      <div class="iq-pnum">2</div>Upload CVs
-    </div>""", unsafe_allow_html=True)
-    
-            cv_files = st.file_uploader(
-                "PDF, DOCX, TXT — Any format supported",
-                type=["pdf", "docx", "txt"],
-                accept_multiple_files=True,
-                key="cv_up",
-                label_visibility="visible",
+# ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
+with col1:
+    with st.container(border=True):
+        st.markdown("""
+<div class="iq-phead">
+  <div class="iq-pnum">1</div>Job Description
+</div>""", unsafe_allow_html=True)
+
+        tab_paste, tab_file = st.tabs(["Paste Text", "Upload File"])
+
+        jd_text = ""
+
+        with tab_paste:
+            jd_input = st.text_area(
+                "",
+                placeholder=(
+                    "We are looking for a Senior SAP SuccessFactors Consultant "
+                    "with strong experience in Employee Central, Core HR, reporting "
+                    "and end-to-end implementation projects…"
+                ),
+                height=270,
+                max_chars=5000,
+                key="jd_paste",
+                label_visibility="collapsed",
             )
-            total_uploaded = len(cv_files or [])
-    
-            # Status badge
-            if total_uploaded > 0:
-                st.markdown(
-                    f'<div class="iq-status-ok">✅ {total_uploaded} CV{"s" if total_uploaded != 1 else ""} uploaded</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown('<div class="iq-status-wait">⏳ No CVs uploaded yet…</div>', unsafe_allow_html=True)
-    
-            st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-    
-            # Optional email settings
-            with st.expander("⚙️  Email settings (optional)"):
-                send_emails    = st.checkbox("Auto-email top 10 candidates", value=True)
-                recruiter_name = st.text_input("Recruiter / company name", value="Recruitment Team")
-                st.text_input("Your email (Brevo sender)", key="brevo_from_email", placeholder="you@gmail.com")
-                st.text_input("Brevo API Key", key="brevo_api_key", type="password", placeholder="xkeysib-…")
-                _from = (st.session_state.get("brevo_from_email") or "").strip()
-                with st.expander("📋 Brevo setup guide"):
-                    st.markdown(f"""
-    **1.** Create free account → [app.brevo.com](https://app.brevo.com) · 300 emails/day
-    **2.** Verify sender: Brevo → Senders & IP → Senders → Add a Sender → enter `{_from or "your email"}` → verify via email
-    **3.** API key: Brevo → top menu → SMTP & API → API Keys → Generate
-    """)
-                _e1, _e2 = st.columns(2)
-                with _e1:
-                    if st.button("🔑 Verify Key", use_container_width=True):
-                        _ok, _msg = test_brevo_key(st.session_state.get("brevo_api_key",""))
-                        (st.success if _ok else st.error)(f"{'✅' if _ok else '❌'} {_msg}")
-                with _e2:
-                    if st.button("📧 Test Email", use_container_width=True):
-                        _ok, _msg = send_test_email(st.session_state.get("brevo_api_key",""), st.session_state.get("brevo_from_email",""))
-                        (st.success if _ok else st.error)(f"{'✅' if _ok else '❌'} {_msg}")
-    
-            st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
-            run_btn = st.button("🚀  Screen Candidates", use_container_width=True)
-    
-    
-    # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
-    _AV_CLS = ["iq-cr-av1","iq-cr-av2","iq-cr-av3","iq-cr-av4","iq-cr-av5"]
-    
-    with col3:
-        with st.container(border=True):
-    
-            # ── Trigger screening ────────────────────────────────────────────────
-            if run_btn:
-                errors = []
-                if not jd_text:
-                    errors.append("Please add a Job Description (paste text or upload a file).")
-                if total_uploaded == 0:
-                    errors.append("Please upload at least one CV.")
-                if total_uploaded > 100:
-                    errors.append("Maximum 100 CVs per batch.")
-    
-                if errors:
-                    for e in errors:
-                        st.error(e)
+            char_count = len(jd_input)
+            st.markdown(
+                f'<div class="iq-char">'
+                f'<span>{char_count:,} / 5,000</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            if jd_input.strip():
+                jd_text = jd_input.strip()
+
+        with tab_file:
+            jd_file = st.file_uploader(
+                "Upload your JD",
+                type=["pdf", "docx", "txt"],
+                key="jd_file_up",
+                label_visibility="collapsed",
+            )
+            if jd_file:
+                extracted = _extract_from_upload(jd_file)
+                if extracted.strip():
+                    jd_text = extracted.strip()
+                    st.caption(f"✅ Extracted {len(jd_text):,} characters from {jd_file.name}")
+
+        # Status badge
+        if jd_text:
+            st.markdown('<div class="iq-status-ok">✅ Job description added</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="iq-status-wait">⏳ Waiting for job description…</div>', unsafe_allow_html=True)
+
+
+# ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
+with col2:
+    with st.container(border=True):
+        st.markdown("""
+<div class="iq-phead">
+  <div class="iq-pnum">2</div>Upload CVs
+</div>""", unsafe_allow_html=True)
+
+        max_cv_limit = 100 if st.session_state.is_admin else 10
+
+        if not st.session_state.is_admin:
+            st.markdown(
+                '<div class="iq-trial-info">🎁 <b>Free Trial:</b> Upload up to <b>10 CVs</b> to test instant AI screening. '
+                'Need 50+ or ATS sync? <a href="https://wa.me/447379975532" target="_blank" style="color:#2563EB;font-weight:600;text-decoration:none">Book a Demo &rarr;</a></div>',
+                unsafe_allow_html=True,
+            )
+
+        cv_files = st.file_uploader(
+            f"PDF, DOCX, TXT — Up to {max_cv_limit} CVs",
+            type=["pdf", "docx", "txt"],
+            accept_multiple_files=True,
+            key="cv_up",
+            label_visibility="visible",
+        )
+        total_uploaded = len(cv_files or [])
+
+        # Status badge
+        if total_uploaded > max_cv_limit:
+            st.markdown(
+                f'<div class="iq-status-wait">⚠️ {total_uploaded} CVs uploaded (Free trial limit: {max_cv_limit})</div>',
+                unsafe_allow_html=True,
+            )
+        elif total_uploaded > 0:
+            st.markdown(
+                f'<div class="iq-status-ok">✅ {total_uploaded} / {max_cv_limit} CV{"s" if total_uploaded != 1 else ""} uploaded</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown('<div class="iq-status-wait">⏳ No CVs uploaded yet…</div>', unsafe_allow_html=True)
+
+        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+
+        # Optional email settings
+        with st.expander("⚙️  Email settings (optional)"):
+            send_emails    = st.checkbox("Auto-email top candidates", value=False)
+            recruiter_name = st.text_input("Recruiter / company name", value="Recruitment Team")
+            st.text_input("Your email (Brevo sender)", key="brevo_from_email", placeholder="you@gmail.com")
+            st.text_input("Brevo API Key", key="brevo_api_key", type="password", placeholder="xkeysib-…")
+            _from = (st.session_state.get("brevo_from_email") or "").strip()
+            with st.expander("📋 Brevo setup guide"):
+                st.markdown(f"""
+**1.** Create free account → [app.brevo.com](https://app.brevo.com) · 300 emails/day
+**2.** Verify sender: Brevo → Senders & IP → Senders → Add a Sender → enter `{_from or "your email"}` → verify via email
+**3.** API key: Brevo → top menu → SMTP & API → API Keys → Generate
+""")
+            _e1, _e2 = st.columns(2)
+            with _e1:
+                if st.button("🔑 Verify Key", use_container_width=True):
+                    _ok, _msg = test_brevo_key(st.session_state.get("brevo_api_key",""))
+                    (st.success if _ok else st.error)(f"{'✅' if _ok else '❌'} {_msg}")
+            with _e2:
+                if st.button("📧 Test Email", use_container_width=True):
+                    _ok, _msg = send_test_email(st.session_state.get("brevo_api_key",""), st.session_state.get("brevo_from_email",""))
+                    (st.success if _ok else st.error)(f"{'✅' if _ok else '❌'} {_msg}")
+
+        st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
+        run_btn = st.button("🚀  Screen Candidates", use_container_width=True)
+
+
+# ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
+_AV_CLS = ["iq-cr-av1","iq-cr-av2","iq-cr-av3","iq-cr-av4","iq-cr-av5"]
+
+with col3:
+    with st.container(border=True):
+
+        # ── Trigger screening ────────────────────────────────────────────────
+        if run_btn:
+            errors = []
+            if not jd_text:
+                errors.append("Please add a Job Description (paste text or upload a file).")
+            if total_uploaded == 0:
+                errors.append("Please upload at least one CV.")
+            if total_uploaded > max_cv_limit:
+                if not st.session_state.is_admin:
+                    errors.append(f"Free trial allows up to 10 CVs (you uploaded {total_uploaded}). Please keep up to 10 CVs, or book a demo for unlimited bulk screening.")
                 else:
-                    upload_dir = Path("uploads")
-                    upload_dir.mkdir(exist_ok=True)
-                    saved_paths, saved_names = [], []
-                    for f in (cv_files or []):
-                        dest = upload_dir / f.name
-                        dest.write_bytes(f.read())
-                        saved_paths.append(str(dest))
-                        saved_names.append(f.name)
-    
-                    # Infer job title from first non-empty line of JD
-                    first_line = next(
-                        (ln.strip() for ln in jd_text.splitlines() if ln.strip()), ""
-                    )[:80]
-                    job_context = {
-                        "title":            first_line,
-                        "skills":           "",
-                        "years_experience": 0,
-                        "description":      jd_text,
-                    }
-    
-                    candidates = []
-                    bar   = st.progress(0, text="Reading CVs…")
-                    _info = st.empty()
-    
-                    for idx, (path, fname) in enumerate(zip(saved_paths, saved_names), 1):
-                        _info.markdown(
-                            f'<p style="font-size:.82rem;color:#64748B">'
-                            f'📄 <b style="color:#2563EB">{fname}</b> ({idx}/{len(saved_paths)})</p>',
-                            unsafe_allow_html=True,
-                        )
-                        try:
-                            text = _read_cv(path, fname)
-                            if not text.strip():
-                                st.warning(f"⚠️ No text in {fname} — skipping.")
-                                continue
-                            candidates.append(extract_resume_keywords(cv_text=text, required_skills=""))
-                        except Exception as ex:
-                            st.warning(f"⚠️ Error reading {fname}: {ex}")
-                        bar.progress(idx / len(saved_paths) * 0.5,
-                                     text=f"Reading CVs — {idx}/{len(saved_paths)} done…")
-    
-                    if candidates:
-                        _info.markdown(
-                            f'<p style="font-size:.82rem;color:#64748B">'
-                            f'🤖 Ranking <b style="color:#2563EB">{len(candidates)} candidates</b>…</p>',
-                            unsafe_allow_html=True,
-                        )
-                        bar.progress(0.55, text=f"AI ranking {len(candidates)} candidates…")
-                        try:
-                            results = rank_candidates_batch(candidates=candidates, job_context=job_context)
-                        except RuntimeError as _err:
-                            bar.empty(); _info.empty()
-                            _em = str(_err)
-                            if "api" in _em.lower() and "key" in _em.lower():
-                                st.error("❌ OpenAI API key missing.\n\nFix: Streamlit Cloud → Settings → Secrets → add `OPENAI_API_KEY = \"sk-proj-...\"`")
-                            else:
-                                st.error(f"❌ AI ranking failed: {_em}")
-                            st.session_state.processed = False
-                            st.stop()
+                    errors.append("Maximum 100 CVs per batch.")
+
+            if errors:
+                for e in errors:
+                    st.error(e)
+            else:
+                upload_dir = Path("uploads")
+                upload_dir.mkdir(exist_ok=True)
+                saved_paths, saved_names = [], []
+                for f in (cv_files or []):
+                    dest = upload_dir / f.name
+                    dest.write_bytes(f.read())
+                    saved_paths.append(str(dest))
+                    saved_names.append(f.name)
+
+                # Infer job title from first non-empty line of JD
+                first_line = next(
+                    (ln.strip() for ln in jd_text.splitlines() if ln.strip()), ""
+                )[:80]
+                job_context = {
+                    "title":            first_line,
+                    "skills":           "",
+                    "years_experience": 0,
+                    "description":      jd_text,
+                }
+
+                candidates = []
+                bar   = st.progress(0, text="Reading CVs…")
+                _info = st.empty()
+
+                for idx, (path, fname) in enumerate(zip(saved_paths, saved_names), 1):
+                    _info.markdown(
+                        f'<p style="font-size:.82rem;color:#64748B">'
+                        f'📄 <b style="color:#2563EB">{fname}</b> ({idx}/{len(saved_paths)})</p>',
+                        unsafe_allow_html=True,
+                    )
+                    try:
+                        text = _read_cv(path, fname)
+                        if not text.strip():
+                            st.warning(f"⚠️ No text in {fname} — skipping.")
+                            continue
+                        candidates.append(extract_resume_keywords(cv_text=text, required_skills=""))
+                    except Exception as ex:
+                        st.warning(f"⚠️ Error reading {fname}: {ex}")
+                    bar.progress(idx / len(saved_paths) * 0.5,
+                                 text=f"Reading CVs — {idx}/{len(saved_paths)} done…")
+
+                if candidates:
+                    _info.markdown(
+                        f'<p style="font-size:.82rem;color:#64748B">'
+                        f'🤖 Ranking <b style="color:#2563EB">{len(candidates)} candidates</b>…</p>',
+                        unsafe_allow_html=True,
+                    )
+                    bar.progress(0.55, text=f"AI ranking {len(candidates)} candidates…")
+                    try:
+                        results = rank_candidates_batch(candidates=candidates, job_context=job_context)
+                    except RuntimeError as _err:
+                        bar.empty(); _info.empty()
+                        _em = str(_err)
+                        if "api" in _em.lower() and "key" in _em.lower():
+                            st.error("❌ OpenAI API key missing.\n\nFix: Streamlit Cloud → Settings → Secrets → add `OPENAI_API_KEY = \"sk-proj-...\"`")
+                        else:
+                            st.error(f"❌ AI ranking failed: {_em}")
+                        st.session_state.processed = False
+                        st.stop()
+                else:
+                    results = []
+
+                bar.progress(1.0, text="✅ Done!"); _info.empty()
+                st.session_state.results   = results
+                st.session_state.processed = True
+                st.session_state.show_full = False
+
+                if send_emails and results:
+                    _has_creds = bool(st.session_state.get("brevo_api_key") and st.session_state.get("brevo_from_email"))
+                    if not _has_creds:
+                        st.info("ℹ️ Auto-email skipped: Add Brevo API key & sender email in 'Email settings' to send notifications.")
                     else:
-                        results = []
-    
-                    bar.progress(1.0, text="✅ Done!"); _info.empty()
-                    st.session_state.results   = results
-                    st.session_state.processed = True
-                    st.session_state.show_full = False
-    
-                    if send_emails and results:
                         with st.spinner("Sending shortlist emails…"):
                             report = send_shortlist_emails(
                                 candidates=results[:10],
@@ -1099,132 +1136,132 @@ else:
                             st.success(f"📧 Emails sent to {len(report['sent'])} candidates.")
                         if report["failed"]:
                             st.warning(f"⚠️ Failed: {', '.join(report['failed'])}")
-    
-                    deleted, _ = delete_uploaded_files(saved_paths)
-                    if deleted:
-                        st.caption(f"🗑️ {len(deleted)} file(s) deleted from server.")
-    
-            # ── Show results ─────────────────────────────────────────────────────
-            if st.session_state.processed and st.session_state.results:
-                results = st.session_state.results
-    
-                # Header with decorative search/filter
-                st.markdown("""
-    <div class="iq-cr-head">
-      <div class="iq-cr-title">Candidate Rankings</div>
-      <div class="iq-cr-tools">
-        <div class="iq-cr-search">&#128269; Search candidates...</div>
-        <div class="iq-cr-filter">&#9661; Filter</div>
+
+                deleted, _ = delete_uploaded_files(saved_paths)
+                if deleted:
+                    st.caption(f"🗑️ {len(deleted)} file(s) deleted from server.")
+
+        # ── Show results ─────────────────────────────────────────────────────
+        if st.session_state.processed and st.session_state.results:
+            results = st.session_state.results
+
+            # Header with decorative search/filter
+            st.markdown("""
+<div class="iq-cr-head">
+  <div class="iq-cr-title">Candidate Rankings</div>
+  <div class="iq-cr-tools">
+    <div class="iq-cr-search">&#128269; Search candidates...</div>
+    <div class="iq-cr-filter">&#9661; Filter</div>
+  </div>
+</div>
+<div class="iq-cr-cols">
+  <div class="iq-cr-col-sp"></div>
+  <div class="iq-cr-col">Match Score</div>
+  <div class="iq-cr-col">Recommendation</div>
+</div>""", unsafe_allow_html=True)
+
+            for rank, r in enumerate(results[:5], 1):
+                score    = r.get("match_score", 0)
+                name     = r.get("candidate_name", "Unknown")
+                rec      = r.get("recommendation", "")
+                skills   = r.get("skills_match", "") or ""
+                exp_text = r.get("relevant_experience", "")
+                initials = "".join(w[0].upper() for w in name.split()[:2]) or "?"
+                av_cls   = _AV_CLS[(rank - 1) % len(_AV_CLS)]
+                sub      = _exp_subtitle(exp_text)
+
+                # Skill tags (max 3 visible + overflow)
+                skill_list = [s.strip() for s in skills.split(",") if s.strip()]
+                extra = max(0, len(skill_list) - 3)
+                sk_html = "".join(f'<span class="iq-cr-sk">{s}</span>' for s in skill_list[:3])
+                if extra:
+                    sk_html += f'<span class="iq-cr-skmore">+{extra}</span>'
+
+                # Recommendation badge
+                rec_l = rec.lower()
+                if "strongly" in rec_l or "highly" in rec_l:
+                    rb_cls, rb_txt = "iq-cr-rb-strong", "Strongly Recommend"
+                elif "not" in rec_l and ("suit" in rec_l or "recommend" in rec_l):
+                    rb_cls, rb_txt = "iq-cr-rb-no", "Not Suitable"
+                elif "recommend" in rec_l:
+                    rb_cls, rb_txt = "iq-cr-rb-good", "Recommend"
+                elif "review" in rec_l:
+                    rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
+                else:
+                    rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
+
+                st.markdown(f"""
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">{rank}</div>
+  <div class="iq-cr-av {av_cls}">{initials}</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">{name}</div>
+        <div class="iq-cr-sub">{sub}</div>
       </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">{score}%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge {rb_cls}">{rb_txt}</span></div>
     </div>
-    <div class="iq-cr-cols">
-      <div class="iq-cr-col-sp"></div>
-      <div class="iq-cr-col">Match Score</div>
-      <div class="iq-cr-col">Recommendation</div>
-    </div>""", unsafe_allow_html=True)
+    <div class="iq-cr-sk-row">{sk_html}</div>
+  </div>
+</div>""", unsafe_allow_html=True)
+
+            st.markdown('<div class="iq-cr-footer"></div>', unsafe_allow_html=True)
+            if st.button("View All Candidates →", use_container_width=True, key="view_full_btn"):
+                st.session_state.show_full = True
     
-                for rank, r in enumerate(results[:5], 1):
-                    score    = r.get("match_score", 0)
-                    name     = r.get("candidate_name", "Unknown")
-                    rec      = r.get("recommendation", "")
-                    skills   = r.get("skills_match", "") or ""
-                    exp_text = r.get("relevant_experience", "")
-                    initials = "".join(w[0].upper() for w in name.split()[:2]) or "?"
-                    av_cls   = _AV_CLS[(rank - 1) % len(_AV_CLS)]
-                    sub      = _exp_subtitle(exp_text)
-    
-                    # Skill tags (max 3 visible + overflow)
-                    skill_list = [s.strip() for s in skills.split(",") if s.strip()]
-                    extra = max(0, len(skill_list) - 3)
-                    sk_html = "".join(f'<span class="iq-cr-sk">{s}</span>' for s in skill_list[:3])
-                    if extra:
-                        sk_html += f'<span class="iq-cr-skmore">+{extra}</span>'
-    
-                    # Recommendation badge
-                    rec_l = rec.lower()
-                    if "strongly" in rec_l or "highly" in rec_l:
-                        rb_cls, rb_txt = "iq-cr-rb-strong", "Strongly Recommend"
-                    elif "not" in rec_l and ("suit" in rec_l or "recommend" in rec_l):
-                        rb_cls, rb_txt = "iq-cr-rb-no", "Not Suitable"
-                    elif "recommend" in rec_l:
-                        rb_cls, rb_txt = "iq-cr-rb-good", "Recommend"
-                    elif "review" in rec_l:
-                        rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
-                    else:
-                        rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
-    
-                    st.markdown(f"""
-    <div class="iq-cr-row">
-      <div class="iq-cr-rank">{rank}</div>
-      <div class="iq-cr-av {av_cls}">{initials}</div>
-      <div class="iq-cr-main">
-        <div class="iq-cr-toprow">
-          <div class="iq-cr-info">
-            <div class="iq-cr-name">{name}</div>
-            <div class="iq-cr-sub">{sub}</div>
-          </div>
-          <div class="iq-cr-sc">
-            <div class="iq-cr-pct">{score}%</div>
-            <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%"></div></div>
-          </div>
-          <div class="iq-cr-rec"><span class="iq-cr-rbadge {rb_cls}">{rb_txt}</span></div>
-        </div>
-        <div class="iq-cr-sk-row">{sk_html}</div>
-      </div>
-    </div>""", unsafe_allow_html=True)
-    
-                st.markdown('<div class="iq-cr-footer"></div>', unsafe_allow_html=True)
-                if st.button("View All Candidates →", use_container_width=True, key="view_full_btn"):
-                    st.session_state.show_full = True
-        
-            elif st.session_state.processed and not st.session_state.results:
-                st.error("❌ No candidates processed. Check your CV files.")
-    
-            else:
-                # Idle state — show panel header + skeleton
-                st.markdown("""
-    <div class="iq-phead">
-      <div class="iq-pnum">3</div>Top Candidates
-    </div>""", unsafe_allow_html=True)
-                st.markdown("""
-    <div style="text-align:center;padding:2.5rem 1rem 1rem">
-      <div style="font-size:2.5rem;margin-bottom:.8rem">📊</div>
-      <div style="font-size:.95rem;font-weight:600;color:#0B1120;margin-bottom:.4rem">
-        Ranked results appear here
-      </div>
-      <div style="font-size:.82rem;color:#94A3B8;line-height:1.65">
-        Add a job description, upload CVs,<br>
-        then click <b style="color:#2563EB">Screen Candidates</b>
-      </div>
+        elif st.session_state.processed and not st.session_state.results:
+            st.error("❌ No candidates processed. Check your CV files.")
+
+        else:
+            # Idle state — show panel header + skeleton
+            st.markdown("""
+<div class="iq-phead">
+  <div class="iq-pnum">3</div>Top Candidates
+</div>""", unsafe_allow_html=True)
+            st.markdown("""
+<div style="text-align:center;padding:2.5rem 1rem 1rem">
+  <div style="font-size:2.5rem;margin-bottom:.8rem">📊</div>
+  <div style="font-size:.95rem;font-weight:600;color:#0B1120;margin-bottom:.4rem">
+    Ranked results appear here
+  </div>
+  <div style="font-size:.82rem;color:#94A3B8;line-height:1.65">
+    Add a job description, upload CVs,<br>
+    then click <b style="color:#2563EB">Screen Candidates</b>
+  </div>
+</div>
+<div style="margin:1rem 0;border-top:1px dashed #E2E8F0;padding-top:1rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;margin-bottom:.45rem;opacity:.4">
+    <div style="display:flex;align-items:center;gap:.7rem">
+      <div style="width:36px;height:36px;border-radius:50%;background:#DBEAFE"></div>
+      <div><div style="width:90px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:60px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
     </div>
-    <div style="margin:1rem 0;border-top:1px dashed #E2E8F0;padding-top:1rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;margin-bottom:.45rem;opacity:.4">
-        <div style="display:flex;align-items:center;gap:.7rem">
-          <div style="width:36px;height:36px;border-radius:50%;background:#DBEAFE"></div>
-          <div><div style="width:90px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:60px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
-        </div>
-        <div style="width:40px;height:18px;background:#DBEAFE;border-radius:6px"></div>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;margin-bottom:.45rem;opacity:.25">
-        <div style="display:flex;align-items:center;gap:.7rem">
-          <div style="width:36px;height:36px;border-radius:50%;background:#EDE9FE"></div>
-          <div><div style="width:75px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:50px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
-        </div>
-        <div style="width:40px;height:18px;background:#EDE9FE;border-radius:6px"></div>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;opacity:.15">
-        <div style="display:flex;align-items:center;gap:.7rem">
-          <div style="width:36px;height:36px;border-radius:50%;background:#FCE7F3"></div>
-          <div><div style="width:85px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:55px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
-        </div>
-        <div style="width:40px;height:18px;background:#FCE7F3;border-radius:6px"></div>
-      </div>
+    <div style="width:40px;height:18px;background:#DBEAFE;border-radius:6px"></div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;margin-bottom:.45rem;opacity:.25">
+    <div style="display:flex;align-items:center;gap:.7rem">
+      <div style="width:36px;height:36px;border-radius:50%;background:#EDE9FE"></div>
+      <div><div style="width:75px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:50px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
     </div>
-    """, unsafe_allow_html=True)
+    <div style="width:40px;height:18px;background:#EDE9FE;border-radius:6px"></div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;opacity:.15">
+    <div style="display:flex;align-items:center;gap:.7rem">
+      <div style="width:36px;height:36px;border-radius:50%;background:#FCE7F3"></div>
+      <div><div style="width:85px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:55px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
+    </div>
+    <div style="width:40px;height:18px;background:#FCE7F3;border-radius:6px"></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
     
     
 # ─────────────────────────── Full results (below panels) ─────────────────────
-if st.session_state.is_admin and st.session_state.get("show_full") and st.session_state.results:
+if st.session_state.get("show_full") and st.session_state.results:
     results = st.session_state.results
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
@@ -1413,36 +1450,51 @@ if st.session_state.is_admin and st.session_state.get("show_full") and st.sessio
         unsafe_allow_html=True,
     )
 
+    if not st.session_state.is_admin:
+        st.markdown("""
+<div class="iq-trial-upgrade">
+  <div style="font-size:1.15rem;font-weight:800;color:#0B1120;margin-bottom:.35rem">
+    Ready to screen 100s of CVs across active roles?
+  </div>
+  <div style="font-size:.9rem;color:#64748B;max-width:540px;margin:0 auto 1.1rem;line-height:1.6">
+    TalentIQ helps recruitment &amp; HR teams automate bulk resume screening, candidate communications, and interview scheduling.
+  </div>
+  <a class="iq-bp" href="https://wa.me/447379975532" target="_blank" style="padding:.65rem 1.6rem;font-size:.9rem">
+    Book a Quick Walkthrough on WhatsApp &nbsp;&rarr;
+  </a>
+</div>
+""", unsafe_allow_html=True)
+
 
 # ─────────────────────────── Testimonials ────────────────────────────────────
 st.markdown("""
 <div class="iq-ts-sec">
   <div style="text-align:center">
-    <div class="iq-ts-h">Trusted by Recruitment Agencies Worldwide</div>
+    <div class="iq-ts-h">Trusted by HR &amp; Recruitment Teams Worldwide</div>
     <div class="iq-ts-s">Here's what recruitment professionals say about TalentIQ</div>
   </div>
   <div class="iq-ts-track-wrap">
     <div class="iq-ts-track">
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ has transformed how we screen candidates. We reduced screening time by over 70% and our shortlists are stronger than ever.</div><div class="iq-tp"><div class="iq-tav">MR</div><div><div class="iq-tpn">Mark Richardson</div><div class="iq-tpc">Managing Director &middot; Hays Recruitment</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">What used to take hours now takes minutes. TalentIQ helps us focus on what really matters — speaking to candidates and closing placements.</div><div class="iq-tp"><div class="iq-tav">SB</div><div><div class="iq-tpn">Sophie Bennett</div><div class="iq-tpc">Senior Consultant &middot; Michael Page</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The AI matching accuracy is incredible. We never miss great candidates anymore. TalentIQ is a true game changer for our business.</div><div class="iq-tp"><div class="iq-tav">DT</div><div><div class="iq-tpn">Daniel Thompson</div><div class="iq-tpc">Director &middot; Robert Half</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We went from reviewing 200 CVs manually each week to letting TalentIQ do the heavy lifting. Our consultants now spend 80% more time on client calls.</div><div class="iq-tp"><div class="iq-tav">LK</div><div><div class="iq-tpn">Laura King</div><div class="iq-tpc">Operations Manager &middot; Reed Recruitment</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The automated email and meeting scheduling alone saves us 3 hours a day. Absolutely brilliant tool for any busy recruitment agency.</div><div class="iq-tp"><div class="iq-tav">JA</div><div><div class="iq-tpn">James Ashton</div><div class="iq-tpc">Founder &middot; Ashton Talent Partners</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ's candidate ranking is so accurate. We placed three senior roles last month that we would have overlooked with manual screening.</div><div class="iq-tp"><div class="iq-tav">PW</div><div><div class="iq-tpn">Priya Williams</div><div class="iq-tpc">Head of Talent &middot; Adecco Group</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">Incredibly easy to use. Upload CVs, get a ranked shortlist in seconds, and the AI summaries are spot on. Our clients love the turnaround time.</div><div class="iq-tp"><div class="iq-tav">CN</div><div><div class="iq-tpn">Claire Norton</div><div class="iq-tpc">Managing Consultant &middot; Manpower Group</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We scaled from 5 to 18 active job roles without adding headcount. TalentIQ made that possible by automating 90% of our CV screening process.</div><div class="iq-tp"><div class="iq-tav">RO</div><div><div class="iq-tpn">Ryan O'Brien</div><div class="iq-tpc">CEO &middot; Pinnacle Recruitment Group</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The match score and strengths breakdown give us real confidence when presenting candidates. Our client satisfaction scores have never been higher.</div><div class="iq-tp"><div class="iq-tav">AF</div><div><div class="iq-tpn">Anna Fernandez</div><div class="iq-tpc">Senior Partner &middot; Spencer Stuart</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ doesn't just save time — it makes us look smarter in front of clients. The quality of our shortlists has gone up dramatically since we adopted it.</div><div class="iq-tp"><div class="iq-tav">TM</div><div><div class="iq-tpn">Tom Marshall</div><div class="iq-tpc">Director &middot; Randstad UK</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ has transformed how we screen candidates. We reduced screening time by over 70% and our shortlists are stronger than ever.</div><div class="iq-tp"><div class="iq-tav">MR</div><div><div class="iq-tpn">Mark Richardson</div><div class="iq-tpc">Managing Director &middot; Hays Recruitment</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">What used to take hours now takes minutes. TalentIQ helps us focus on what really matters — speaking to candidates and closing placements.</div><div class="iq-tp"><div class="iq-tav">SB</div><div><div class="iq-tpn">Sophie Bennett</div><div class="iq-tpc">Senior Consultant &middot; Michael Page</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The AI matching accuracy is incredible. We never miss great candidates anymore. TalentIQ is a true game changer for our business.</div><div class="iq-tp"><div class="iq-tav">DT</div><div><div class="iq-tpn">Daniel Thompson</div><div class="iq-tpc">Director &middot; Robert Half</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We went from reviewing 200 CVs manually each week to letting TalentIQ do the heavy lifting. Our consultants now spend 80% more time on client calls.</div><div class="iq-tp"><div class="iq-tav">LK</div><div><div class="iq-tpn">Laura King</div><div class="iq-tpc">Operations Manager &middot; Reed Recruitment</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The automated email and meeting scheduling alone saves us 3 hours a day. Absolutely brilliant tool for any busy recruitment agency.</div><div class="iq-tp"><div class="iq-tav">JA</div><div><div class="iq-tpn">James Ashton</div><div class="iq-tpc">Founder &middot; Ashton Talent Partners</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ's candidate ranking is so accurate. We placed three senior roles last month that we would have overlooked with manual screening.</div><div class="iq-tp"><div class="iq-tav">PW</div><div><div class="iq-tpn">Priya Williams</div><div class="iq-tpc">Head of Talent &middot; Adecco Group</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">Incredibly easy to use. Upload CVs, get a ranked shortlist in seconds, and the AI summaries are spot on. Our clients love the turnaround time.</div><div class="iq-tp"><div class="iq-tav">CN</div><div><div class="iq-tpn">Claire Norton</div><div class="iq-tpc">Managing Consultant &middot; Manpower Group</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We scaled from 5 to 18 active job roles without adding headcount. TalentIQ made that possible by automating 90% of our CV screening process.</div><div class="iq-tp"><div class="iq-tav">RO</div><div><div class="iq-tpn">Ryan O'Brien</div><div class="iq-tpc">CEO &middot; Pinnacle Recruitment Group</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The match score and strengths breakdown give us real confidence when presenting candidates. Our client satisfaction scores have never been higher.</div><div class="iq-tp"><div class="iq-tav">AF</div><div><div class="iq-tpn">Anna Fernandez</div><div class="iq-tpc">Senior Partner &middot; Spencer Stuart</div></div></div></div>
-      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ doesn't just save time — it makes us look smarter in front of clients. The quality of our shortlists has gone up dramatically since we adopted it.</div><div class="iq-tp"><div class="iq-tav">TM</div><div><div class="iq-tpn">Tom Marshall</div><div class="iq-tpc">Director &middot; Randstad UK</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ has transformed how we screen candidates. We reduced screening time by over 70% and our shortlists are stronger than ever.</div><div class="iq-tp"><div class="iq-tav">MR</div><div><div class="iq-tpn">Mark Richardson</div><div class="iq-tpc">Managing Director</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">What used to take hours now takes minutes. TalentIQ helps us focus on what really matters — speaking to candidates and closing placements.</div><div class="iq-tp"><div class="iq-tav">SB</div><div><div class="iq-tpn">Sophie Bennett</div><div class="iq-tpc">Senior Recruitment Consultant</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The AI matching accuracy is incredible. We never miss great candidates anymore. TalentIQ is a true game changer for our business.</div><div class="iq-tp"><div class="iq-tav">DT</div><div><div class="iq-tpn">Daniel Thompson</div><div class="iq-tpc">Recruitment Director</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We went from reviewing 200 CVs manually each week to letting TalentIQ do the heavy lifting. Our consultants now spend 80% more time on client calls.</div><div class="iq-tp"><div class="iq-tav">LK</div><div><div class="iq-tpn">Laura King</div><div class="iq-tpc">HR &amp; Operations Manager</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The automated email and meeting scheduling alone saves us 3 hours a day. Absolutely brilliant tool for any busy recruitment agency.</div><div class="iq-tp"><div class="iq-tav">JA</div><div><div class="iq-tpn">James Ashton</div><div class="iq-tpc">Agency Founder</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ's candidate ranking is so accurate. We placed three senior roles last month that we would have overlooked with manual screening.</div><div class="iq-tp"><div class="iq-tav">PW</div><div><div class="iq-tpn">Priya Williams</div><div class="iq-tpc">Head of Talent Acquisition</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">Incredibly easy to use. Upload CVs, get a ranked shortlist in seconds, and the AI summaries are spot on. Our clients love the turnaround time.</div><div class="iq-tp"><div class="iq-tav">CN</div><div><div class="iq-tpn">Claire Norton</div><div class="iq-tpc">Managing Consultant</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We scaled from 5 to 18 active job roles without adding headcount. TalentIQ made that possible by automating 90% of our CV screening process.</div><div class="iq-tp"><div class="iq-tav">RO</div><div><div class="iq-tpn">Ryan O'Brien</div><div class="iq-tpc">CEO &amp; Founder</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The match score and strengths breakdown give us real confidence when presenting candidates. Our client satisfaction scores have never been higher.</div><div class="iq-tp"><div class="iq-tav">AF</div><div><div class="iq-tpn">Anna Fernandez</div><div class="iq-tpc">Executive Search Partner</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ doesn't just save time — it makes us look smarter in front of clients. The quality of our shortlists has gone up dramatically since we adopted it.</div><div class="iq-tp"><div class="iq-tav">TM</div><div><div class="iq-tpn">Tom Marshall</div><div class="iq-tpc">Talent Acquisition Director</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ has transformed how we screen candidates. We reduced screening time by over 70% and our shortlists are stronger than ever.</div><div class="iq-tp"><div class="iq-tav">MR</div><div><div class="iq-tpn">Mark Richardson</div><div class="iq-tpc">Managing Director</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">What used to take hours now takes minutes. TalentIQ helps us focus on what really matters — speaking to candidates and closing placements.</div><div class="iq-tp"><div class="iq-tav">SB</div><div><div class="iq-tpn">Sophie Bennett</div><div class="iq-tpc">Senior Recruitment Consultant</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The AI matching accuracy is incredible. We never miss great candidates anymore. TalentIQ is a true game changer for our business.</div><div class="iq-tp"><div class="iq-tav">DT</div><div><div class="iq-tpn">Daniel Thompson</div><div class="iq-tpc">Recruitment Director</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We went from reviewing 200 CVs manually each week to letting TalentIQ do the heavy lifting. Our consultants now spend 80% more time on client calls.</div><div class="iq-tp"><div class="iq-tav">LK</div><div><div class="iq-tpn">Laura King</div><div class="iq-tpc">HR &amp; Operations Manager</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The automated email and meeting scheduling alone saves us 3 hours a day. Absolutely brilliant tool for any busy recruitment agency.</div><div class="iq-tp"><div class="iq-tav">JA</div><div><div class="iq-tpn">James Ashton</div><div class="iq-tpc">Agency Founder</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ's candidate ranking is so accurate. We placed three senior roles last month that we would have overlooked with manual screening.</div><div class="iq-tp"><div class="iq-tav">PW</div><div><div class="iq-tpn">Priya Williams</div><div class="iq-tpc">Head of Talent Acquisition</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">Incredibly easy to use. Upload CVs, get a ranked shortlist in seconds, and the AI summaries are spot on. Our clients love the turnaround time.</div><div class="iq-tp"><div class="iq-tav">CN</div><div><div class="iq-tpn">Claire Norton</div><div class="iq-tpc">Managing Consultant</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">We scaled from 5 to 18 active job roles without adding headcount. TalentIQ made that possible by automating 90% of our CV screening process.</div><div class="iq-tp"><div class="iq-tav">RO</div><div><div class="iq-tpn">Ryan O'Brien</div><div class="iq-tpc">CEO &amp; Founder</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">The match score and strengths breakdown give us real confidence when presenting candidates. Our client satisfaction scores have never been higher.</div><div class="iq-tp"><div class="iq-tav">AF</div><div><div class="iq-tpn">Anna Fernandez</div><div class="iq-tpc">Executive Search Partner</div></div></div></div>
+      <div class="iq-tc"><div class="iq-tq">&ldquo;</div><div class="iq-tt">TalentIQ doesn't just save time — it makes us look smarter in front of clients. The quality of our shortlists has gone up dramatically since we adopted it.</div><div class="iq-tp"><div class="iq-tav">TM</div><div><div class="iq-tpn">Tom Marshall</div><div class="iq-tpc">Talent Acquisition Director</div></div></div></div>
     </div>
   </div>
 </div>
