@@ -1515,7 +1515,7 @@ if st.session_state.get("show_full") and st.session_state.results:
 st.markdown("""
 <div class="iq-ts-sec">
   <div style="text-align:center">
-    <div class="iq-ts-h">Trusted by HR &amp; Recruitment Teams Worldwide</div>
+    <div class="iq-ts-h">Reviews &amp; Testimonials</div>
     <div class="iq-ts-s">Here's what recruitment professionals say about TalentIQ</div>
   </div>
   <div class="iq-ts-track-wrap">
