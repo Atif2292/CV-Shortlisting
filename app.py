@@ -77,25 +77,26 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 /* ── Tabs ── */
 [data-testid="stTabsTabList"] {
     border-bottom: 1.5px solid #E2E8F0 !important;
-    gap: 0 !important;
-    margin-bottom: .4rem !important;
+    gap: .4rem !important;
+    margin-bottom: .8rem !important;
+    justify-content: center !important;
 }
 button[data-testid="stTab"] {
-    font-size: .875rem !important;
-    font-weight: 500 !important;
-    color: #94A3B8 !important;
-    padding: .5rem 1.1rem !important;
-    border-radius: 0 !important;
-    border-bottom: 2px solid transparent !important;
-    transition: color .15s !important;
+    font-size: .88rem !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+    padding: .55rem 1.25rem !important;
+    border-radius: 8px 8px 0 0 !important;
+    border-bottom: 2.5px solid transparent !important;
+    transition: color .15s, border-color .15s !important;
 }
 button[data-testid="stTab"][aria-selected="true"] {
     color: #2563EB !important;
-    border-bottom: 2px solid #2563EB !important;
-    font-weight: 600 !important;
-    background: none !important;
+    border-bottom: 2.5px solid #2563EB !important;
+    font-weight: 700 !important;
+    background: transparent !important;
 }
-button[data-testid="stTab"]:hover { color: #2563EB !important; }
+button[data-testid="stTab"]:hover { color: #1D4ED8 !important; }
 
 /* ── Inputs ── */
 .stTextInput  > div > div > input,
@@ -1028,60 +1029,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────── Feature bar & Visualisations ─────────────────────
+# ─────────────────────────── Feature Capabilities Showcase ───────────────────
 st.markdown("""
-<div class="iq-fbar">
-  <div class="iq-fbar-item">
-    <div class="iq-fbar-icon">&#128196;</div>
-    <div><div class="iq-fbar-t1">Screen 100s of CVs</div><div class="iq-fbar-t2">in minutes</div></div>
+<div style="text-align:center; margin:2.2rem 0 1.2rem;">
+  <div style="font-size:1.35rem; font-weight:800; color:#0B1120; letter-spacing:-.4px;">
+    Platform Capabilities &amp; Results Visualisations
   </div>
-  <div class="iq-fbar-item">
-    <div class="iq-fbar-icon">&#11088;</div>
-    <div><div class="iq-fbar-t1">AI-Powered Scoring</div><div class="iq-fbar-t2">and Ranking</div></div>
-  </div>
-  <div class="iq-fbar-item">
-    <div class="iq-fbar-icon">&#128200;</div>
-    <div><div class="iq-fbar-t1">Identify Top Talent</div><div class="iq-fbar-t2">Faster</div></div>
-  </div>
-  <div class="iq-fbar-item">
-    <div class="iq-fbar-icon">&#9201;</div>
-    <div><div class="iq-fbar-t1">Save Hours</div><div class="iq-fbar-t2">Every Week</div></div>
+  <div style="font-size:.86rem; color:#64748B; margin-top:.2rem;">
+    Explore how TalentIQ automates candidate evaluation, scoring, and ranking
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ── Interactive Feature Dropdown & Visual Results Showcase ──
-st.markdown("""
-<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:18px; padding:1.25rem 1.4rem; margin-bottom:2rem;">
-  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.6rem; margin-bottom:.75rem;">
-    <div>
-      <div style="font-size:1.08rem; font-weight:800; color:#0B1120; display:flex; align-items:center; gap:.45rem;">
-        <span>📊</span> <span>Interactive Feature Tour &amp; Final Results Visualisations</span>
-      </div>
-      <div style="font-size:.82rem; color:#64748B; margin-top:.15rem;">
-        Select any capability below to preview what TalentIQ's AI screening results look like:
-      </div>
-    </div>
-    <span style="font-size:.76rem; font-weight:700; color:#2563EB; background:#EFF6FF; border:1px solid #BFDBFE; padding:.25rem .75rem; border-radius:99px;">
-      Interactive Preview
-    </span>
-  </div>
-""", unsafe_allow_html=True)
+tab_bulk, tab_score, tab_rank, tab_roi = st.tabs([
+    "📄  Screen 100s in Minutes",
+    "⭐  AI Scoring & Scorecard",
+    "📈  Candidate Leaderboard",
+    "⏱  Save Hours & ROI",
+])
 
-feature_choice = st.selectbox(
-    "Choose capability to preview results & visualisations:",
-    [
-        "📄 1. Screen 100s of CVs in minutes — Bulk Ingestion & High-Speed Pipeline",
-        "⭐ 2. AI-Powered Scoring and Ranking — Multi-Dimensional Candidate Scorecard",
-        "📈 3. Identify Top Talent Faster — Candidate Ranking Matrix & Leaderboard",
-        "⏱ 4. Save Hours Every Week — Recruiter Efficiency ROI & Excel Export",
-    ],
-    index=0,
-    label_visibility="collapsed",
-    key="feature_preview_dropdown",
-)
-
-if "Screen 100s" in feature_choice:
+with tab_bulk:
     st.markdown("""
 <div class="iq-feat-box">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:.5rem;">
@@ -1175,7 +1142,7 @@ if "Screen 100s" in feature_choice:
 </div>
 """, unsafe_allow_html=True)
 
-elif "AI-Powered Scoring" in feature_choice:
+with tab_score:
     st.markdown("""
 <div class="iq-feat-box">
   <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.2rem; flex-wrap:wrap; gap:.8rem;">
@@ -1257,7 +1224,7 @@ elif "AI-Powered Scoring" in feature_choice:
 </div>
 """, unsafe_allow_html=True)
 
-elif "Top Talent" in feature_choice:
+with tab_rank:
     st.markdown("""
 <div class="iq-feat-box">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.1rem; flex-wrap:wrap; gap:.6rem;">
@@ -1340,7 +1307,7 @@ elif "Top Talent" in feature_choice:
 </div>
 """, unsafe_allow_html=True)
 
-else:
+with tab_roi:
     st.markdown("""
 <div class="iq-feat-box">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.1rem; flex-wrap:wrap; gap:.6rem;">
@@ -1393,8 +1360,7 @@ else:
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
-st.markdown('<div class="iq-div"></div>', unsafe_allow_html=True)
+st.markdown('<div class="iq-div" style="margin-top:2rem;"></div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
@@ -1668,93 +1634,20 @@ with col3:
             st.error("❌ No candidates processed. Check your CV files.")
 
         else:
-            # Idle state — show panel header + live sample shortlist preview
+            # Idle state — clean professional empty state
             st.markdown("""
 <div class="iq-phead">
   <div class="iq-pnum">3</div>Candidate Rankings
-</div>""", unsafe_allow_html=True)
-
-            tab_sample, tab_guide = st.tabs(["👁️ Sample Shortlist", "⏳ Waiting for Upload"])
-
-            with tab_sample:
-                st.markdown("""
-<div style="font-size:.76rem;color:#64748B;margin-bottom:.65rem;">
-  Preview of ranked candidate scorecards generated by TalentIQ:
 </div>
-<div class="iq-cr-row">
-  <div class="iq-cr-rank">1</div>
-  <div class="iq-cr-av iq-cr-av1">ER</div>
-  <div class="iq-cr-main">
-    <div class="iq-cr-toprow">
-      <div class="iq-cr-info">
-        <div class="iq-cr-name">Elena Rostova</div>
-        <div class="iq-cr-sub">7+ yrs exp &middot; PyTorch, MLOps, AWS</div>
-      </div>
-      <div class="iq-cr-sc">
-        <div class="iq-cr-pct">96%</div>
-        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:96%"></div></div>
-      </div>
-      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-strong">Strongly Recommend</span></div>
-    </div>
-    <div class="iq-cr-sk-row">
-      <span class="iq-cr-sk">PyTorch</span><span class="iq-cr-sk">MLOps</span><span class="iq-cr-sk">Kubernetes</span><span class="iq-cr-skmore">+3</span>
-    </div>
+<div style="text-align:center; padding:3.2rem 1.4rem 2.8rem; background:#FAFCFF; border:1.5px dashed #E2E8F0; border-radius:14px; margin-top:.3rem;">
+  <div style="width:48px; height:48px; border-radius:50%; background:#EFF6FF; color:#2563EB; font-size:1.35rem; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; border:1px solid #DBEAFE;">
+    📊
   </div>
-</div>
-
-<div class="iq-cr-row">
-  <div class="iq-cr-rank">2</div>
-  <div class="iq-cr-av iq-cr-av2">MC</div>
-  <div class="iq-cr-main">
-    <div class="iq-cr-toprow">
-      <div class="iq-cr-info">
-        <div class="iq-cr-name">Marcus Chen</div>
-        <div class="iq-cr-sub">6+ yrs exp &middot; Docker, Terraform, CI/CD</div>
-      </div>
-      <div class="iq-cr-sc">
-        <div class="iq-cr-pct">91%</div>
-        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:91%"></div></div>
-      </div>
-      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-strong">Strongly Recommend</span></div>
-    </div>
-    <div class="iq-cr-sk-row">
-      <span class="iq-cr-sk">Docker</span><span class="iq-cr-sk">Terraform</span><span class="iq-cr-sk">AWS</span>
-    </div>
+  <div style="font-size:1rem; font-weight:800; color:#0B1120; margin-bottom:.35rem;">
+    Rankings Appear Here
   </div>
-</div>
-
-<div class="iq-cr-row">
-  <div class="iq-cr-rank">3</div>
-  <div class="iq-cr-av iq-cr-av3">AP</div>
-  <div class="iq-cr-main">
-    <div class="iq-cr-toprow">
-      <div class="iq-cr-info">
-        <div class="iq-cr-name">Aisha Patel</div>
-        <div class="iq-cr-sub">5+ yrs exp &middot; SQL, Airflow, Snowflake</div>
-      </div>
-      <div class="iq-cr-sc">
-        <div class="iq-cr-pct">86%</div>
-        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:86%"></div></div>
-      </div>
-      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-good">Recommend</span></div>
-    </div>
-    <div class="iq-cr-sk-row">
-      <span class="iq-cr-sk">SQL</span><span class="iq-cr-sk">Airflow</span><span class="iq-cr-sk">Snowflake</span>
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-            with tab_guide:
-                st.markdown("""
-<div style="text-align:center;padding:2rem 1rem 1rem">
-  <div style="font-size:2.2rem;margin-bottom:.6rem">📊</div>
-  <div style="font-size:.92rem;font-weight:700;color:#0B1120;margin-bottom:.3rem">
-    Upload up to 10 CVs to screen
-  </div>
-  <div style="font-size:.8rem;color:#94A3B8;line-height:1.6">
-    Add a job description in Panel 1, select CVs in Panel 2,<br>
-    then click <b style="color:#2563EB">Screen Candidates</b>
+  <div style="font-size:.83rem; color:#64748B; line-height:1.65; max-width:270px; margin:0 auto;">
+    Add your Job Description in Panel 1, upload candidate CVs in Panel 2, and click <b style="color:#2563EB;">Screen Candidates</b>.
   </div>
 </div>
 """, unsafe_allow_html=True)
