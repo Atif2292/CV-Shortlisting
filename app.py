@@ -22,6 +22,7 @@ from utils.docx_parser import extract_docx_text
 from utils.ai_scoring import extract_resume_keywords, rank_candidates_batch
 from utils.email_sender import send_shortlist_emails, test_brevo_key, send_test_email
 from utils.cleanup import delete_uploaded_files
+from utils.account_tracker import get_account_usage, record_account_usage, MAX_FREE_RESUMES
 
 
 st.set_page_config(
@@ -452,6 +453,22 @@ label, .stFileUploader label {
     padding: 1.7rem 2rem; text-align: center;
 }
 
+.iq-account-exhausted {
+    background: #FEF2F2;
+    border: 1.5px solid #FCA5A5;
+    border-radius: 12px;
+    padding: .85rem 1rem;
+    margin: .6rem 0;
+    font-size: .83rem;
+    color: #991B1B;
+    line-height: 1.5;
+}
+.iq-account-exhausted a {
+    color: #DC2626 !important;
+    text-decoration: underline;
+    font-weight: 700;
+}
+
 /* ── Pricing ── */
 .iq-pricing-sec { margin: 3rem 0 2rem; }
 .iq-pricing-hdr { text-align:center; margin-bottom:2.8rem; }
@@ -780,19 +797,12 @@ for _k, _v in [
     ("processed",        False),
     ("uploaded_paths",   []),
     ("show_full",        False),
-    ("is_admin",         False),
+    ("account_email",    ""),
     ("brevo_api_key",    os.getenv("BREVO_API_KEY", "")),
     ("brevo_from_email", os.getenv("BREVO_FROM_EMAIL", "")),
 ]:
     if _k not in st.session_state:
         st.session_state[_k] = _v
-
-# ── Admin auth — query param auto-login ──────────────────────────────────────
-# Bookmark: https://your-app-url/?key=TalentIQ@2025
-_ADMIN_PW = os.getenv("ADMIN_PASSWORD", "TalentIQ@2025")
-_qp = st.query_params
-if _qp.get("key") == _ADMIN_PW:
-    st.session_state.is_admin = True
 
 
 # ─────────────────────────── Helpers ─────────────────────────────────────────
@@ -901,8 +911,6 @@ st.markdown("""
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
 st.markdown('<div id="screening-workspace"></div>', unsafe_allow_html=True)
-if st.session_state.is_admin:
-    st.caption("🔑 **Admin Mode Active:** Screening batch limit increased to 100 CVs.")
 col1, col2, col3 = st.columns([1, 1, 1.15], gap="large")
 
 # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
@@ -968,17 +976,47 @@ with col2:
   <div class="iq-pnum">2</div>Upload CVs
 </div>""", unsafe_allow_html=True)
 
-        max_cv_limit = 100 if st.session_state.is_admin else 10
+        email_input = st.text_input(
+            "Work Email (Free Trial Account)",
+            placeholder="hr@yourcompany.com",
+            key="account_email_input",
+            help="Each account gets 10 free CV evaluations to test TalentIQ.",
+        ).strip().lower()
 
-        if not st.session_state.is_admin:
+        account_usage = get_account_usage(email_input) if email_input else None
+        remaining_limit = account_usage["remaining"] if account_usage else MAX_FREE_RESUMES
+
+        if email_input:
+            if "@" not in email_input or "." not in email_input:
+                st.caption("⚠️ Please enter a valid work email.")
+            elif account_usage and account_usage["is_exhausted"]:
+                st.markdown(
+                    f'<div class="iq-account-exhausted">'
+                    f'⚠️ <b>Free trial limit reached (10/10 CVs)</b> for <b>{email_input}</b>.<br>'
+                    f'Need to screen more candidates? '
+                    f'<a href="https://wa.me/447379975532" target="_blank">Chat with us on WhatsApp &rarr;</a>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                used = account_usage["resumes_used"]
+                rem = account_usage["remaining"]
+                st.markdown(
+                    f'<div class="iq-trial-info">'
+                    f'👤 Account: <b>{email_input}</b> &middot; '
+                    f'<b>{rem} of 10 free CVs remaining</b> ({used} used)'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+        else:
             st.markdown(
-                '<div class="iq-trial-info">🎁 <b>Free Trial:</b> Upload up to <b>10 CVs</b> to test instant AI screening. '
-                'Need 50+ or ATS sync? <a href="https://wa.me/447379975532" target="_blank" style="color:#2563EB;font-weight:600;text-decoration:none">Book a Demo &rarr;</a></div>',
+                '<div class="iq-trial-info">🎁 <b>Free Trial:</b> Screen up to <b>10 CVs per account</b>. '
+                'Enter your work email above to start.</div>',
                 unsafe_allow_html=True,
             )
 
         cv_files = st.file_uploader(
-            f"PDF, DOCX, TXT — Up to {max_cv_limit} CVs",
+            f"PDF, DOCX, TXT — Up to {remaining_limit} CVs",
             type=["pdf", "docx", "txt"],
             accept_multiple_files=True,
             key="cv_up",
@@ -987,14 +1025,14 @@ with col2:
         total_uploaded = len(cv_files or [])
 
         # Status badge
-        if total_uploaded > max_cv_limit:
+        if total_uploaded > remaining_limit:
             st.markdown(
-                f'<div class="iq-status-wait">⚠️ {total_uploaded} CVs uploaded (Free trial limit: {max_cv_limit})</div>',
+                f'<div class="iq-status-wait">⚠️ {total_uploaded} CVs uploaded (Exceeds {remaining_limit} remaining CVs)</div>',
                 unsafe_allow_html=True,
             )
         elif total_uploaded > 0:
             st.markdown(
-                f'<div class="iq-status-ok">✅ {total_uploaded} / {max_cv_limit} CV{"s" if total_uploaded != 1 else ""} uploaded</div>',
+                f'<div class="iq-status-ok">✅ {total_uploaded} CV{"s" if total_uploaded != 1 else ""} ready for screening</div>',
                 unsafe_allow_html=True,
             )
         else:
@@ -1038,15 +1076,19 @@ with col3:
         # ── Trigger screening ────────────────────────────────────────────────
         if run_btn:
             errors = []
+            if not email_input or "@" not in email_input or "." not in email_input:
+                errors.append("Please enter your work email to use your 10 free trial CV evaluations.")
+            elif account_usage and account_usage["is_exhausted"]:
+                errors.append(f"Account '{email_input}' has already used all 10 free CV evaluations. Please book a demo on WhatsApp to unlock full access.")
             if not jd_text:
                 errors.append("Please add a Job Description (paste text or upload a file).")
             if total_uploaded == 0:
                 errors.append("Please upload at least one CV.")
-            if total_uploaded > max_cv_limit:
-                if not st.session_state.is_admin:
-                    errors.append(f"Free trial allows up to 10 CVs (you uploaded {total_uploaded}). Please keep up to 10 CVs, or book a demo for unlimited bulk screening.")
-                else:
-                    errors.append("Maximum 100 CVs per batch.")
+            if account_usage and total_uploaded > account_usage["remaining"]:
+                errors.append(
+                    f"Account '{email_input}' has {account_usage['remaining']} free evaluations remaining, "
+                    f"but you uploaded {total_uploaded} CVs. Please keep up to {account_usage['remaining']} files."
+                )
 
             if errors:
                 for e in errors:
@@ -1118,6 +1160,10 @@ with col3:
                 st.session_state.results   = results
                 st.session_state.processed = True
                 st.session_state.show_full = False
+
+                # Deduct screened CVs from account balance
+                new_usage = record_account_usage(email_input, len(saved_paths))
+                st.success(f"🎯 Evaluated {len(saved_paths)} CV(s) for {email_input}. {new_usage['remaining']} free evaluations remaining.")
 
                 if send_emails and results:
                     _has_creds = bool(st.session_state.get("brevo_api_key") and st.session_state.get("brevo_from_email"))
@@ -1450,8 +1496,7 @@ if st.session_state.get("show_full") and st.session_state.results:
         unsafe_allow_html=True,
     )
 
-    if not st.session_state.is_admin:
-        st.markdown("""
+    st.markdown("""
 <div class="iq-trial-upgrade">
   <div style="font-size:1.15rem;font-weight:800;color:#0B1120;margin-bottom:.35rem">
     Ready to screen 100s of CVs across active roles?
@@ -1507,27 +1552,4 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Admin login panel (subtle, at bottom) ────────────────────────────────────
-st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-with st.expander("🔐", expanded=False):
-    _pw_in = st.text_input(
-        "Admin password", type="password",
-        key="admin_pw_input", label_visibility="collapsed",
-        placeholder="Admin password…"
-    )
-    _acol1, _acol2 = st.columns(2)
-    with _acol1:
-        if st.button("Login", key="admin_login_btn", use_container_width=True):
-            if _pw_in == _ADMIN_PW:
-                st.session_state.is_admin = True
-                st.rerun()
-            else:
-                st.error("Incorrect password")
-    with _acol2:
-        if st.session_state.is_admin:
-            if st.button("Logout", key="admin_logout_btn", use_container_width=True):
-                st.session_state.is_admin = False
-                st.query_params.clear()
-                st.rerun()
-    if st.session_state.is_admin:
-        st.success("✓ Admin mode active")
+

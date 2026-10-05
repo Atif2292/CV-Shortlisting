@@ -24,6 +24,7 @@ env/
 
 # ── Uploaded CVs (ephemeral, never commit) ────────────────────────────────────
 uploads/
+data/*.db
 
 # ── OS / editor ──────────────────────────────────────────────────────────────
 .DS_Store
