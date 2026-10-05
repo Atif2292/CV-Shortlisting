@@ -20,9 +20,8 @@ load_dotenv()
 from utils.pdf_parser import extract_pdf_text
 from utils.docx_parser import extract_docx_text
 from utils.ai_scoring import extract_resume_keywords, rank_candidates_batch
-from utils.email_sender import send_shortlist_emails, test_brevo_key, send_test_email
 from utils.cleanup import delete_uploaded_files
-from utils.account_tracker import get_account_usage, record_account_usage, MAX_FREE_RESUMES
+import altair as alt
 
 
 st.set_page_config(
@@ -475,6 +474,147 @@ label, .stFileUploader label {
     font-weight: 700;
 }
 
+/* ── Interactive Feature Showcase Visualisations ── */
+.iq-feat-box {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(10,20,60,.04);
+    margin-top: .75rem;
+}
+.iq-vis-statgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .85rem;
+    margin-bottom: 1.2rem;
+}
+.iq-vis-stat {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: .85rem 1rem;
+    text-align: center;
+}
+.iq-vis-stat-val {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #2563EB;
+    line-height: 1.1;
+}
+.iq-vis-stat-lbl {
+    font-size: .74rem;
+    color: #64748B;
+    font-weight: 600;
+    margin-top: .25rem;
+}
+.iq-pipeline-flow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    background: #F8FAFC;
+    padding: .9rem 1.1rem;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    margin-bottom: 1.2rem;
+    overflow-x: auto;
+}
+.iq-pipe-step {
+    flex: 1;
+    min-width: 140px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: .65rem .75rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,.02);
+}
+.iq-pipe-step-num {
+    font-size: .63rem;
+    font-weight: 800;
+    color: #2563EB;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.iq-pipe-step-title {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin-top: .15rem;
+}
+.iq-pipe-arrow {
+    color: #94A3B8;
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+.iq-vis-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .83rem;
+    margin-top: .6rem;
+}
+.iq-vis-table th {
+    background: #F1F5F9;
+    color: #475569;
+    font-weight: 700;
+    font-size: .73rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: .55rem .75rem;
+    text-align: left;
+    border-bottom: 1px solid #E2E8F0;
+}
+.iq-vis-table td {
+    padding: .65rem .75rem;
+    border-bottom: 1px solid #F1F5F9;
+    color: #1E293B;
+}
+.iq-score-bar-row {
+    margin-bottom: .7rem;
+}
+.iq-score-bar-hdr {
+    display: flex;
+    justify-content: space-between;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: .25rem;
+}
+.iq-score-track {
+    height: 7px;
+    background: #E2E8F0;
+    border-radius: 99px;
+    overflow: hidden;
+}
+.iq-score-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #2563EB, #3B82F6);
+}
+.iq-score-fill-g {
+    background: linear-gradient(90deg, #10B981, #34D399);
+}
+.iq-roi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem;
+    margin-bottom: 1.1rem;
+}
+.iq-roi-box {
+    border-radius: 12px;
+    padding: 1.15rem;
+    border: 1px solid #E2E8F0;
+}
+.iq-roi-manual {
+    background: #FFFBFB;
+    border-color: #FECACA;
+}
+.iq-roi-ai {
+    background: #F0FDF4;
+    border-color: #BBF7D0;
+}
+
 /* ── Pricing ── */
 .iq-pricing-sec { margin: 3rem 0 2rem; }
 .iq-pricing-hdr { text-align:center; margin-bottom:2.8rem; }
@@ -803,9 +943,6 @@ for _k, _v in [
     ("processed",        False),
     ("uploaded_paths",   []),
     ("show_full",        False),
-    ("account_email",    ""),
-    ("brevo_api_key",    os.getenv("BREVO_API_KEY", "")),
-    ("brevo_from_email", os.getenv("BREVO_FROM_EMAIL", "")),
 ]:
     if _k not in st.session_state:
         st.session_state[_k] = _v
@@ -891,7 +1028,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────── Feature bar ─────────────────────────────────────
+# ─────────────────────────── Feature bar & Visualisations ─────────────────────
 st.markdown("""
 <div class="iq-fbar">
   <div class="iq-fbar-item">
@@ -911,8 +1048,353 @@ st.markdown("""
     <div><div class="iq-fbar-t1">Save Hours</div><div class="iq-fbar-t2">Every Week</div></div>
   </div>
 </div>
-<div class="iq-div"></div>
 """, unsafe_allow_html=True)
+
+# ── Interactive Feature Dropdown & Visual Results Showcase ──
+st.markdown("""
+<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:18px; padding:1.25rem 1.4rem; margin-bottom:2rem;">
+  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.6rem; margin-bottom:.75rem;">
+    <div>
+      <div style="font-size:1.08rem; font-weight:800; color:#0B1120; display:flex; align-items:center; gap:.45rem;">
+        <span>📊</span> <span>Interactive Feature Tour &amp; Final Results Visualisations</span>
+      </div>
+      <div style="font-size:.82rem; color:#64748B; margin-top:.15rem;">
+        Select any capability below to preview what TalentIQ's AI screening results look like:
+      </div>
+    </div>
+    <span style="font-size:.76rem; font-weight:700; color:#2563EB; background:#EFF6FF; border:1px solid #BFDBFE; padding:.25rem .75rem; border-radius:99px;">
+      Interactive Preview
+    </span>
+  </div>
+""", unsafe_allow_html=True)
+
+feature_choice = st.selectbox(
+    "Choose capability to preview results & visualisations:",
+    [
+        "📄 1. Screen 100s of CVs in minutes — Bulk Ingestion & High-Speed Pipeline",
+        "⭐ 2. AI-Powered Scoring and Ranking — Multi-Dimensional Candidate Scorecard",
+        "📈 3. Identify Top Talent Faster — Candidate Ranking Matrix & Leaderboard",
+        "⏱ 4. Save Hours Every Week — Recruiter Efficiency ROI & Excel Export",
+    ],
+    index=0,
+    label_visibility="collapsed",
+    key="feature_preview_dropdown",
+)
+
+if "Screen 100s" in feature_choice:
+    st.markdown("""
+<div class="iq-feat-box">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:.5rem;">
+    <div>
+      <div style="font-size:1.05rem; font-weight:800; color:#0B1120;">Bulk Ingestion &amp; High-Speed Processing Pipeline</div>
+      <div style="font-size:.82rem; color:#64748B;">Processes over 100 CVs in parallel with multi-format parsing (PDF, Word, TXT)</div>
+    </div>
+    <span style="background:#D1FAE5; color:#065F46; font-size:.76rem; font-weight:700; padding:.25rem .75rem; border-radius:99px;">
+      ⚡ Active Throughput: 0.3s / CV
+    </span>
+  </div>
+
+  <div class="iq-vis-statgrid">
+    <div class="iq-vis-stat">
+      <div class="iq-vis-stat-val">100+</div>
+      <div class="iq-vis-stat-lbl">CVs per Single Batch</div>
+    </div>
+    <div class="iq-vis-stat">
+      <div class="iq-vis-stat-val">42 sec</div>
+      <div class="iq-vis-stat-lbl">Average Full Processing Time</div>
+    </div>
+    <div class="iq-vis-stat">
+      <div class="iq-vis-stat-val">99.4%</div>
+      <div class="iq-vis-stat-lbl">Entity Extraction Accuracy</div>
+    </div>
+    <div class="iq-vis-stat">
+      <div class="iq-vis-stat-val">0 Manual</div>
+      <div class="iq-vis-stat-lbl">Pre-Formatting Required</div>
+    </div>
+  </div>
+
+  <div class="iq-pipeline-flow">
+    <div class="iq-pipe-step">
+      <div class="iq-pipe-step-num">Step 1</div>
+      <div class="iq-pipe-step-title">📁 Bulk Upload</div>
+      <div style="font-size:.72rem; color:#64748B; margin-top:.2rem;">PDF, DOCX, TXT</div>
+    </div>
+    <div class="iq-pipe-arrow">&rarr;</div>
+    <div class="iq-pipe-step">
+      <div class="iq-pipe-step-num">Step 2</div>
+      <div class="iq-pipe-step-title">🔍 Text &amp; Skill Parser</div>
+      <div style="font-size:.72rem; color:#64748B; margin-top:.2rem;">Experience &amp; Tech Stack</div>
+    </div>
+    <div class="iq-pipe-arrow">&rarr;</div>
+    <div class="iq-pipe-step">
+      <div class="iq-pipe-step-num">Step 3</div>
+      <div class="iq-pipe-step-title">🤖 Semantic Matching</div>
+      <div style="font-size:.72rem; color:#64748B; margin-top:.2rem;">GPT-4o Scoring Engine</div>
+    </div>
+    <div class="iq-pipe-arrow">&rarr;</div>
+    <div class="iq-pipe-step">
+      <div class="iq-pipe-step-num">Step 4</div>
+      <div class="iq-pipe-step-title">🏆 Ranked Shortlist</div>
+      <div style="font-size:.72rem; color:#64748B; margin-top:.2rem;">Export to Excel (.xlsx)</div>
+    </div>
+  </div>
+
+  <div style="font-size:.78rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.4rem;">
+    Live Ingestion Queue Preview
+  </div>
+  <table class="iq-vis-table">
+    <thead>
+      <tr>
+        <th>Candidate File</th>
+        <th>Target Role</th>
+        <th>Extracted Experience</th>
+        <th>Match Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Sarah_Jenkins_CV.pdf</b></td>
+        <td>Senior Full-Stack Engineer</td>
+        <td>7.5 Years (React, Node, AWS)</td>
+        <td><span style="color:#059669; font-weight:700;">● Ranked #1 (94%)</span></td>
+      </tr>
+      <tr>
+        <td><b>Marcus_Vance_Resume.docx</b></td>
+        <td>Frontend Lead</td>
+        <td>6.0 Years (TypeScript, Next.js)</td>
+        <td><span style="color:#059669; font-weight:700;">● Ranked #2 (88%)</span></td>
+      </tr>
+      <tr>
+        <td><b>Amira_Patel_CV.pdf</b></td>
+        <td>Backend Specialist</td>
+        <td>5.2 Years (Python, PostgreSQL)</td>
+        <td><span style="color:#2563EB; font-weight:700;">● Ranked #3 (82%)</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+""", unsafe_allow_html=True)
+
+elif "AI-Powered Scoring" in feature_choice:
+    st.markdown("""
+<div class="iq-feat-box">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.2rem; flex-wrap:wrap; gap:.8rem;">
+    <div>
+      <div style="display:flex; align-items:center; gap:.5rem;">
+        <span style="font-size:1.15rem; font-weight:800; color:#0B1120;">Candidate Scorecard: Priya Sharma</span>
+        <span style="background:#D1FAE5; color:#065F46; font-size:.75rem; font-weight:700; padding:.2rem .65rem; border-radius:6px;">
+          ✦ Strongly Recommended
+        </span>
+      </div>
+      <div style="font-size:.82rem; color:#64748B; margin-top:.2rem;">
+        Role: <b>Senior Cloud &amp; DevOps Architect</b> &middot; Experience: <b>8.5 Years</b> &middot; Top 2% Match
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:1.85rem; font-weight:900; color:#10B981; line-height:1;">94<span style="font-size:1rem; color:#64748B; font-weight:600;">/100</span></div>
+      <div style="font-size:.78rem; color:#F59E0B; font-weight:700;">★★★★★ 9.4/10</div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:1.4rem;">
+    <div>
+      <div style="font-size:.8rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.8rem;">
+        Multi-Dimensional Match Breakdown
+      </div>
+
+      <div class="iq-score-bar-row">
+        <div class="iq-score-bar-hdr">
+          <span>Core Technical Skills (AWS, Terraform, Kubernetes, Python)</span>
+          <span style="color:#059669;">96%</span>
+        </div>
+        <div class="iq-score-track"><div class="iq-score-fill-g" style="width:96%;"></div></div>
+      </div>
+
+      <div class="iq-score-bar-row">
+        <div class="iq-score-bar-hdr">
+          <span>Seniority &amp; Leadership Fit (8+ yrs matching 7+ yr req)</span>
+          <span style="color:#059669;">94%</span>
+        </div>
+        <div class="iq-score-track"><div class="iq-score-fill-g" style="width:94%;"></div></div>
+      </div>
+
+      <div class="iq-score-bar-row">
+        <div class="iq-score-bar-hdr">
+          <span>Industry &amp; Enterprise Architecture Relevance</span>
+          <span style="color:#2563EB;">91%</span>
+        </div>
+        <div class="iq-score-track"><div class="iq-score-fill" style="width:91%;"></div></div>
+      </div>
+
+      <div class="iq-score-bar-row">
+        <div class="iq-score-bar-hdr">
+          <span>Certifications (AWS Solutions Architect Professional)</span>
+          <span style="color:#059669;">95%</span>
+        </div>
+        <div class="iq-score-track"><div class="iq-score-fill-g" style="width:95%;"></div></div>
+      </div>
+    </div>
+
+    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:1.1rem;">
+      <div style="font-size:.78rem; font-weight:700; color:#0B1120; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.55rem;">
+        AI Recruiter Rationale
+      </div>
+      <div style="font-size:.82rem; color:#334155; line-height:1.6; margin-bottom:.85rem;">
+        &ldquo;Priya exceeds all core technical prerequisites with extensive hands-on enterprise migration experience. Demonstrated track record leading DevOps and Kubernetes modernization projects.&rdquo;
+      </div>
+      <div style="font-size:.75rem; font-weight:700; color:#059669; margin-bottom:.3rem;">KEY STRENGTHS:</div>
+      <div style="font-size:.78rem; color:#475569; line-height:1.5;">
+        &bull; 8+ yrs architecting scalable cloud solutions<br>
+        &bull; Hands-on Kubernetes &amp; Terraform automation<br>
+        &bull; Led 3 multi-region cloud migrations
+      </div>
+      <div style="font-size:.75rem; font-weight:700; color:#D97706; margin-top:.5rem; margin-bottom:.2rem;">POINTS TO VERIFY:</div>
+      <div style="font-size:.78rem; color:#64748B;">
+        &bull; Notice period is 30 days &middot; Expected salary at top of band
+      </div>
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+elif "Top Talent" in feature_choice:
+    st.markdown("""
+<div class="iq-feat-box">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.1rem; flex-wrap:wrap; gap:.6rem;">
+    <div>
+      <div style="font-size:1.05rem; font-weight:800; color:#0B1120;">Ranked Leaderboard &amp; Talent Distribution Matrix</div>
+      <div style="font-size:.82rem; color:#64748B;">Instant comparative ranking cuts screening time from hours to seconds</div>
+    </div>
+    <div style="display:flex; gap:.4rem;">
+      <span style="background:#EFF6FF; color:#2563EB; font-size:.76rem; font-weight:700; padding:.25rem .65rem; border-radius:6px; border:1px solid #BFDBFE;">Top 3 Shortlist</span>
+      <span style="background:#F8FAFC; color:#64748B; font-size:.76rem; font-weight:600; padding:.25rem .65rem; border-radius:6px; border:1px solid #E2E8F0;">Score &ge; 80%</span>
+    </div>
+  </div>
+
+  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.8rem 1rem; margin-bottom:1.1rem;">
+    <div style="display:flex; justify-content:space-between; font-size:.78rem; font-weight:700; margin-bottom:.35rem;">
+      <span style="color:#059669;">● Tier 1 Shortlist (80-100%): 3 Candidates</span>
+      <span style="color:#2563EB;">● Qualified Pool (60-79%): 5 Candidates</span>
+      <span style="color:#64748B;">● Screened Out (&lt;60%): 2 Candidates</span>
+    </div>
+    <div style="height:10px; background:#E2E8F0; border-radius:99px; display:flex; overflow:hidden;">
+      <div style="width:30%; background:#10B981;" title="Tier 1: 30%"></div>
+      <div style="width:50%; background:#3B82F6;" title="Qualified: 50%"></div>
+      <div style="width:20%; background:#CBD5E1;" title="Screened Out: 20%"></div>
+    </div>
+  </div>
+
+  <table class="iq-vis-table">
+    <thead>
+      <tr>
+        <th style="width:40px;">Rank</th>
+        <th>Candidate</th>
+        <th>Match Score</th>
+        <th>AI Recommendation</th>
+        <th>Highlighted Skills</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:#FAFDFB;">
+        <td><b style="font-size:1.1rem;">🥇</b></td>
+        <td>
+          <div style="font-weight:700; color:#0B1120;">Elena Rostova</div>
+          <div style="font-size:.72rem; color:#64748B;">Senior ML Engineer &middot; 7 yrs exp</div>
+        </td>
+        <td><b style="color:#059669; font-size:.95rem;">96%</b> (9.6/10)</td>
+        <td><span style="background:#DCFCE7; color:#15803D; padding:3px 8px; border-radius:5px; font-weight:700; font-size:.73rem;">Strongly Recommend</span></td>
+        <td><span class="iq-tag iq-tag-g">PyTorch</span> <span class="iq-tag iq-tag-g">MLOps</span> <span class="iq-tag iq-tag-g">Kubernetes</span></td>
+      </tr>
+      <tr style="background:#FAFDFB;">
+        <td><b style="font-size:1.1rem;">🥈</b></td>
+        <td>
+          <div style="font-weight:700; color:#0B1120;">Marcus Chen</div>
+          <div style="font-size:.72rem; color:#64748B;">DevOps &amp; Cloud Lead &middot; 6 yrs exp</div>
+        </td>
+        <td><b style="color:#059669; font-size:.95rem;">91%</b> (9.1/10)</td>
+        <td><span style="background:#DCFCE7; color:#15803D; padding:3px 8px; border-radius:5px; font-weight:700; font-size:.73rem;">Strongly Recommend</span></td>
+        <td><span class="iq-tag iq-tag-g">Docker</span> <span class="iq-tag iq-tag-g">Terraform</span> <span class="iq-tag iq-tag-g">AWS</span></td>
+      </tr>
+      <tr>
+        <td><b style="font-size:1.1rem;">🥉</b></td>
+        <td>
+          <div style="font-weight:700; color:#0B1120;">Aisha Patel</div>
+          <div style="font-size:.72rem; color:#64748B;">Data Platform Specialist &middot; 5 yrs exp</div>
+        </td>
+        <td><b style="color:#2563EB; font-size:.95rem;">86%</b> (8.6/10)</td>
+        <td><span style="background:#DBEAFE; color:#1D4ED8; padding:3px 8px; border-radius:5px; font-weight:700; font-size:.73rem;">Recommend</span></td>
+        <td><span class="iq-tag">SQL</span> <span class="iq-tag">Airflow</span> <span class="iq-tag">Snowflake</span></td>
+      </tr>
+      <tr>
+        <td><b style="color:#64748B;">#4</b></td>
+        <td>
+          <div style="font-weight:700; color:#0B1120;">David Thorne</div>
+          <div style="font-size:.72rem; color:#64748B;">Systems Engineer &middot; 4 yrs exp</div>
+        </td>
+        <td><b style="color:#D97706; font-size:.95rem;">74%</b> (7.4/10)</td>
+        <td><span style="background:#FEF3C7; color:#92400E; padding:3px 8px; border-radius:5px; font-weight:700; font-size:.73rem;">Review</span></td>
+        <td><span class="iq-tag iq-tag-m">Linux</span> <span class="iq-tag iq-tag-m">Bash</span> <span class="iq-tag iq-tag-m">Ansible</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+""", unsafe_allow_html=True)
+
+else:
+    st.markdown("""
+<div class="iq-feat-box">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.1rem; flex-wrap:wrap; gap:.6rem;">
+    <div>
+      <div style="font-size:1.05rem; font-weight:800; color:#0B1120;">Recruiter Time &amp; Cost ROI Dashboard</div>
+      <div style="font-size:.82rem; color:#64748B;">Quantifiable efficiency gains proven across recruitment agencies and internal talent teams</div>
+    </div>
+    <span style="background:#EFF6FF; color:#2563EB; font-size:.78rem; font-weight:700; padding:.3rem .8rem; border-radius:99px; border:1px solid #BFDBFE;">
+      🚀 98.5% Screening Time Saved
+    </span>
+  </div>
+
+  <div class="iq-roi-grid">
+    <div class="iq-roi-box iq-roi-manual">
+      <div style="font-size:.85rem; font-weight:800; color:#991B1B; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.5rem;">
+        🔴 Traditional Manual Screening
+      </div>
+      <div style="font-size:1.75rem; font-weight:900; color:#991B1B; margin-bottom:.4rem;">15 &ndash; 20 Hours</div>
+      <div style="font-size:.82rem; color:#7F1D1D; line-height:1.6;">
+        &bull; 100 CVs &times; 10&ndash;12 mins manual reading per CV<br>
+        &bull; Approx. <b>$750+</b> recruiter labor cost per role<br>
+        &bull; High risk of fatigue and overlooking hidden talent<br>
+        &bull; Inconsistent evaluation criteria across days
+      </div>
+    </div>
+
+    <div class="iq-roi-box iq-roi-ai">
+      <div style="font-size:.85rem; font-weight:800; color:#065F46; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.5rem;">
+        🟢 With TalentIQ AI Screening
+      </div>
+      <div style="font-size:1.75rem; font-weight:900; color:#059669; margin-bottom:.4rem;">45 Seconds</div>
+      <div style="font-size:.82rem; color:#064E3B; line-height:1.6;">
+        &bull; Instant multi-CV parallel semantic analysis<br>
+        &bull; Over <b>99% reduction</b> in screening turnaround<br>
+        &bull; Objective scoring against the exact job description<br>
+        &bull; Ready-to-send branded Excel (.xlsx) client report
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <div style="font-size:.86rem; font-weight:800; color:#0B1120;">📊 Instant Client Shortlist Export (.xlsx)</div>
+      <div style="font-size:.78rem; color:#64748B;">Pre-formatted Excel sheet with candidate contact info, ranking, match score, strengths, and recommendations.</div>
+    </div>
+    <span style="background:#2563EB; color:#fff; font-size:.82rem; font-weight:700; padding:.5rem 1.1rem; border-radius:8px; display:inline-flex; align-items:center; gap:.4rem;">
+      ⬇️ Example Shortlist Report (.xlsx)
+    </span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
+st.markdown('<div class="iq-div"></div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
@@ -979,50 +1461,17 @@ with col2:
     with st.container(border=True):
         st.markdown("""
 <div class="iq-phead">
-  <div class="iq-pnum">2</div>Upload CVs
+  <div class="iq-pnum">2</div>Upload Candidate CVs
 </div>""", unsafe_allow_html=True)
 
-        email_input = st.text_input(
-            "Work Email (Free Trial Account)",
-            placeholder="hr@yourcompany.com",
-            key="account_email_input",
-            help="Each account gets 10 free CV evaluations to test TalentIQ.",
-        ).strip().lower()
-
-        account_usage = get_account_usage(email_input) if email_input else None
-        remaining_limit = account_usage["remaining"] if account_usage else MAX_FREE_RESUMES
-
-        if email_input:
-            if "@" not in email_input or "." not in email_input:
-                st.caption("⚠️ Please enter a valid work email.")
-            elif account_usage and account_usage["is_exhausted"]:
-                st.markdown(
-                    f'<div class="iq-account-exhausted">'
-                    f'⚠️ <b>Free trial limit reached (10/10 CVs)</b> for <b>{email_input}</b>.<br>'
-                    f'Need to screen more candidates? '
-                    f'<a href="https://wa.me/447379975532" target="_blank">Chat with us on WhatsApp &rarr;</a>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                used = account_usage["resumes_used"]
-                rem = account_usage["remaining"]
-                st.markdown(
-                    f'<div class="iq-trial-info">'
-                    f'👤 Account: <b>{email_input}</b> &middot; '
-                    f'<b>{rem} of 10 free CVs remaining</b> ({used} used)'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.markdown(
-                '<div class="iq-trial-info">🎁 <b>Free Trial:</b> Screen up to <b>10 CVs per account</b>. '
-                'Enter your work email above to start.</div>',
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            '<div class="iq-trial-info">🎁 <b>Free Trial:</b> Screen up to <b>10 CVs per batch</b>. '
+            'Upload resumes in PDF, DOCX or TXT format.</div>',
+            unsafe_allow_html=True,
+        )
 
         cv_files = st.file_uploader(
-            f"PDF, DOCX, TXT — Up to {remaining_limit} CVs",
+            "Upload CVs (PDF, DOCX, TXT — up to 10 files)",
             type=["pdf", "docx", "txt"],
             accept_multiple_files=True,
             key="cv_up",
@@ -1030,47 +1479,24 @@ with col2:
         )
         total_uploaded = len(cv_files or [])
 
-        # Status badge
-        if total_uploaded > remaining_limit:
+        # Status badge & limit enforcement
+        if total_uploaded > 10:
             st.markdown(
-                f'<div class="iq-status-wait">⚠️ {total_uploaded} CVs uploaded (Exceeds {remaining_limit} remaining CVs)</div>',
+                f'<div class="iq-status-wait" style="background:#FEF2F2;color:#DC2626;border-color:#FCA5A5">'
+                f'⚠️ <b>{total_uploaded} CVs uploaded</b> — Free trial is limited to 10 CVs per batch. '
+                f'Please remove {total_uploaded - 10} file(s) to proceed.</div>',
                 unsafe_allow_html=True,
             )
         elif total_uploaded > 0:
             st.markdown(
-                f'<div class="iq-status-ok">✅ {total_uploaded} CV{"s" if total_uploaded != 1 else ""} ready for screening</div>',
+                f'<div class="iq-status-ok">✅ <b>{total_uploaded}/10 CVs selected</b> ready for screening</div>',
                 unsafe_allow_html=True,
             )
         else:
-            st.markdown('<div class="iq-status-wait">⏳ No CVs uploaded yet…</div>', unsafe_allow_html=True)
+            st.markdown('<div class="iq-status-wait">⏳ Drag &amp; drop up to 10 resumes to get started…</div>', unsafe_allow_html=True)
 
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-
-        # Optional email settings
-        with st.expander("⚙️  Email settings (optional)"):
-            send_emails    = st.checkbox("Auto-email top candidates", value=False)
-            recruiter_name = st.text_input("Recruiter / company name", value="Recruitment Team")
-            st.text_input("Your email (Brevo sender)", key="brevo_from_email", placeholder="you@gmail.com")
-            st.text_input("Brevo API Key", key="brevo_api_key", type="password", placeholder="xkeysib-…")
-            _from = (st.session_state.get("brevo_from_email") or "").strip()
-            with st.expander("📋 Brevo setup guide"):
-                st.markdown(f"""
-**1.** Create free account → [app.brevo.com](https://app.brevo.com) · 300 emails/day
-**2.** Verify sender: Brevo → Senders & IP → Senders → Add a Sender → enter `{_from or "your email"}` → verify via email
-**3.** API key: Brevo → top menu → SMTP & API → API Keys → Generate
-""")
-            _e1, _e2 = st.columns(2)
-            with _e1:
-                if st.button("🔑 Verify Key", use_container_width=True):
-                    _ok, _msg = test_brevo_key(st.session_state.get("brevo_api_key",""))
-                    (st.success if _ok else st.error)(f"{'✅' if _ok else '❌'} {_msg}")
-            with _e2:
-                if st.button("📧 Test Email", use_container_width=True):
-                    _ok, _msg = send_test_email(st.session_state.get("brevo_api_key",""), st.session_state.get("brevo_from_email",""))
-                    (st.success if _ok else st.error)(f"{'✅' if _ok else '❌'} {_msg}")
-
-        st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
-        run_btn = st.button("🚀  Screen Candidates", use_container_width=True)
+        st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+        run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
@@ -1082,19 +1508,12 @@ with col3:
         # ── Trigger screening ────────────────────────────────────────────────
         if run_btn:
             errors = []
-            if not email_input or "@" not in email_input or "." not in email_input:
-                errors.append("Please enter your work email to use your 10 free trial CV evaluations.")
-            elif account_usage and account_usage["is_exhausted"]:
-                errors.append(f"Account '{email_input}' has already used all 10 free CV evaluations. Please book a demo on WhatsApp to unlock full access.")
             if not jd_text:
-                errors.append("Please add a Job Description (paste text or upload a file).")
+                errors.append("Please provide a Job Description in Panel 1 (paste text or choose a sample).")
             if total_uploaded == 0:
-                errors.append("Please upload at least one CV.")
-            if account_usage and total_uploaded > account_usage["remaining"]:
-                errors.append(
-                    f"Account '{email_input}' has {account_usage['remaining']} free evaluations remaining, "
-                    f"but you uploaded {total_uploaded} CVs. Please keep up to {account_usage['remaining']} files."
-                )
+                errors.append("Please upload at least one candidate CV in Panel 2.")
+            if total_uploaded > 10:
+                errors.append(f"Free trial limit is 10 CVs per batch. You uploaded {total_uploaded}. Please select up to 10 files.")
 
             if errors:
                 for e in errors:
@@ -1165,29 +1584,8 @@ with col3:
                 bar.progress(1.0, text="✅ Done!"); _info.empty()
                 st.session_state.results   = results
                 st.session_state.processed = True
-                st.session_state.show_full = False
-
-                # Deduct screened CVs from account balance
-                new_usage = record_account_usage(email_input, len(saved_paths))
-                st.success(f"🎯 Evaluated {len(saved_paths)} CV(s) for {email_input}. {new_usage['remaining']} free evaluations remaining.")
-
-                if send_emails and results:
-                    _has_creds = bool(st.session_state.get("brevo_api_key") and st.session_state.get("brevo_from_email"))
-                    if not _has_creds:
-                        st.info("ℹ️ Auto-email skipped: Add Brevo API key & sender email in 'Email settings' to send notifications.")
-                    else:
-                        with st.spinner("Sending shortlist emails…"):
-                            report = send_shortlist_emails(
-                                candidates=results[:10],
-                                job_title=first_line,
-                                recruiter_name=recruiter_name,
-                                brevo_api_key=st.session_state.get("brevo_api_key",""),
-                                from_email=st.session_state.get("brevo_from_email",""),
-                            )
-                        if report["sent"]:
-                            st.success(f"📧 Emails sent to {len(report['sent'])} candidates.")
-                        if report["failed"]:
-                            st.warning(f"⚠️ Failed: {', '.join(report['failed'])}")
+                st.session_state.show_full = True
+                st.success(f"🎯 Successfully evaluated {len(results)} candidate(s)!")
 
                 deleted, _ = delete_uploaded_files(saved_paths)
                 if deleted:
@@ -1270,58 +1668,126 @@ with col3:
             st.error("❌ No candidates processed. Check your CV files.")
 
         else:
-            # Idle state — show panel header + skeleton
+            # Idle state — show panel header + live sample shortlist preview
             st.markdown("""
 <div class="iq-phead">
-  <div class="iq-pnum">3</div>Top Candidates
+  <div class="iq-pnum">3</div>Candidate Rankings
 </div>""", unsafe_allow_html=True)
-            st.markdown("""
-<div style="text-align:center;padding:2.5rem 1rem 1rem">
-  <div style="font-size:2.5rem;margin-bottom:.8rem">📊</div>
-  <div style="font-size:.95rem;font-weight:600;color:#0B1120;margin-bottom:.4rem">
-    Ranked results appear here
-  </div>
-  <div style="font-size:.82rem;color:#94A3B8;line-height:1.65">
-    Add a job description, upload CVs,<br>
-    then click <b style="color:#2563EB">Screen Candidates</b>
+
+            tab_sample, tab_guide = st.tabs(["👁️ Sample Shortlist", "⏳ Waiting for Upload"])
+
+            with tab_sample:
+                st.markdown("""
+<div style="font-size:.76rem;color:#64748B;margin-bottom:.65rem;">
+  Preview of ranked candidate scorecards generated by TalentIQ:
+</div>
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">1</div>
+  <div class="iq-cr-av iq-cr-av1">ER</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">Elena Rostova</div>
+        <div class="iq-cr-sub">7+ yrs exp &middot; PyTorch, MLOps, AWS</div>
+      </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">96%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:96%"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-strong">Strongly Recommend</span></div>
+    </div>
+    <div class="iq-cr-sk-row">
+      <span class="iq-cr-sk">PyTorch</span><span class="iq-cr-sk">MLOps</span><span class="iq-cr-sk">Kubernetes</span><span class="iq-cr-skmore">+3</span>
+    </div>
   </div>
 </div>
-<div style="margin:1rem 0;border-top:1px dashed #E2E8F0;padding-top:1rem">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;margin-bottom:.45rem;opacity:.4">
-    <div style="display:flex;align-items:center;gap:.7rem">
-      <div style="width:36px;height:36px;border-radius:50%;background:#DBEAFE"></div>
-      <div><div style="width:90px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:60px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
+
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">2</div>
+  <div class="iq-cr-av iq-cr-av2">MC</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">Marcus Chen</div>
+        <div class="iq-cr-sub">6+ yrs exp &middot; Docker, Terraform, CI/CD</div>
+      </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">91%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:91%"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-strong">Strongly Recommend</span></div>
     </div>
-    <div style="width:40px;height:18px;background:#DBEAFE;border-radius:6px"></div>
+    <div class="iq-cr-sk-row">
+      <span class="iq-cr-sk">Docker</span><span class="iq-cr-sk">Terraform</span><span class="iq-cr-sk">AWS</span>
+    </div>
   </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;margin-bottom:.45rem;opacity:.25">
-    <div style="display:flex;align-items:center;gap:.7rem">
-      <div style="width:36px;height:36px;border-radius:50%;background:#EDE9FE"></div>
-      <div><div style="width:75px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:50px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
+</div>
+
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">3</div>
+  <div class="iq-cr-av iq-cr-av3">AP</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">Aisha Patel</div>
+        <div class="iq-cr-sub">5+ yrs exp &middot; SQL, Airflow, Snowflake</div>
+      </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">86%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:86%"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-good">Recommend</span></div>
     </div>
-    <div style="width:40px;height:18px;background:#EDE9FE;border-radius:6px"></div>
-  </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;border:1px dashed #E2E8F0;border-radius:10px;opacity:.15">
-    <div style="display:flex;align-items:center;gap:.7rem">
-      <div style="width:36px;height:36px;border-radius:50%;background:#FCE7F3"></div>
-      <div><div style="width:85px;height:9px;background:#E2E8F0;border-radius:4px;margin-bottom:5px"></div><div style="width:55px;height:7px;background:#EEF2FF;border-radius:4px"></div></div>
+    <div class="iq-cr-sk-row">
+      <span class="iq-cr-sk">SQL</span><span class="iq-cr-sk">Airflow</span><span class="iq-cr-sk">Snowflake</span>
     </div>
-    <div style="width:40px;height:18px;background:#FCE7F3;border-radius:6px"></div>
   </div>
 </div>
 """, unsafe_allow_html=True)
-    
-    
+
+            with tab_guide:
+                st.markdown("""
+<div style="text-align:center;padding:2rem 1rem 1rem">
+  <div style="font-size:2.2rem;margin-bottom:.6rem">📊</div>
+  <div style="font-size:.92rem;font-weight:700;color:#0B1120;margin-bottom:.3rem">
+    Upload up to 10 CVs to screen
+  </div>
+  <div style="font-size:.8rem;color:#94A3B8;line-height:1.6">
+    Add a job description in Panel 1, select CVs in Panel 2,<br>
+    then click <b style="color:#2563EB">Screen Candidates</b>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+
 # ─────────────────────────── Full results (below panels) ─────────────────────
 if st.session_state.get("show_full") and st.session_state.results:
     results = st.session_state.results
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
-    m1, m2, m3 = st.columns(3)
+    m1, m2, m3, m4 = st.columns(4)
     m1.metric("Total Screened", len(results))
-    m2.metric("Shortlisted",    min(10, len(results)))
+    m2.metric("Shortlisted", min(10, len(results)))
     avg = sum(r.get("match_score", 0) for r in results) / len(results)
-    m3.metric("Avg Score", f"{round(avg / 10, 1)}/10")
+    m3.metric("Avg Match", f"{round(avg, 1)}%")
+    top_score = max(r.get("match_score", 0) for r in results)
+    m4.metric("Top Match", f"{top_score}%")
+
+    # ── Score Distribution Visualisation ─────────────────────────────
+    with st.expander("📊 Candidate Match Score Visualisation", expanded=True):
+        chart_data = pd.DataFrame([
+            {
+                "Candidate": r.get("candidate_name", f"CV #{i+1}"),
+                "Match Score (%)": r.get("match_score", 0),
+            }
+            for i, r in enumerate(results[:10])
+        ])
+        chart = alt.Chart(chart_data).mark_bar(cornerRadius=6, color="#2563EB").encode(
+            x=alt.X("Match Score (%):Q", scale=alt.Scale(domain=[0, 100]), title="Match Score (%)"),
+            y=alt.Y("Candidate:N", sort="-x", title=""),
+            tooltip=["Candidate", "Match Score (%)"]
+        ).properties(height=max(160, len(chart_data) * 28))
+        st.altair_chart(chart, use_container_width=True)
 
     # ── Search + Filter bar ──────────────────────────────────────────
     _fc1, _fc2 = st.columns([3, 2])
