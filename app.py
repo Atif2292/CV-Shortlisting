@@ -33,13 +33,10 @@ st.set_page_config(
 
 
 def render_html(html_str: str, container=None):
-    """Safely renders HTML in Streamlit without CommonMark converting lines into code blocks."""
+    """Safely renders HTML in Streamlit using st.markdown with stripped lines to prevent CommonMark code blocks."""
     clean = "\n".join(ln.strip() for ln in html_str.splitlines() if ln.strip())
     target = container if container is not None else st
-    if hasattr(target, "html"):
-        target.html(clean)
-    else:
-        target.markdown(clean, unsafe_allow_html=True)
+    target.markdown(clean, unsafe_allow_html=True)
 
 
 # ─────────────────────────── CSS (light mode only) ────────────────────────────
@@ -1048,7 +1045,7 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 }
 </style>"""
 
-render_html(build_css())
+st.markdown(build_css(), unsafe_allow_html=True)
 
 # ─────────────────────────── Session state ───────────────────────────────────
 for _k, _v in [
