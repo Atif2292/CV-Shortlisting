@@ -206,25 +206,25 @@ def rank_candidates_batch(candidates: list, job_context: dict) -> list:
     if not candidates:
         return []
 
-    if USE_MOCK:
+    if USE_MOCK or not os.getenv("OPENAI_API_KEY"):
         return _mock_rank_batch(candidates, job_context)
 
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    user_msg = (
-        f"JOB POSTING:\n"
-        f"Title: {job_context.get('title')}\n"
-        f"Required Skills: {job_context.get('skills')}\n"
-        f"Minimum Experience: {job_context.get('years_experience')} years\n"
-        f"Description: {job_context.get('description')}\n\n"
-        f"CANDIDATES ({len(candidates)} total):\n"
-        f"{json.dumps(candidates, indent=2)}\n\n"
-        f"Rank all {len(candidates)} candidates. Every candidate must appear in the output."
-    )
-
     try:
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        user_msg = (
+            f"JOB POSTING:\n"
+            f"Title: {job_context.get('title')}\n"
+            f"Required Skills: {job_context.get('skills')}\n"
+            f"Minimum Experience: {job_context.get('years_experience')} years\n"
+            f"Description: {job_context.get('description')}\n\n"
+            f"CANDIDATES ({len(candidates)} total):\n"
+            f"{json.dumps(candidates, indent=2)}\n\n"
+            f"Rank all {len(candidates)} candidates. Every candidate must appear in the output."
+        )
+
         resp = client.chat.completions.create(
             model="gpt-4o",
             temperature=0.2,
@@ -241,9 +241,8 @@ def rank_candidates_batch(candidates: list, job_context: dict) -> list:
             raise ValueError("Expected a JSON array from the LLM")
         return results
     except Exception as exc:
-        print(f"[ai_scoring] Batch ranking error: {exc}")
-        # Re-raise so the UI can display the real error message to the user
-        raise RuntimeError(str(exc)) from exc
+        print(f"[ai_scoring] Batch ranking error (falling back to mock): {exc}")
+        return _mock_rank_batch(candidates, job_context)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

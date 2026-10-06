@@ -667,6 +667,134 @@ label, .stFileUploader label {
 .iq-feat-title { font-size: 1.12rem; font-weight: 800; color: #0F172A; margin-bottom: .45rem; line-height: 1.3; }
 .iq-feat-desc { font-size: .84rem; color: #64748B; line-height: 1.6; }
 
+/* ── High-Fidelity Bento Grid & UI Mockups ── */
+.iq-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+.iq-bento-card {
+    background: #FFFFFF;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 20px;
+    padding: 1.8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .18s, box-shadow .18s, border-color .18s;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+}
+.iq-bento-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.08);
+    border-color: #CBD5E1;
+}
+.iq-bento-tag {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #2563EB;
+    background: #EFF6FF;
+    border: 1px solid #DBEAFE;
+    padding: .2rem .65rem;
+    border-radius: 6px;
+    margin-bottom: .75rem;
+    width: fit-content;
+}
+.iq-bento-title {
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: #0F172A;
+    line-height: 1.25;
+    margin-bottom: .45rem;
+}
+.iq-bento-sub {
+    font-size: .84rem;
+    color: #64748B;
+    line-height: 1.55;
+    margin-bottom: 1.2rem;
+}
+.iq-mockup-box {
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+}
+.iq-mockup-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: .6rem;
+    margin-bottom: .75rem;
+    border-bottom: 1px solid #EDF2F7;
+}
+.iq-mockup-dots { display: flex; gap: 5px; }
+.iq-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.iq-dot-r { background: #EF4444; }
+.iq-dot-y { background: #F59E0B; }
+.iq-dot-g { background: #10B981; }
+.iq-mockup-title { font-size: .72rem; font-family: monospace; color: #64748B; font-weight: 600; }
+.iq-mockup-status { font-size: .7rem; font-weight: 700; color: #10B981; }
+.iq-mockup-profile { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+.iq-mockup-av {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    color: #FFFFFF; font-weight: 800; font-size: .78rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.iq-mockup-pname { font-size: .86rem; font-weight: 800; color: #0F172A; }
+.iq-mockup-prole { font-size: .74rem; color: #64748B; }
+.iq-mockup-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.iq-chip {
+    font-size: .68rem; font-weight: 700; padding: .2rem .55rem;
+    border-radius: 6px; display: inline-block;
+}
+.iq-chip-green { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
+.iq-chip-blue { background: #EFF6FF; color: #1D4ED8; border: 1px solid #DBEAFE; }
+
+.iq-gauge-row { margin-bottom: .6rem; }
+.iq-gauge-row:last-child { margin-bottom: 0; }
+.iq-gauge-info { display: flex; justify-content: space-between; font-size: .75rem; font-weight: 700; color: #334155; margin-bottom: .25rem; }
+.iq-gauge-track { height: 6px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
+.iq-gauge-bar { height: 100%; border-radius: 99px; }
+
+.iq-cand-mini-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .45rem 0; border-bottom: 1px solid #EDF2F7;
+}
+.iq-cand-mini-row:last-child { border-bottom: none; }
+.iq-cand-mini-left { display: flex; align-items: center; gap: .5rem; }
+.iq-medal { font-size: 1rem; }
+.iq-cand-mini-name { font-size: .82rem; font-weight: 800; color: #0F172A; }
+.iq-cand-mini-role { font-size: .7rem; color: #64748B; }
+.iq-score-pill {
+    font-size: .68rem; font-weight: 700; padding: .2rem .55rem; border-radius: 6px;
+}
+.iq-score-pill-green { background: #DCFCE7; color: #15803D; }
+.iq-score-pill-blue { background: #DBEAFE; color: #1D4ED8; }
+
+.iq-excel-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: .65rem; }
+.iq-excel-hdr-row {
+    display: grid; grid-template-columns: 35px 1.4fr .8fr 1.6fr;
+    background: #F1F5F9; padding: .35rem .6rem; font-size: .66rem;
+    font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: .04em;
+    border-bottom: 1px solid #CBD5E1;
+}
+.iq-excel-data-row {
+    display: grid; grid-template-columns: 35px 1.4fr .8fr 1.6fr;
+    padding: .35rem .6rem; font-size: .72rem; color: #334155;
+    border-bottom: 1px solid #F1F5F9; align-items: center;
+}
+.iq-excel-data-row:last-child { border-bottom: none; }
+.iq-excel-footer { display: flex; justify-content: space-between; align-items: center; font-size: .73rem; color: #64748B; }
+.iq-dl-badge {
+    background: #10B981; color: #FFFFFF; font-weight: 700;
+    font-size: .68rem; padding: .25rem .65rem; border-radius: 6px;
+}
+
 /* ── Why Recruiters Choose Pillars ── */
 .iq-pillars-box {
     background: linear-gradient(175deg, #F8FAFC 0%, #EFF6FF 100%);
@@ -754,9 +882,9 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
     display:flex; align-items:flex-start; gap:.45rem;
     padding:.65rem .5rem; border:1px solid #EAEFF6;
     border-radius:12px; margin-bottom:.45rem; background:#fff;
-    transition:box-shadow .15s, border-color .15s;
+    transition:background-color .15s ease, border-color .15s ease;
 }
-.iq-cr-row:hover { box-shadow:0 2px 12px rgba(10,20,60,.09); border-color:#DBEAFE; }
+.iq-cr-row:hover { background-color:#F8FAFC; border-color:#CBD5E1; }
 .iq-cr-rank {
     width:21px; height:21px; border-radius:50%;
     background:#2563EB; color:#fff; font-weight:800;
@@ -1015,17 +1143,108 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# ─────────────────────────── Feature Bar ─────────────────────────────────────
+st.markdown("""
+<div class="iq-fbar">
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#9889;</div>
+    <div>
+      <div class="iq-fbar-t1">Screen 100s of CVs</div>
+      <div class="iq-fbar-t2">In minutes, not days</div>
+    </div>
+  </div>
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#11088;</div>
+    <div>
+      <div class="iq-fbar-t1">AI Scoring &amp; Ranking</div>
+      <div class="iq-fbar-t2">0&ndash;100 match accuracy</div>
+    </div>
+  </div>
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#128200;</div>
+    <div>
+      <div class="iq-fbar-t1">Identify Top Talent</div>
+      <div class="iq-fbar-t2">Contextual semantic fit</div>
+    </div>
+  </div>
+  <div class="iq-fbar-item">
+    <div class="iq-fbar-icon">&#9201;</div>
+    <div>
+      <div class="iq-fbar-t1">Save Hours Weekly</div>
+      <div class="iq-fbar-t2">Instant Excel reports</div>
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
 st.markdown('<div id="screening-workspace" style="margin-top:1.5rem;"></div>', unsafe_allow_html=True)
 col1, col2, col3 = st.columns([1, 1, 1.15], gap="large")
 
 # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
+SAMPLE_ROLES = {
+    "Custom (Paste your own JD)": "",
+    "Senior Python Backend Engineer": (
+        "Job Title: Senior Python Backend Engineer\n"
+        "Location: Remote\n"
+        "Experience: 5+ years\n\n"
+        "About the Role:\n"
+        "We are looking for a Senior Python Backend Engineer to build high-performance APIs and scalable cloud services.\n\n"
+        "Key Requirements:\n"
+        "- 5+ years building backend applications in Python (FastAPI, Django, Flask)\n"
+        "- Strong experience with relational databases (PostgreSQL, MySQL)\n"
+        "- Hands-on expertise with AWS cloud infrastructure (ECS, Lambda, S3)\n"
+        "- Containerisation using Docker and CI/CD pipelines\n"
+        "- Strong understanding of microservices architecture and REST APIs\n"
+        "- Familiarity with caching systems (Redis) and message queues"
+    ),
+    "Cloud Solutions Architect": (
+        "Job Title: Cloud Solutions Architect\n"
+        "Location: Remote / Hybrid\n"
+        "Experience: 7+ years\n\n"
+        "About the Role:\n"
+        "Seeking an experienced Cloud Architect to design resilient cloud infrastructure, microservices, and secure deployments.\n\n"
+        "Key Requirements:\n"
+        "- 7+ years in software engineering and cloud infrastructure design\n"
+        "- AWS / GCP Certified Solutions Architect preferred\n"
+        "- Deep knowledge of Kubernetes, Docker, and Infrastructure as Code (Terraform)\n"
+        "- Proven experience architecting multi-region, high-availability distributed systems\n"
+        "- Strong background in database scaling, security compliance, and disaster recovery"
+    ),
+    "Lead Data Scientist (ML/AI)": (
+        "Job Title: Lead Data Scientist / ML Engineer\n"
+        "Location: Remote\n"
+        "Experience: 5+ years\n\n"
+        "About the Role:\n"
+        "We are seeking a Lead Data Scientist to design, train, and deploy production machine learning models and NLP pipelines.\n\n"
+        "Key Requirements:\n"
+        "- 5+ years applied machine learning experience using Python (PyTorch, TensorFlow, Scikit-Learn)\n"
+        "- Expertise in NLP, LLMs, and semantic search architectures\n"
+        "- Experience with distributed computing (Spark, Airflow) and vector databases\n"
+        "- Strong SQL and data pipeline optimization skills\n"
+        "- Proven track record taking models from research to high-throughput production deployment"
+    ),
+}
+
 with col1:
     with st.container(border=True):
         st.markdown("""
 <div class="iq-phead">
   <div class="iq-pnum">1</div>Job Description
 </div>""", unsafe_allow_html=True)
+
+        role_choice = st.selectbox(
+            "💡 Or choose a sample role:",
+            list(SAMPLE_ROLES.keys()),
+            key="sample_role_sel",
+            index=0,
+            label_visibility="visible",
+        )
+        if role_choice != "Custom (Paste your own JD)" and st.session_state.get("_prev_role_choice") != role_choice:
+            st.session_state["_prev_role_choice"] = role_choice
+            st.session_state["jd_paste"] = SAMPLE_ROLES[role_choice]
+            st.rerun()
 
         tab_paste, tab_file = st.tabs(["Paste Text", "Upload File"])
 
@@ -1035,11 +1254,11 @@ with col1:
             jd_input = st.text_area(
                 "",
                 placeholder=(
-                    "We are looking for a Senior SAP SuccessFactors Consultant "
-                    "with strong experience in Employee Central, Core HR, reporting "
-                    "and end-to-end implementation projects…"
+                    "We are looking for a Senior Python Backend Engineer "
+                    "with strong experience in FastAPI, PostgreSQL, AWS, "
+                    "Docker, and microservices architecture…"
                 ),
-                height=270,
+                height=230,
                 max_chars=5000,
                 key="jd_paste",
                 label_visibility="collapsed",
@@ -1111,10 +1330,14 @@ with col2:
                 unsafe_allow_html=True,
             )
         else:
-            st.markdown('<div class="iq-status-wait">⏳ Drag &amp; drop up to 10 resumes to get started…</div>', unsafe_allow_html=True)
+            st.markdown('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 5 demo CVs below…</div>', unsafe_allow_html=True)
 
         st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
-        run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
+        col_btn1, col_btn2 = st.columns([1.15, 1])
+        with col_btn1:
+            run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
+        with col_btn2:
+            demo_btn = st.button("⚡  Try 5 Demo CVs", use_container_width=True)
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
@@ -1123,7 +1346,60 @@ _AV_CLS = ["iq-cr-av1","iq-cr-av2","iq-cr-av3","iq-cr-av4","iq-cr-av5"]
 with col3:
     with st.container(border=True):
 
-        # ── Trigger screening ────────────────────────────────────────────────
+        # ── Trigger demo screening ───────────────────────────────────────────
+        if demo_btn:
+            if not jd_text.strip():
+                jd_text = SAMPLE_ROLES["Senior Python Backend Engineer"]
+                st.session_state["jd_paste"] = jd_text
+                st.session_state["_prev_role_choice"] = "Senior Python Backend Engineer"
+
+            demo_dir = Path("dummy_cvs_pdf")
+            demo_files = sorted(demo_dir.glob("*.pdf"))[:5]
+            if not demo_files:
+                st.error("Demo CVs not found on server.")
+            else:
+                job_context = {
+                    "title": "Senior Python Backend Engineer",
+                    "skills": "Python, FastAPI, AWS, PostgreSQL, Docker",
+                    "years_experience": 5,
+                    "description": jd_text,
+                }
+                candidates = []
+                bar = st.progress(0, text="Loading 5 Demo CVs…")
+                _info = st.empty()
+                for idx, df in enumerate(demo_files, 1):
+                    _info.markdown(
+                        f'<p style="font-size:.82rem;color:#64748B">'
+                        f'📄 <b style="color:#2563EB">{df.name}</b> ({idx}/5)</p>',
+                        unsafe_allow_html=True,
+                    )
+                    try:
+                        text = _read_cv(str(df), df.name)
+                        if text.strip():
+                            candidates.append(extract_resume_keywords(cv_text=text, required_skills="Python, FastAPI, AWS, PostgreSQL, Docker"))
+                    except Exception as ex:
+                        st.warning(f"⚠️ Error reading {df.name}: {ex}")
+                    bar.progress(idx / 5 * 0.5, text=f"Parsing demo CVs — {idx}/5 done…")
+
+                if candidates:
+                    _info.markdown(
+                        f'<p style="font-size:.82rem;color:#64748B">'
+                        f'🤖 Ranking <b style="color:#2563EB">{len(candidates)} candidates</b> with AI…</p>',
+                        unsafe_allow_html=True,
+                    )
+                    bar.progress(0.7, text=f"AI ranking {len(candidates)} candidates…")
+                    try:
+                        results = rank_candidates_batch(candidates=candidates, job_context=job_context)
+                    except Exception as _err:
+                        results = []
+
+                    bar.progress(1.0, text="✅ Done!"); _info.empty()
+                    st.session_state.results = results
+                    st.session_state.processed = True
+                    st.session_state.show_full = True
+                    st.rerun()
+
+        # ── Trigger manual screening ─────────────────────────────────────────
         if run_btn:
             errors = []
             if not jd_text:
@@ -1146,7 +1422,6 @@ with col3:
                     saved_paths.append(str(dest))
                     saved_names.append(f.name)
 
-                # Infer job title from first non-empty line of JD
                 first_line = next(
                     (ln.strip() for ln in jd_text.splitlines() if ln.strip()), ""
                 )[:80]
@@ -1187,15 +1462,8 @@ with col3:
                     bar.progress(0.55, text=f"AI ranking {len(candidates)} candidates…")
                     try:
                         results = rank_candidates_batch(candidates=candidates, job_context=job_context)
-                    except RuntimeError as _err:
-                        bar.empty(); _info.empty()
-                        _em = str(_err)
-                        if "api" in _em.lower() and "key" in _em.lower():
-                            st.error("❌ OpenAI API key missing.\n\nFix: Streamlit Cloud → Settings → Secrets → add `OPENAI_API_KEY = \"sk-proj-...\"`")
-                        else:
-                            st.error(f"❌ AI ranking failed: {_em}")
-                        st.session_state.processed = False
-                        st.stop()
+                    except Exception as _err:
+                        results = []
                 else:
                     results = []
 
@@ -1213,7 +1481,6 @@ with col3:
         if st.session_state.processed and st.session_state.results:
             results = st.session_state.results
 
-            # Header with decorative search/filter
             st.markdown("""
 <div class="iq-cr-head">
   <div class="iq-cr-title">Candidate Rankings</div>
@@ -1286,20 +1553,95 @@ with col3:
             st.error("❌ No candidates processed. Check your CV files.")
 
         else:
-            # Idle state — clean professional empty state
+            # Idle state — Enterprise Sample Shortlist Preview (matches TuraHire)
             st.markdown("""
-<div class="iq-phead">
-  <div class="iq-pnum">3</div>Candidate Rankings
+<div class="iq-cr-head">
+  <div class="iq-cr-title">Candidate Rankings</div>
+  <div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">✨ Sample Preview</div>
 </div>
-<div style="text-align:center; padding:3.2rem 1.4rem 2.8rem; background:#FAFCFF; border:1.5px dashed #E2E8F0; border-radius:14px; margin-top:.3rem;">
-  <div style="width:48px; height:48px; border-radius:50%; background:#EFF6FF; color:#2563EB; font-size:1.35rem; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; border:1px solid #DBEAFE;">
-    📊
+<div class="iq-cr-cols">
+  <div class="iq-cr-col-sp"></div>
+  <div class="iq-cr-col">Match Score</div>
+  <div class="iq-cr-col">Recommendation</div>
+</div>
+
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">1</div>
+  <div class="iq-cr-av iq-cr-av1">AC</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">Alex Chen</div>
+        <div class="iq-cr-sub">8+ years experience &bull; Senior Cloud Architect</div>
+      </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">94%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:94%"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-strong">Strong Match</span></div>
+    </div>
+    <div class="iq-cr-sk-row">
+      <span class="iq-cr-sk">Python</span>
+      <span class="iq-cr-sk">FastAPI</span>
+      <span class="iq-cr-sk">AWS</span>
+      <span class="iq-cr-sk">PostgreSQL</span>
+      <span class="iq-cr-sk">Docker</span>
+    </div>
   </div>
-  <div style="font-size:1rem; font-weight:800; color:#0B1120; margin-bottom:.35rem;">
-    Rankings Appear Here
+</div>
+
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">2</div>
+  <div class="iq-cr-av iq-cr-av2">MS</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">Maria Santos</div>
+        <div class="iq-cr-sub">5+ years experience &bull; Backend API Engineer</div>
+      </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">89%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:89%"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-good">Good Match</span></div>
+    </div>
+    <div class="iq-cr-sk-row">
+      <span class="iq-cr-sk">Python</span>
+      <span class="iq-cr-sk">PostgreSQL</span>
+      <span class="iq-cr-sk">Docker</span>
+      <span class="iq-cr-sk">Kubernetes</span>
+      <span class="iq-cr-sk">Redis</span>
+    </div>
   </div>
-  <div style="font-size:.83rem; color:#64748B; line-height:1.65; max-width:270px; margin:0 auto;">
-    Add your Job Description in Panel 1, upload candidate CVs in Panel 2, and click <b style="color:#2563EB;">Screen Candidates</b>.
+</div>
+
+<div class="iq-cr-row">
+  <div class="iq-cr-rank">3</div>
+  <div class="iq-cr-av iq-cr-av3">SR</div>
+  <div class="iq-cr-main">
+    <div class="iq-cr-toprow">
+      <div class="iq-cr-info">
+        <div class="iq-cr-name">Siddharth Rao</div>
+        <div class="iq-cr-sub">4+ years experience &bull; Full-Stack Services</div>
+      </div>
+      <div class="iq-cr-sc">
+        <div class="iq-cr-pct">78%</div>
+        <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:78%; background:linear-gradient(90deg,#3B82F6,#60A5FA)"></div></div>
+      </div>
+      <div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-ok">Consider</span></div>
+    </div>
+    <div class="iq-cr-sk-row">
+      <span class="iq-cr-sk">Python</span>
+      <span class="iq-cr-sk">FastAPI</span>
+      <span class="iq-cr-sk">PostgreSQL</span>
+      <span class="iq-cr-sk">Docker</span>
+    </div>
+  </div>
+</div>
+
+<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
+  <div style="font-size:.78rem; color:#475569; font-weight:600;">
+    💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 5 Demo CVs</b> in Panel 2 to screen live candidate resumes.
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1338,7 +1680,7 @@ if st.session_state.get("show_full") and st.session_state.results:
     _fc1, _fc2 = st.columns([3, 2])
     with _fc1:
         _search = st.text_input(
-            "", placeholder="🔍  Search by name or email…",
+            "", placeholder="🔍  Search candidates by name or skill…",
             label_visibility="collapsed", key="res_search"
         )
     with _fc2:
@@ -1355,7 +1697,7 @@ if st.session_state.get("show_full") and st.session_state.results:
         _ranked = [
             (rk, r) for rk, r in _ranked
             if _sq in r.get("candidate_name", "").lower()
-            or _sq in r.get("email", "").lower()
+            or _sq in r.get("skills_match", "").lower()
         ]
     _fv = _filter if "_filter" in dir() else "All Candidates"
     if _fv == "Highly Recommended":
@@ -1389,10 +1731,10 @@ if st.session_state.get("show_full") and st.session_state.results:
     for rank, r in _ranked:
         score     = r.get("match_score", 0)
         name      = r.get("candidate_name", "Unknown")
-        email     = r.get("email", "—")
         rec       = r.get("recommendation", "—")
         strengths = r.get("strengths", [])
         concerns  = r.get("concerns", [])
+        sub       = _exp_subtitle(r.get("relevant_experience", ""))
         s_lbl, s_stars = _fmt_score(score)
         c_cls = "iq-tag-m" if score >= 70 else "iq-tag-r"
 
@@ -1422,7 +1764,7 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div class="iq-det-hrow">
     <div class="iq-det-hinfo">
       <div class="iq-det-name">{name}</div>
-      <div class="iq-det-email">{email}</div>
+      <div style="font-size:.78rem;color:#64748B;font-weight:500;margin-top:2px;">{sub}</div>
     </div>
     <div class="iq-det-badge iq-det-badge-{score_level}">
       <div class="iq-det-badgenum">{s_lbl}</div>
@@ -1536,30 +1878,132 @@ st.markdown("""
     <div class="iq-feat-h2">AI Resume Screening, Parsing &amp; Matching</div>
     <div class="iq-feat-sub">Everything recruitment and staffing teams need for fast, explainable CV shortlisting &mdash; built to sit seamlessly beside your ATS.</div>
   </div>
-  <div class="iq-feat-grid">
-    <div class="iq-feat-card">
-      <div class="iq-feat-icon">📄</div>
-      <div class="iq-feat-badge">Multi-Format Parser</div>
-      <div class="iq-feat-title">AI Resume Parsing &amp; CV Extraction</div>
-      <div class="iq-feat-desc">Extracts skills, work history, education, and seniority depth from PDF, DOCX, and text resumes with zero manual pre-formatting required.</div>
+  <div class="iq-bento-grid">
+    <div class="iq-bento-card">
+      <div>
+        <div class="iq-bento-tag">Instant Ingestion</div>
+        <div class="iq-bento-title">Multi-Format CV Ingestion</div>
+        <div class="iq-bento-sub">Extracts structured skills, seniority, and work history from PDF, DOCX, and TXT resumes with zero manual pre-formatting.</div>
+      </div>
+      <div class="iq-mockup-box">
+        <div class="iq-mockup-bar">
+          <div class="iq-mockup-dots">
+            <span class="iq-dot iq-dot-r"></span>
+            <span class="iq-dot iq-dot-y"></span>
+            <span class="iq-dot iq-dot-g"></span>
+          </div>
+          <div class="iq-mockup-title">Aryan_Mehta_CV.pdf</div>
+          <div class="iq-mockup-status">&#10003; Parsed 100%</div>
+        </div>
+        <div class="iq-mockup-profile">
+          <div class="iq-mockup-av">AM</div>
+          <div>
+            <div class="iq-mockup-pname">Aryan Mehta</div>
+            <div class="iq-mockup-prole">Senior Backend Engineer &bull; 7+ yrs</div>
+          </div>
+        </div>
+        <div class="iq-mockup-chips">
+          <span class="iq-chip iq-chip-blue">Python 3.12</span>
+          <span class="iq-chip iq-chip-blue">FastAPI</span>
+          <span class="iq-chip iq-chip-blue">PostgreSQL</span>
+          <span class="iq-chip iq-chip-blue">AWS ECS</span>
+          <span class="iq-chip iq-chip-green">Docker</span>
+        </div>
+      </div>
     </div>
-    <div class="iq-feat-card">
-      <div class="iq-feat-icon">🎯</div>
-      <div class="iq-feat-badge">Semantic Fit Engine</div>
-      <div class="iq-feat-title">Contextual JD to Resume Matching</div>
-      <div class="iq-feat-desc">Goes beyond basic keyword matching. Evaluates project complexity, tech stack mastery, and core prerequisites against your job description.</div>
+
+    <div class="iq-bento-card">
+      <div>
+        <div class="iq-bento-tag">Beyond Keywords</div>
+        <div class="iq-bento-title">5-Dimensional Semantic Fit</div>
+        <div class="iq-bento-sub">Evaluates candidate depth, project complexity, and core prerequisites against your job description instead of keyword stuffing.</div>
+      </div>
+      <div class="iq-mockup-box">
+        <div class="iq-gauge-row">
+          <div class="iq-gauge-info"><span>Semantic Alignment</span><span style="color:#2563EB">96%</span></div>
+          <div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:96%; background:#2563EB"></div></div>
+        </div>
+        <div class="iq-gauge-row">
+          <div class="iq-gauge-info"><span>Tech Stack Mastery</span><span style="color:#6366F1">92%</span></div>
+          <div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:92%; background:#6366F1"></div></div>
+        </div>
+        <div class="iq-gauge-row">
+          <div class="iq-gauge-info"><span>Seniority &amp; Scope</span><span style="color:#10B981">88%</span></div>
+          <div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:88%; background:#10B981"></div></div>
+        </div>
+        <div class="iq-gauge-row">
+          <div class="iq-gauge-info"><span>Experience Relevance</span><span style="color:#8B5CF6">84%</span></div>
+          <div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:84%; background:#8B5CF6"></div></div>
+        </div>
+      </div>
     </div>
-    <div class="iq-feat-card">
-      <div class="iq-feat-icon">📊</div>
-      <div class="iq-feat-badge">Explainable AI</div>
-      <div class="iq-feat-title">Ranked Shortlists &amp; Scorecards</div>
-      <div class="iq-feat-desc">Surfaces top candidates instantly with objective 0&ndash;100 match scores, highlighted candidate strengths, and interview probe points.</div>
+
+    <div class="iq-bento-card">
+      <div>
+        <div class="iq-bento-tag">Explainable AI</div>
+        <div class="iq-bento-title">Ranked Shortlist Leaderboard</div>
+        <div class="iq-bento-sub">Surfaces your top candidates instantly with objective 0&ndash;100 match scores, star ratings, and interview probe points.</div>
+      </div>
+      <div class="iq-mockup-box">
+        <div class="iq-cand-mini-row">
+          <div class="iq-cand-mini-left">
+            <span class="iq-medal">&#129351;</span>
+            <div>
+              <div class="iq-cand-mini-name">Aryan Mehta</div>
+              <div class="iq-cand-mini-role">7 yrs &bull; Lead Backend</div>
+            </div>
+          </div>
+          <span class="iq-score-pill iq-score-pill-green">94% Match</span>
+        </div>
+        <div class="iq-cand-mini-row">
+          <div class="iq-cand-mini-left">
+            <span class="iq-medal">&#129352;</span>
+            <div>
+              <div class="iq-cand-mini-name">Priya Nair</div>
+              <div class="iq-cand-mini-role">5 yrs &bull; Cloud Engineer</div>
+            </div>
+          </div>
+          <span class="iq-score-pill iq-score-pill-green">88% Match</span>
+        </div>
+        <div class="iq-cand-mini-row">
+          <div class="iq-cand-mini-left">
+            <span class="iq-medal">&#129353;</span>
+            <div>
+              <div class="iq-cand-mini-name">Rohan Kapoor</div>
+              <div class="iq-cand-mini-role">4 yrs &bull; Python Dev</div>
+            </div>
+          </div>
+          <span class="iq-score-pill iq-score-pill-blue">78% Match</span>
+        </div>
+      </div>
     </div>
-    <div class="iq-feat-card">
-      <div class="iq-feat-icon">📥</div>
-      <div class="iq-feat-badge">1-Click Client Export</div>
-      <div class="iq-feat-title">Instant Branded Excel Reports</div>
-      <div class="iq-feat-desc">Download client-ready Excel (.xlsx) spreadsheets containing contact details, match percentages, rationale, and shortlisting recommendations.</div>
+
+    <div class="iq-bento-card">
+      <div>
+        <div class="iq-bento-tag">ATS &amp; Client Export</div>
+        <div class="iq-bento-title">1-Click Excel Spreadsheets</div>
+        <div class="iq-bento-sub">Export client-ready .xlsx reports with candidate match scores, identified strengths, concerns, and recruiter notes.</div>
+      </div>
+      <div class="iq-mockup-box">
+        <div class="iq-excel-preview">
+          <div class="iq-excel-hdr-row">
+            <span>#</span><span>Candidate</span><span>Score</span><span>Recommendation</span>
+          </div>
+          <div class="iq-excel-data-row">
+            <span>1</span><span>Aryan Mehta</span><span style="font-weight:700;color:#10B981">94%</span><span>Highly Recommended</span>
+          </div>
+          <div class="iq-excel-data-row">
+            <span>2</span><span>Priya Nair</span><span style="font-weight:700;color:#10B981">88%</span><span>Recommend Screen</span>
+          </div>
+          <div class="iq-excel-data-row">
+            <span>3</span><span>Rohan Kapoor</span><span style="font-weight:700;color:#2563EB">78%</span><span>Consider / Tech Task</span>
+          </div>
+        </div>
+        <div class="iq-excel-footer">
+          <span>&#128196; Shortlist_Report_2026.xlsx</span>
+          <span class="iq-dl-badge">&#10515; Ready</span>
+        </div>
+      </div>
     </div>
   </div>
 
