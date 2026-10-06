@@ -616,91 +616,124 @@ label, .stFileUploader label {
     border-color: #BBF7D0;
 }
 
-/* ── Pricing ── */
-.iq-pricing-sec { margin: 3rem 0 2rem; }
-.iq-pricing-hdr { text-align:center; margin-bottom:2.8rem; }
-.iq-pricing-title {
-    font-size:2.2rem; font-weight:900; color:#0B1120;
-    letter-spacing:-1px; margin-bottom:.5rem; line-height:1.15;
+/* ── TuraHire-Style Pricing Architecture ── */
+.iq-th-sec { margin: 3.5rem 0 2rem; }
+.iq-th-hdr { text-align: center; margin-bottom: 2rem; }
+.iq-th-eye {
+    display: inline-block; font-size: .68rem; font-weight: 700;
+    letter-spacing: .15em; color: #2563EB; text-transform: uppercase;
+    background: #EFF6FF; padding: .35rem .95rem;
+    border-radius: 99px; border: 1px solid #BFDBFE; margin-bottom: .85rem;
 }
-.iq-pricing-sub { font-size:.97rem; color:#64748B; line-height:1.7; }
-.iq-pc {
-    background:#FFFFFF; border:1.5px solid #E2E8F0;
-    border-radius:18px; padding:1.9rem 1.6rem 1.7rem;
-    display:flex; flex-direction:column;
-    transition:box-shadow .2s; height:100%;
+.iq-th-h2 {
+    font-size: 2.35rem; font-weight: 900; color: #0F172A;
+    letter-spacing: -1px; margin-bottom: .5rem; line-height: 1.15;
 }
-.iq-pc:hover { box-shadow:0 8px 28px rgba(10,20,60,.1); }
-.iq-pc-feat {
-    background: linear-gradient(160deg,#1D4ED8 0%,#2563EB 40%,#3B82F6 100%);
-    border-color:#2563EB;
-    box-shadow:0 12px 36px rgba(37,99,235,.38);
-    transform:translateY(-6px);
+.iq-th-sub { font-size: 1.05rem; color: #64748B; margin-bottom: .5rem; }
+.iq-th-note { font-size: .82rem; color: #94A3B8; max-width: 620px; margin: 0 auto; line-height: 1.5; }
+.iq-th-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+    align-items: stretch;
 }
-.iq-pc-feat:hover { box-shadow:0 16px 44px rgba(37,99,235,.48); }
-.iq-ptag {
-    display:inline-block; font-size:.68rem; font-weight:700;
-    letter-spacing:.12em; text-transform:uppercase;
-    background:rgba(255,255,255,.22); color:#fff;
-    border-radius:99px; padding:.28rem .8rem; margin-bottom:.85rem;
-    width:fit-content;
+.iq-th-card {
+    background: #FFFFFF;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 18px;
+    padding: 1.7rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .15s, box-shadow .15s;
+    position: relative;
 }
-.iq-pname { font-size:1.25rem; font-weight:800; color:#0B1120; letter-spacing:-.3px; margin-bottom:.3rem; }
-.iq-pc-feat .iq-pname { color:#fff; }
-.iq-price { font-size:2.6rem; font-weight:900; color:#2563EB; letter-spacing:-1.5px; line-height:1; }
-.iq-pc-feat .iq-price { color:#fff; }
-.iq-price-mo { font-size:.9rem; color:#94A3B8; margin-bottom:1.1rem; }
-.iq-pc-feat .iq-price-mo { color:rgba(255,255,255,.7); }
-.iq-pdiv { height:1px; background:#E2E8F0; margin:.9rem 0 1rem; border:none; }
-.iq-pc-feat .iq-pdiv { background:rgba(255,255,255,.2); }
-.iq-prow { display:flex; align-items:center; gap:.6rem; font-size:.87rem; color:#374151; padding:.32rem 0; }
-.iq-pc-feat .iq-prow { color:rgba(255,255,255,.9); }
-.iq-prow-label { flex:1; }
-.iq-prow-val { font-weight:600; font-size:.84rem; color:#0B1120; flex-shrink:0; }
-.iq-pc-feat .iq-prow-val { color:#fff; }
-.iq-pck { color:#10B981; font-size:1rem; flex-shrink:0; }
-.iq-pcx { color:#EF4444; font-size:1rem; flex-shrink:0; }
-.iq-pc-feat .iq-pck { color:#86EFAC; }
-.iq-pc-feat .iq-pcx { color:rgba(255,255,255,.4); }
-.iq-pbtn, .iq-pbtn:link, .iq-pbtn:visited, .iq-pbtn:active {
-    display:block; width:100%; margin-top:1.4rem;
-    background:#2563EB; color:#fff !important; font-weight:700;
-    font-size:.93rem; border:none; border-radius:10px;
-    padding:.72rem 0; cursor:pointer; text-align:center;
-    box-shadow:0 4px 14px rgba(37,99,235,.3);
-    transition:background .18s, box-shadow .18s, transform .12s;
-    text-decoration:none !important; box-sizing:border-box;
+.iq-th-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15,23,42,.06);
+    border-color: #CBD5E1;
 }
-.iq-pbtn:hover { background:#1D4ED8 !important; box-shadow:0 6px 20px rgba(37,99,235,.4) !important; transform:translateY(-1px); color:#fff !important; text-decoration:none !important; }
-.iq-pc-feat .iq-pbtn, .iq-pc-feat .iq-pbtn:link, .iq-pc-feat .iq-pbtn:visited { background:#fff !important; color:#2563EB !important; box-shadow:0 4px 16px rgba(0,0,0,.15) !important; }
-.iq-pc-feat .iq-pbtn:hover { background:#EFF6FF !important; color:#2563EB !important; }
-.iq-nav-demo, .iq-nav-demo:link, .iq-nav-demo:visited, .iq-nav-demo:active {
-    color: #fff !important; text-decoration: none !important;
+.iq-th-card-popular {
+    border: 2px solid #2563EB !important;
+    box-shadow: 0 8px 30px rgba(37,99,235,.12);
 }
-.iq-nav-demo:hover { color: #fff !important; }
-.iq-pfooter { text-align:center; padding-top:1.5rem; font-size:.8rem; color:#94A3B8; }
+.iq-th-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: #2563EB; color: #FFFFFF;
+    font-size: .67rem; font-weight: 800; letter-spacing: .08em;
+    padding: .24rem .85rem; border-radius: 99px; text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(37,99,235,.3);
+    white-space: nowrap;
+}
+.iq-th-name { font-size: 1.25rem; font-weight: 800; color: #0F172A; }
+.iq-th-desc { font-size: .81rem; color: #64748B; margin: .35rem 0 1rem; min-height: 2.4rem; line-height: 1.45; }
+.iq-th-price-wrap { display: flex; align-items: baseline; gap: 2px; margin-bottom: .2rem; }
+.iq-th-price { font-size: 2.35rem; font-weight: 900; color: #0F172A; line-height: 1; letter-spacing: -1px; }
+.iq-th-period { font-size: .82rem; color: #64748B; font-weight: 600; }
+.iq-th-subprice { font-size: .75rem; color: #94A3B8; margin-bottom: 1.2rem; min-height: 1.1rem; }
+.iq-th-btn, .iq-th-btn:link, .iq-th-btn:visited {
+    display: block; width: 100%; text-align: center;
+    padding: .68rem 0; border-radius: 10px; font-weight: 700;
+    font-size: .88rem; text-decoration: none !important;
+    transition: background .15s, transform .12s; margin-bottom: 1.4rem;
+    box-sizing: border-box;
+}
+.iq-th-btn-primary {
+    background: #2563EB; color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(37,99,235,.3);
+}
+.iq-th-btn-primary:hover { background: #1D4ED8; }
+.iq-th-btn-secondary {
+    background: #F8FAFC; color: #0F172A !important;
+    border: 1.5px solid #CBD5E1;
+}
+.iq-th-btn-secondary:hover { background: #F1F5F9; border-color: #94A3B8; }
+.iq-th-divider { height: 1px; background: #F1F5F9; margin-bottom: 1rem; }
+.iq-th-flist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .65rem; }
+.iq-th-fitem { display: flex; align-items: flex-start; gap: .55rem; font-size: .82rem; color: #334155; line-height: 1.45; }
+.iq-th-ficon { color: #10B981; font-weight: 800; font-size: .85rem; flex-shrink: 0; margin-top: 1px; }
+.iq-th-ficon-b { color: #2563EB; font-weight: 800; font-size: .85rem; flex-shrink: 0; margin-top: 1px; }
 
-/* ── Footer bar ── */
-/* ── Demo gate (non-admin view of screening tool) ── */
-.iq-gate {
-    text-align:center; background:linear-gradient(135deg,#EFF6FF,#F8FAFF);
-    border:2px solid #DBEAFE; border-radius:20px;
-    padding:3.5rem 2rem; max-width:600px; margin:2rem auto 3rem;
+/* ── Volume Calculator ── */
+.iq-th-calc-box {
+    background: linear-gradient(175deg, #F8FAFC 0%, #EFF6FF 100%);
+    border: 1.5px solid #DBEAFE; border-radius: 20px;
+    padding: 2rem 2.2rem; margin: 2.5rem 0;
 }
-.iq-gate-icon { font-size:3.2rem; margin-bottom:1rem; }
-.iq-gate-title { font-size:1.55rem; font-weight:800; color:#0B1120; margin-bottom:.7rem; letter-spacing:-.02em; }
-.iq-gate-sub { font-size:.97rem; color:#64748B; line-height:1.75; margin-bottom:2rem; max-width:440px; margin-left:auto; margin-right:auto; }
-.iq-gate-btn, .iq-gate-btn:link, .iq-gate-btn:visited, .iq-gate-btn:active {
-    display:inline-flex; align-items:center; gap:.55rem;
-    background:linear-gradient(135deg,#25D366,#1DA851);
-    color:#fff !important; text-decoration:none !important;
-    padding:.9rem 2rem; border-radius:12px; font-weight:700;
-    font-size:1rem; box-shadow:0 4px 18px rgba(37,168,81,.3);
-    transition:transform .15s, box-shadow .15s;
+.iq-th-calc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.iq-th-calc-rec {
+    background: #FFFFFF; border: 1.5px solid #2563EB;
+    border-radius: 14px; padding: 1.2rem 1.4rem; min-width: 280px;
+    box-shadow: 0 4px 16px rgba(37,99,235,.08);
 }
-.iq-gate-btn:hover { transform:translateY(-2px) !important; box-shadow:0 7px 26px rgba(37,168,81,.42) !important; color:#fff !important; text-decoration:none !important; }
-.iq-gate-note { font-size:.78rem; color:#94A3B8; margin-top:1.2rem; }
-/* ── Footer ── */
+
+/* ── Feature Comparison Table ── */
+.iq-th-table {
+    width: 100%; border-collapse: collapse; font-size: .84rem;
+    background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px;
+    overflow: hidden; margin: 1.2rem 0;
+}
+.iq-th-table th {
+    background: #F8FAFC; color: #0F172A; font-weight: 800;
+    padding: .85rem 1rem; border-bottom: 1.5px solid #E2E8F0; text-align: left;
+}
+.iq-th-table td {
+    padding: .8rem 1rem; border-bottom: 1px solid #F1F5F9; color: #334155;
+}
+.iq-th-table tr:hover td { background: #FBFDFF; }
+.iq-th-cat-hdr {
+    background: #F1F5F9 !important; font-weight: 800 !important;
+    color: #2563EB !important; text-transform: uppercase;
+    font-size: .74rem; letter-spacing: .06em;
+}
+
+/* ── Trust Banner ── */
+.iq-th-trust {
+    background: #F8FAFC; border: 1px solid #E2E8F0;
+    border-radius: 14px; padding: 1rem 1.5rem; text-align: center;
+    font-size: .83rem; color: #64748B; margin: 2rem 0;
+}
 .iq-foot { text-align:center; padding:2rem 0 1.5rem; border-top:1px solid #E2E8F0; margin-top:2rem; }
 .iq-foot-txt { font-size:.78rem; color:#94A3B8; }
 
@@ -1000,11 +1033,14 @@ def _exp_subtitle(text: str) -> str:
 
 
 # ─────────────────────────── Navbar ──────────────────────────────────────────
-# No login button, no night mode — clean product nav
 st.markdown("""
 <div class="iq-nav">
   <div class="iq-logo">Talent<b>IQ</b></div>
-  <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
+  <div style="display:flex;align-items:center;gap:1.3rem;">
+    <a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
+    <a href="#pricing" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Pricing</a>
+    <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1874,6 +1910,331 @@ if st.session_state.get("show_full") and st.session_state.results:
   </a>
 </div>
 """, unsafe_allow_html=True)
+
+
+# ─────────────────────────── Pricing (TuraHire Architecture) ─────────────────
+st.markdown('<div id="pricing"></div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="iq-th-sec">
+  <div class="iq-th-hdr">
+    <div class="iq-th-eye">Transparent Pricing</div>
+    <div class="iq-th-h2">Pricing that scales with your hiring</div>
+    <div class="iq-th-sub">Free for solo recruiters. Per-seat for teams. Custom for enterprise.</div>
+    <div class="iq-th-note">Self-serve list prices in USD. Toggle illustrative INR. Checkout is billed in USD. Start free with no card; contact sales for custom invoicing.</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Toggles for Billing Cycle and Currency
+_pcol_left, _pcol_cycle, _pcol_curr, _pcol_right = st.columns([1, 2, 2, 1])
+with _pcol_cycle:
+    billing_cycle = st.radio(
+        "Billing Cycle",
+        options=["Monthly", "Annual (−20%)"],
+        index=0,
+        horizontal=True,
+        key="pricing_billing_cycle",
+        label_visibility="collapsed"
+    )
+with _pcol_curr:
+    currency = st.radio(
+        "Currency",
+        options=["USD ($)", "INR (₹)"],
+        index=0,
+        horizontal=True,
+        key="pricing_currency",
+        label_visibility="collapsed"
+    )
+
+is_annual = (billing_cycle == "Annual (−20%)")
+is_inr = (currency == "INR (₹)")
+
+# Calculate pricing figures
+if is_inr:
+    curr_sym = "₹"
+    p_free = "₹0"
+    p_pro = "₹799" if is_annual else "₹999"
+    p_pro_sub = "Billed annually (₹9,588/yr)" if is_annual else "Billed monthly"
+    p_team = "₹1,999" if is_annual else "₹2,499"
+    p_team_sub = "Min 2 seats · Billed annually" if is_annual else "Min 2 seats · Billed monthly"
+    p_ent = "Custom"
+    p_ent_sub = "Custom contracts & invoicing"
+else:
+    curr_sym = "$"
+    p_free = "$0"
+    p_pro = "$10" if is_annual else "$12"
+    p_pro_sub = "Billed annually ($120/yr)" if is_annual else "Billed monthly"
+    p_team = "$23" if is_annual else "$29"
+    p_team_sub = "Min 2 seats · Billed annually" if is_annual else "Min 2 seats · Billed monthly"
+    p_ent = "Custom"
+    p_ent_sub = "Custom infrastructure & SLA"
+
+# Render 4 Tier Cards in grid
+st.markdown(f"""
+<div class="iq-th-grid">
+  <!-- Free Tier -->
+  <div class="iq-th-card">
+    <div>
+      <div class="iq-th-name">Free</div>
+      <div class="iq-th-desc">For curious recruiters kicking the tires.</div>
+      <div class="iq-th-price-wrap">
+        <div class="iq-th-price">{p_free}</div>
+      </div>
+      <div class="iq-th-subprice">Free forever &middot; No credit card</div>
+      <a class="iq-th-btn iq-th-btn-secondary" href="#screening-workspace">Start free &nbsp;&darr;</a>
+      <div class="iq-th-divider"></div>
+      <ul class="iq-th-flist">
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span><b>50</b> resume parses/mo</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span><b>3</b> active requirements</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>AI matching: Basic</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>10 CVs bulk upload / batch</span></li>
+        <li class="iq-th-fitem" style="color:#94A3B8"><span style="color:#CBD5E1">✕</span> <span>Interview tools</span></li>
+        <li class="iq-th-fitem" style="color:#94A3B8"><span style="color:#CBD5E1">✕</span> <span>Role-based access</span></li>
+        <li class="iq-th-fitem" style="color:#94A3B8"><span style="color:#CBD5E1">✕</span> <span>SSO / SAML / SCIM</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Pro Tier -->
+  <div class="iq-th-card">
+    <div>
+      <div class="iq-th-name">Pro</div>
+      <div class="iq-th-desc">Everything an individual recruiter needs.</div>
+      <div class="iq-th-price-wrap">
+        <div class="iq-th-price">{p_pro}</div>
+        <div class="iq-th-period">/mo</div>
+      </div>
+      <div class="iq-th-subprice">{p_pro_sub}</div>
+      <a class="iq-th-btn iq-th-btn-secondary" href="https://wa.me/447379975532?text=Hi%2C%20I'd%20like%20to%20start%20a%20Pro%20plan%20trial" target="_blank">Start 30-Day Free Trial</a>
+      <div class="iq-th-divider"></div>
+      <ul class="iq-th-flist">
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span><b>500</b> resume parses/mo</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span><b>Unlimited</b> active requirements</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>AI matching: <b>Full</b></span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>100 CVs bulk upload / batch</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>Candidate deep search &amp; chat</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>Email support (48h)</span></li>
+        <li class="iq-th-fitem" style="color:#94A3B8"><span style="color:#CBD5E1">✕</span> <span>SSO / SAML / SCIM</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Team Tier (Most Popular) -->
+  <div class="iq-th-card iq-th-card-popular">
+    <div class="iq-th-badge">Most Popular</div>
+    <div>
+      <div class="iq-th-name">Team</div>
+      <div class="iq-th-desc">Collaborate with role-based access.</div>
+      <div class="iq-th-price-wrap">
+        <div class="iq-th-price">{p_team}</div>
+        <div class="iq-th-period">/user/mo</div>
+      </div>
+      <div class="iq-th-subprice">{p_team_sub}</div>
+      <a class="iq-th-btn iq-th-btn-primary" href="https://wa.me/447379975532?text=Hi%2C%20I'd%20like%20to%20start%20a%20Team%20plan%20trial" target="_blank">Start 30-Day Free Trial</a>
+      <div class="iq-th-divider"></div>
+      <ul class="iq-th-flist">
+        <li class="iq-th-fitem"><span class="iq-th-ficon-b">✓</span> <span><b>2,000</b> parses/mo/seat (pooled)</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon-b">✓</span> <span><b>Unlimited</b> active requirements</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon-b">✓</span> <span>AI matching: <b>Full + advanced</b></span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon-b">✓</span> <span>Org + Personal workspaces</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon-b">✓</span> <span>Role-based access (Admin + Recruiter)</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon-b">✓</span> <span>Priority email support (12h)</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon-b">✓</span> <span>30-day activity &amp; audit logs</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Enterprise Tier -->
+  <div class="iq-th-card">
+    <div>
+      <div class="iq-th-name">Enterprise</div>
+      <div class="iq-th-desc">Custom infrastructure, security, and support.</div>
+      <div class="iq-th-price-wrap">
+        <div class="iq-th-price">{p_ent}</div>
+      </div>
+      <div class="iq-th-subprice">{p_ent_sub}</div>
+      <a class="iq-th-btn iq-th-btn-secondary" href="https://wa.me/447379975532?text=Hi%2C%20I'd%20like%20to%20discuss%20Enterprise%20pricing" target="_blank">Talk to Sales</a>
+      <div class="iq-th-divider"></div>
+      <ul class="iq-th-flist">
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span><b>Unlimited</b> resume parses</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span><b>Unlimited</b> active requirements</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>Full + <b>Custom fine-tuned models</b></span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>Dedicated CSM + 99.9% uptime SLA</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>SSO / SAML / SCIM integration</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>Unlimited audit logs &amp; custom roles</span></li>
+        <li class="iq-th-fitem"><span class="iq-th-ficon">✓</span> <span>US / EU / Private VPC residency</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Volume Calculator ──
+st.markdown("""
+<div class="iq-th-calc-box">
+  <div class="iq-th-calc-top">
+    <div>
+      <div style="font-size:1.35rem;font-weight:800;color:#0F172A;letter-spacing:-.4px;margin-bottom:.35rem">
+        How much will TalentIQ cost you?
+      </div>
+      <div style="font-size:.88rem;color:#64748B">
+        Drag the slider to match your monthly resume volume.
+      </div>
+    </div>
+    <div style="font-size:.78rem;font-weight:700;color:#2563EB;background:#DBEAFE;padding:.4rem .9rem;border-radius:99px">
+      ⚡ Dynamic Cost Estimator
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+calc_vol = st.slider(
+    "Select your monthly resume volume",
+    min_value=50,
+    max_value=10000,
+    value=500,
+    step=50,
+    key="vol_calculator_slider",
+    label_visibility="collapsed"
+)
+
+# Dynamic recommendation logic
+if calc_vol <= 50:
+    rec_plan = "Free"
+    rec_cost = f"{curr_sym}0"
+    rec_unit = "/month"
+    rec_details = "Free forever for solo recruiters kickstarting automated CV screening."
+elif calc_vol <= 500:
+    rec_plan = "Pro"
+    rec_cost = f"{curr_sym}799" if (is_inr and is_annual) else (f"{curr_sym}999" if is_inr else (f"{curr_sym}10" if is_annual else f"{curr_sym}12"))
+    rec_unit = "/month"
+    rec_details = "Includes up to 500 resume parses/mo, unlimited job specs, and full AI matching."
+elif calc_vol <= 4000:
+    seats_needed = max(2, (calc_vol + 1999) // 2000)
+    if is_inr:
+        seat_rate = 1999 if is_annual else 2499
+    else:
+        seat_rate = 23 if is_annual else 29
+    total_seat_cost = seats_needed * seat_rate
+    rec_plan = f"Team ({seats_needed} seats)"
+    rec_cost = f"{curr_sym}{total_seat_cost:,}"
+    rec_unit = "/month"
+    rec_details = f"Pooled {seats_needed * 2000:,} parses across {seats_needed} seats with admin & recruiter roles."
+else:
+    rec_plan = "Enterprise"
+    rec_cost = "Custom"
+    rec_unit = ""
+    rec_details = "Tailored volume (>4,000 parses/mo), dedicated CSM, custom models, and SSO/SAML."
+
+st.markdown(f"""
+<div style="background:#FFFFFF;border:1.5px solid #2563EB;border-radius:16px;padding:1.4rem 1.8rem;margin:-1rem 0 1.2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.2rem;box-shadow:0 4px 16px rgba(37,99,235,.07);">
+  <div>
+    <div style="font-size:.72rem;font-weight:800;color:#64748B;letter-spacing:.08em;text-transform:uppercase;">Volume Selected</div>
+    <div style="font-size:2.4rem;font-weight:900;color:#0F172A;line-height:1.1;">{calc_vol:,} <span style="font-size:1rem;color:#64748B;font-weight:600;">resumes/mo</span></div>
+    <div style="font-size:.82rem;color:#334155;margin-top:.35rem;">Recommended Tier: <b style="color:#2563EB;">{rec_plan}</b> &mdash; {rec_details}</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:.72rem;font-weight:800;color:#64748B;letter-spacing:.08em;text-transform:uppercase;">Estimated Cost</div>
+    <div style="font-size:2.4rem;font-weight:900;color:#10B981;line-height:1.1;">{rec_cost} <span style="font-size:.95rem;color:#64748B;font-weight:600;">{rec_unit}</span></div>
+    <div style="font-size:.75rem;color:#94A3B8;margin-top:.35rem;">Billed {'annually (−20%)' if is_annual else 'monthly'}</div>
+  </div>
+</div>
+<div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin:0 0 2rem;font-size:.82rem;color:#64748B;">
+  <div style="display:flex;align-items:center;gap:.4rem;"><span style="color:#2563EB;font-weight:bold;">●</span> Pricing scales with parsed volume, not headcount alone.</div>
+  <div style="display:flex;align-items:center;gap:.4rem;"><span style="color:#2563EB;font-weight:bold;">●</span> Switch tiers any time as your hiring ramps up.</div>
+  <div style="display:flex;align-items:center;gap:.4rem;"><span style="color:#2563EB;font-weight:bold;">●</span> No surprise charges. Overages are flagged ahead of time.</div>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Feature Comparison Table ──
+with st.expander("📊 Compare All Features & Plan Details", expanded=False):
+    st.markdown("""
+<table class="iq-th-table">
+  <thead>
+    <tr>
+      <th style="width:36%">Feature</th>
+      <th style="width:16%">Free</th>
+      <th style="width:16%">Pro</th>
+      <th style="width:16%;color:#2563EB">Team</th>
+      <th style="width:16%">Enterprise</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Category 1 -->
+    <tr class="iq-th-cat-hdr"><td colspan="5">Workspace &amp; Volume</td></tr>
+    <tr><td>Workspace</td><td>Personal only</td><td>Personal only</td><td>Org + Personal</td><td>Org + Personal</td></tr>
+    <tr><td>Resume parses/mo</td><td>50</td><td>500</td><td>2,000 / seat (pooled)</td><td>Unlimited</td></tr>
+    <tr><td>Active requirements</td><td>3</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+    <tr><td>Bulk upload batch</td><td>10 per batch</td><td>100 per batch</td><td>Unlimited</td><td>Unlimited</td></tr>
+    <tr><td>Excel / CSV export</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+
+    <!-- Category 2 -->
+    <tr class="iq-th-cat-hdr"><td colspan="5">AI &amp; Matching</td></tr>
+    <tr><td>AI matching engine</td><td>Basic</td><td>Full</td><td>Full + advanced</td><td>Full + custom models</td></tr>
+    <tr><td>Candidate deep search</td><td>10 queries/day</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+    <tr><td>Match scoring &amp; reasoning</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Analytics &amp; hiring insights</td><td>Basic</td><td>Basic</td><td>Advanced</td><td>Advanced + custom</td></tr>
+    <tr><td>API access</td><td>—</td><td>—</td><td>Read-only</td><td>Full read/write</td></tr>
+
+    <!-- Category 3 -->
+    <tr class="iq-th-cat-hdr"><td colspan="5">Collaboration &amp; Access</td></tr>
+    <tr><td>Role-based access</td><td>—</td><td>—</td><td>Admin + Recruiter</td><td>Custom roles &amp; permissions</td></tr>
+    <tr><td>Shared candidate pools</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Multiple recruiter seats</td><td>—</td><td>—</td><td>✓ (min 2 seats)</td><td>Unlimited seats</td></tr>
+
+    <!-- Category 4 -->
+    <tr class="iq-th-cat-hdr"><td colspan="5">Security &amp; Infrastructure</td></tr>
+    <tr><td>SSO / SAML / SCIM</td><td>—</td><td>—</td><td>—</td><td>SSO / SAML / SCIM</td></tr>
+    <tr><td>Audit logs</td><td>—</td><td>—</td><td>Last 30 days</td><td>Unlimited</td></tr>
+    <tr><td>Compliance certifications</td><td>On roadmap</td><td>On roadmap</td><td>On roadmap</td><td>Design partners available</td></tr>
+    <tr><td>Data residency</td><td>Cloud (US)</td><td>Cloud (US)</td><td>Cloud (US)</td><td>US / EU / Private VPC</td></tr>
+    <tr><td>Uptime SLA</td><td>—</td><td>—</td><td>99.5%</td><td>99.9% guaranteed</td></tr>
+
+    <!-- Category 5 -->
+    <tr class="iq-th-cat-hdr"><td colspan="5">Support</td></tr>
+    <tr><td>Support level</td><td>Community</td><td>Email (48h SLA)</td><td>Priority email (12h SLA)</td><td>Dedicated CSM + phone</td></tr>
+  </tbody>
+</table>
+""", unsafe_allow_html=True)
+
+# ── Trust & Security Banner ──
+st.markdown("""
+<div class="iq-th-trust">
+  <span>🔒 <b>Encrypted in transit &amp; at rest</b></span>
+  &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <span>🛡️ <b>Role-based data isolation</b></span>
+  &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <span>⚡ <b>99.9% Uptime Architecture</b></span>
+  &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+  <span>📋 <b>SOC 2 &amp; GDPR compliance roadmap</b></span>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Pricing FAQ ──
+st.markdown("""
+<div style="margin:2.5rem 0 1rem;text-align:center;">
+  <div style="font-size:1.6rem;font-weight:800;color:#0F172A;letter-spacing:-.4px;">Frequently Asked Questions</div>
+  <div style="font-size:.88rem;color:#64748B;margin-top:.25rem;">Everything you need to know about TalentIQ plans, billing, and security</div>
+</div>
+""", unsafe_allow_html=True)
+
+with st.expander("What counts as a resume parse?"):
+    st.write("Each unique resume file (PDF or DOCX) you upload and process counts as one parse. Re-running matching against different job descriptions on already-parsed resumes is free.")
+
+with st.expander("Can I switch plans anytime?"):
+    st.write("Yes. Upgrades take effect immediately and are pro-rated. Downgrades take effect at the beginning of the next billing cycle.")
+
+with st.expander("How does annual billing work?"):
+    st.write("Annual plans are billed once per year at a 20% discount versus monthly billing. You can cancel anytime; refunds are pro-rated for the unused period.")
+
+with st.expander("Is TalentIQ SOC 2 or GDPR certified?"):
+    st.write("Formal certifications are on our product roadmap. We currently partner with enterprise customers as design partners to align on their specific compliance and data privacy requirements. All data is encrypted in transit and at rest.")
+
+with st.expander("What is your data ownership and AI privacy policy?"):
+    st.write("You own 100% of the candidate data you upload. You can export results to Excel or CSV at any time. We strictly never train public or shared AI models on your proprietary candidate resumes.")
+
+with st.expander("What happens when I exceed my monthly parse limit?"):
+    st.write("New resume parses will pause until your next monthly billing cycle resets, or you can instantly upgrade your tier. All existing candidate data, score breakdowns, and shortlist filters remain accessible.")
 
 
 # ─────────────────────────── Testimonials ────────────────────────────────────
