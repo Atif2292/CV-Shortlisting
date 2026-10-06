@@ -813,6 +813,97 @@ label, .stFileUploader label {
 .iq-pillar-stat { font-size: 1.85rem; font-weight: 900; color: #2563EB; line-height: 1.1; margin-bottom: .3rem; }
 .iq-pillar-title { font-size: .95rem; font-weight: 800; color: #0F172A; margin-bottom: .35rem; }
 .iq-pillar-desc { font-size: .8rem; color: #64748B; line-height: 1.5; }
+
+/* ── FAQ Section (TuraHire style) ── */
+.iq-faq-sec {
+    max-width: 820px;
+    margin: 4.5rem auto 3rem;
+    padding: 0 1rem;
+}
+.iq-faq-hdr {
+    text-align: center;
+    margin-bottom: 2.2rem;
+}
+.iq-faq-eye {
+    font-size: .75rem;
+    font-weight: 800;
+    color: #2563EB;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: .45rem;
+}
+.iq-faq-h2 {
+    font-size: 2.15rem;
+    font-weight: 900;
+    color: #0F172A;
+    letter-spacing: -.6px;
+    margin-bottom: .5rem;
+}
+.iq-faq-sub {
+    font-size: .94rem;
+    color: #64748B;
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.55;
+}
+.iq-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+.iq-faq-item {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all .2s ease;
+}
+.iq-faq-item:hover {
+    border-color: #CBD5E1;
+    background: #F8FAFC;
+}
+.iq-faq-item[open] {
+    background: #F8FAFC;
+    border-color: #C7D2FE;
+    box-shadow: 0 4px 16px rgba(99,102,241,.06);
+}
+.iq-faq-summary {
+    padding: 1.15rem 1.35rem;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #0F172A;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    user-select: none;
+}
+.iq-faq-summary::-webkit-details-marker {
+    display: none;
+}
+.iq-faq-summary::marker {
+    display: none;
+}
+.iq-faq-arrow {
+    width: 20px;
+    height: 20px;
+    color: #7C3AED;
+    transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+.iq-faq-item[open] .iq-faq-arrow {
+    transform: rotate(180deg);
+}
+.iq-faq-body {
+    padding: 0 1.35rem 1.25rem;
+    font-size: .92rem;
+    color: #475569;
+    line-height: 1.65;
+    border-top: 1px solid #F1F5F9;
+    padding-top: .85rem;
+}
 .iq-foot { text-align:center; padding:2rem 0 1.5rem; border-top:1px solid #E2E8F0; margin-top:2rem; }
 .iq-foot-txt { font-size:.78rem; color:#94A3B8; }
 
@@ -1115,6 +1206,7 @@ render_html("""
 <div style="display:flex;align-items:center;gap:1.3rem;">
 <a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
 <a href="#features" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Features</a>
+<a href="#faq" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">FAQ</a>
 <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
 </div>
 </div>
@@ -2073,6 +2165,101 @@ render_html("""
 </div>
 </div>
 </div>
+</div>
+</div>
+""")
+
+
+# ─────────────────────────── FAQ ─────────────────────────────────────────────
+render_html("""
+<div id="faq" class="iq-faq-sec">
+<div class="iq-faq-hdr">
+<div class="iq-faq-eye">Frequently Asked Questions</div>
+<div class="iq-faq-h2">Got Questions? We&rsquo;ve Got Answers</div>
+<div class="iq-faq-sub">Everything you need to know about AI resume screening, batch evaluations, and candidate data privacy.</div>
+</div>
+<div class="iq-faq-list">
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>What counts as a resume parse?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+Each uploaded resume (PDF, Word DOCX, or TXT) evaluated against your job description counts as one candidate parse. TalentIQ extracts work history, skill proficiencies, seniority level, and requirement alignment in seconds.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>What is included in the free trial?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+You can screen up to 10 candidate CVs per batch completely free with zero credit card required. You get instant access to 0&ndash;100 match scores, candidate rankings, strengths &amp; concerns breakdowns, and executive Excel exports.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>How does the AI score and rank candidates?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+TalentIQ uses contextual semantic evaluation to assess applicants against your specific job criteria. Rather than relying on rigid keyword matching, the AI evaluates project complexity, demonstrated skills, and seniority depth to produce fair, explainable rankings.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>Is candidate data safe and GDPR compliant?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+Yes, 100%. We take candidate privacy and data protection seriously. Uploaded CVs are processed in-memory and automatically deleted from our servers immediately after analysis. Your hiring data is never stored, sold, or used to train public AI models.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>Does TalentIQ integrate with our ATS?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+TalentIQ is designed to work smoothly beside your existing ATS (Greenhouse, Lever, Workday, Ashby, BambooHR). Simply export applicant resumes from your ATS, drop them into TalentIQ, and download interview-ready Excel reports formatted for hiring managers.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>What is data ownership and portability?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+You maintain 100% ownership of all uploaded job descriptions, candidate resumes, scorecards, and reports. All shortlists and candidate evaluations can be exported in 1 click as structured <code>.xlsx</code> spreadsheets.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>How fast is the batch screening process?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+Parallel multi-file processing enables TalentIQ to parse, score, and rank a batch of 10 to 50 resumes in under 45 seconds&mdash;saving hours of manual resume skimming for each open role.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>What happens when I need higher volume or custom team features?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+If your recruiting team handles high-volume applicant pipelines or requires custom scoring rubrics, click <a href="https://wa.me/447379975532" target="_blank" style="color:#2563EB;font-weight:700;text-decoration:none;">Book a Demo</a> to connect directly with our team on WhatsApp for dedicated volume onboarding.
+</div>
+</details>
+
 </div>
 </div>
 """)
