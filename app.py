@@ -239,12 +239,30 @@ label, .stFileUploader label {
 }
 .iq-logo { font-size: 1.45rem; font-weight: 900; color: #2563EB; letter-spacing: -.5px; }
 .iq-logo b { color: #2563EB; font-weight: 900; }
+.iq-nav a.iq-nav-demo,
+.iq-nav a.iq-nav-demo:link,
+.iq-nav a.iq-nav-demo:visited,
+.iq-nav a.iq-nav-demo:hover,
+.iq-nav a.iq-nav-demo:focus,
+.iq-nav a.iq-nav-demo:active,
+a.iq-nav-demo,
+a.iq-nav-demo:link,
+a.iq-nav-demo:visited,
+a.iq-nav-demo:hover,
+a.iq-nav-demo:focus,
+a.iq-nav-demo:active,
 .iq-nav-demo {
-    font-size: .875rem; font-weight: 600; color: #fff; background: #2563EB;
-    padding: .45rem 1.15rem; border-radius: 8px; border: none; cursor: pointer;
-    box-shadow: 0 2px 8px rgba(37,99,235,.3); transition: background .15s;
+    font-size: .875rem !important; font-weight: 700 !important; color: #FFFFFF !important; background: #2563EB !important;
+    padding: .48rem 1.25rem !important; border-radius: 8px !important; border: none !important; cursor: pointer !important;
+    box-shadow: 0 2px 8px rgba(37,99,235,.25) !important; transition: all .15s ease !important;
+    text-decoration: none !important; display: inline-flex !important; align-items: center !important;
 }
-.iq-nav-demo:hover { background: #1D4ED8; }
+.iq-nav a.iq-nav-demo:hover,
+.iq-nav a.iq-nav-demo:active,
+a.iq-nav-demo:hover,
+a.iq-nav-demo:active {
+    color: #FFFFFF !important; background: #1D4ED8 !important; text-decoration: none !important;
+}
 
 /* ── Hero — use <div> not h-tags to avoid Streamlit anchor icons ── */
 .iq-hero { text-align: center; padding: 4rem 1rem 2.8rem; max-width: 740px; margin: 0 auto; }
@@ -399,40 +417,101 @@ label, .stFileUploader label {
 }
 .iq-view-link:hover { text-decoration: underline; }
 
-/* ── Testimonials & Early Beta Feedback ── */
-.iq-ts-sec { background:#fff; border:1px solid #E2E8F0; border-radius:20px; padding:2.5rem 2rem; margin:3rem 0 2rem; }
-.iq-ts-h   { font-size:1.65rem; font-weight:900; color:#0B1120; letter-spacing:-.5px; margin-bottom:.35rem; }
-.iq-ts-s   { color:#64748B; font-size:.9rem; margin-bottom:1.6rem; }
-.iq-beta-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+/* ── Testimonials & Early Beta Feedback (Scrolling Marquee) ── */
+.iq-ts-sec {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    padding: 3rem 0 2.5rem;
+    margin: 3.5rem 0 2rem;
+    overflow: hidden;
+    position: relative;
+}
+.iq-ts-h { font-size: 1.65rem; font-weight: 900; color: #0B1120; letter-spacing: -.5px; margin-bottom: .35rem; }
+.iq-ts-s { color: #64748B; font-size: .9rem; margin-bottom: 2rem; }
+.iq-ts-track-wrap {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    padding: .5rem 0;
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+}
+.iq-ts-track {
+    display: flex;
     gap: 1.25rem;
+    width: max-content;
+    animation: iq-marquee 36s linear infinite;
+}
+.iq-ts-track:hover {
+    animation-play-state: paused;
+}
+@keyframes iq-marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 .iq-beta-card {
+    width: 335px;
+    flex-shrink: 0;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
     border-radius: 14px;
-    padding: 1.4rem 1.4rem;
+    padding: 1.35rem 1.35rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 12px rgba(15,23,42,.03);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    user-select: none;
 }
 .iq-beta-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(10,20,60,.06);
+    box-shadow: 0 6px 20px rgba(37,99,235,.07);
     border-color: #CBD5E1;
 }
+.iq-beta-stars {
+    color: #F59E0B;
+    font-size: .84rem;
+    margin-bottom: .5rem;
+    letter-spacing: 2px;
+}
 .iq-beta-text {
-    font-size: .875rem;
+    font-size: .865rem;
     color: #334155;
     line-height: 1.6;
     margin-bottom: 1.1rem;
+    flex: 1;
 }
-.iq-tp     { display:flex; align-items:center; gap:.65rem; }
-.iq-tav    { width:36px; height:36px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#DBEAFE,#EDE9FE); display:flex; align-items:center; justify-content:center; font-weight:700; color:#2563EB; font-size:.82rem; }
-.iq-tpn    { font-weight:700; font-size:.83rem; color:#0B1120; }
-.iq-tpc    { font-size:.76rem; color:#64748B; }
+.iq-tp {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    border-top: 1px solid #EDF2F7;
+    padding-top: .75rem;
+}
+.iq-tav {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #DBEAFE, #EDE9FE);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #2563EB;
+    font-size: .78rem;
+}
+.iq-tpn {
+    font-weight: 700;
+    font-size: .82rem;
+    color: #0F172A;
+}
+.iq-tpc {
+    font-size: .72rem;
+    color: #64748B;
+    font-weight: 500;
+}
 
 /* ── Hero CTA buttons — force white text on <a> tags ── */
 .iq-bp, .iq-bp:link, .iq-bp:visited, .iq-bp:hover, .iq-bp:active {
@@ -1168,13 +1247,85 @@ def _rec_badge(text: str) -> str:
     return f'<span class="{css}">{text}</span>'
 
 
+def _extract_doc_file(path: str) -> str:
+    """Extract text from Word 97-2003 .doc files using textutil, docx, or binary stream fallback."""
+    # 1. Many modern .doc files are actually docx files renamed as .doc
+    try:
+        from docx import Document
+        doc = Document(path)
+        t = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+        if t.strip():
+            return t.strip()
+    except Exception:
+        pass
+
+    # 2. On macOS, textutil converts .doc to plain text natively
+    import subprocess, sys
+    if sys.platform == "darwin":
+        try:
+            res = subprocess.run(["textutil", "-convert", "txt", "-stdout", path], capture_output=True, text=True)
+            if res.returncode == 0 and res.stdout.strip():
+                return res.stdout.strip()
+        except Exception:
+            pass
+
+    # 3. Robust binary string extraction fallback (works for OLE Word documents on Linux/Cloud)
+    try:
+        with open(path, "rb") as f:
+            raw = f.read()
+        import re
+        words = re.findall(rb'[\x20-\x7E\t\r\n]{4,}', raw)
+        clean = " ".join(w.decode('latin1', errors='ignore') for w in words)
+        return clean.strip()
+    except Exception:
+        return ""
+
+
+def _extract_excel_file(path: str, fname: str) -> str:
+    """Extract candidate or JD content from Excel (.xlsx, .xls) and CSV files."""
+    ext = Path(fname).suffix.lower()
+    try:
+        if ext == ".csv":
+            df = pd.read_csv(path)
+        else:
+            engine = "openpyxl" if ext == ".xlsx" else None
+            excel_data = pd.read_excel(path, sheet_name=None, engine=engine)
+            dfs = [sheet for sheet in excel_data.values()]
+            df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+        df = df.dropna(how='all')
+        lines = []
+        for idx, row in df.iterrows():
+            row_parts = []
+            for col, val in row.items():
+                if pd.notna(val) and str(val).strip():
+                    row_parts.append(f"{col}: {val}")
+            if row_parts:
+                lines.append(f"Candidate/Profile #{idx+1}: " + " | ".join(row_parts))
+        return "\n\n".join(lines)
+    except Exception:
+        try:
+            df = pd.read_excel(path)
+            return df.to_string(index=False)
+        except Exception:
+            return ""
+
+
 def _read_cv(path: str, fname: str) -> str:
     ext = Path(fname).suffix.lower()
-    if ext == ".pdf":   return extract_pdf_text(path)
-    if ext == ".docx":  return extract_docx_text(path)
+    if ext == ".pdf":
+        return extract_pdf_text(path)
+    if ext == ".docx":
+        return extract_docx_text(path)
+    if ext == ".doc":
+        return _extract_doc_file(path)
+    if ext in [".xlsx", ".xls", ".csv"]:
+        return _extract_excel_file(path, fname)
     if ext == ".txt":
-        try:    return Path(path).read_text(encoding="utf-8", errors="ignore")
-        except: return ""
+        try:
+            return Path(path).read_text(encoding="utf-8", errors="ignore")
+        except:
+            return ""
     return ""
 
 
@@ -1182,11 +1333,13 @@ def _extract_from_upload(f) -> str:
     """Extract text from a Streamlit UploadedFile object."""
     suffix = Path(f.name).suffix
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        f.seek(0)
         tmp.write(f.read())
         path = tmp.name
     try:
         return _read_cv(path, f.name)
     finally:
+        f.seek(0)
         Path(path).unlink(missing_ok=True)
 
 
@@ -1207,7 +1360,7 @@ render_html("""
 <a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
 <a href="#features" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Features</a>
 <a href="#faq" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">FAQ</a>
-<a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
+<a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Book a Demo &nbsp;&rarr;</span></a>
 </div>
 </div>
 """)
@@ -1260,7 +1413,7 @@ render_html("""
 <div class="iq-fbar-icon">&#9201;</div>
 <div>
 <div class="iq-fbar-t1">Save Hours Weekly</div>
-<div class="iq-fbar-t2">Instant Excel reports</div>
+<div class="iq-fbar-t2">1-Click Shortlist Reports</div>
 </div>
 </div>
 </div>
@@ -1316,6 +1469,11 @@ SAMPLE_ROLES = {
     ),
 }
 
+def _on_role_select():
+    sel = st.session_state.get("sample_role_sel")
+    if sel and sel != "Custom (Paste your own JD)":
+        st.session_state["jd_paste"] = SAMPLE_ROLES.get(sel, "")
+
 with col1:
     with st.container(border=True):
         render_html("""
@@ -1328,16 +1486,14 @@ with col1:
             list(SAMPLE_ROLES.keys()),
             key="sample_role_sel",
             index=0,
+            on_change=_on_role_select,
             label_visibility="visible",
         )
-        if role_choice != "Custom (Paste your own JD)" and st.session_state.get("_prev_role_choice") != role_choice:
-            st.session_state["_prev_role_choice"] = role_choice
-            st.session_state["jd_paste"] = SAMPLE_ROLES[role_choice]
-            st.rerun()
 
         tab_paste, tab_file = st.tabs(["Paste Text", "Upload File"])
 
-        jd_text = ""
+        # Immediately check session state for fast feedback
+        jd_text = st.session_state.get("jd_paste", "").strip()
 
         with tab_paste:
             jd_input = st.text_area(
@@ -1363,20 +1519,23 @@ with col1:
 
         with tab_file:
             jd_file = st.file_uploader(
-                "Upload your JD",
-                type=["pdf", "docx", "txt"],
+                "Upload your JD (PDF, Word, TXT, Excel)",
+                type=["pdf", "docx", "doc", "txt", "xlsx", "xls", "csv"],
                 key="jd_file_up",
                 label_visibility="collapsed",
             )
             if jd_file:
-                extracted = _extract_from_upload(jd_file)
+                cache_key = f"_jd_cache_{jd_file.name}_{jd_file.size}"
+                if cache_key not in st.session_state:
+                    st.session_state[cache_key] = _extract_from_upload(jd_file)
+                extracted = st.session_state[cache_key]
                 if extracted.strip():
                     jd_text = extracted.strip()
                     st.caption(f"✅ Extracted {len(jd_text):,} characters from {jd_file.name}")
 
         # Status badge
         if jd_text:
-            render_html('<div class="iq-status-ok">✅ Job description added</div>')
+            render_html(f'<div class="iq-status-ok">✅ Job description ready ({len(jd_text):,} chars)</div>')
         else:
             render_html('<div class="iq-status-wait">⏳ Waiting for job description…</div>')
 
@@ -1391,12 +1550,12 @@ with col2:
 
         render_html(
             '<div class="iq-trial-info">🎁 <b>Free Trial:</b> Screen up to <b>10 CVs per batch</b>. '
-            'Upload resumes in PDF, DOCX or TXT format.</div>'
+            'Upload resumes in PDF, DOCX, DOC, TXT, or MS Excel (XLSX, XLS, CSV).</div>'
         )
 
         cv_files = st.file_uploader(
-            "Upload CVs (PDF, DOCX, TXT — up to 10 files)",
-            type=["pdf", "docx", "txt"],
+            "Upload CVs (PDF, DOC/DOCX, TXT, MS Excel — up to 10 files)",
+            type=["pdf", "docx", "doc", "txt", "xlsx", "xls", "csv"],
             accept_multiple_files=True,
             key="cv_up",
             label_visibility="visible",
@@ -1503,6 +1662,7 @@ with col3:
                 saved_paths, saved_names = [], []
                 for f in (cv_files or []):
                     dest = upload_dir / f.name
+                    f.seek(0)
                     dest.write_bytes(f.read())
                     saved_paths.append(str(dest))
                     saved_names.append(f.name)
@@ -1933,7 +2093,7 @@ if st.session_state.get("show_full") and st.session_state.results:
         f'<div class="iq-dl-wrap">'
         f'<a class="iq-dl-btn" href="data:{_mime};base64,{_xl_b64}" '
         f'download="talentiq_results.xlsx">'
-        f'⬇️&nbsp;&nbsp;Download Results (.xlsx)</a>'
+        f'⬇️&nbsp;&nbsp;Download Shortlist Report (.xlsx)</a>'
         f'</div>'
     )
 
@@ -2073,8 +2233,8 @@ render_html("""
 <div class="iq-bento-card">
 <div>
 <div class="iq-bento-tag">Client &amp; Manager Reports</div>
-<div class="iq-bento-title">1-Click Formatted Spreadsheets</div>
-<div class="iq-bento-sub">Download executive-ready Excel reports formatted with candidate scores, strengths, and interview notes.</div>
+<div class="iq-bento-title">Executive Shortlist Reports</div>
+<div class="iq-bento-sub">Export interview-ready candidate reports formatted with scores, strengths, and interview probe notes.</div>
 </div>
 <div class="iq-mockup-box">
 <div class="iq-excel-preview">
@@ -2092,7 +2252,7 @@ render_html("""
 </div>
 </div>
 <div class="iq-excel-footer">
-<span>&#128196; Shortlist_Executive_Report.xlsx</span>
+<span>&#128196; Shortlist_Candidate_Report.xlsx</span>
 <span class="iq-dl-badge">&#10515; Ready</span>
 </div>
 </div>
@@ -2130,40 +2290,158 @@ render_html("""
 # ─────────────────────────── Testimonials ────────────────────────────────────
 render_html("""
 <div class="iq-ts-sec">
-<div style="text-align:center">
+<div style="text-align:center;padding:0 1rem;">
 <div class="iq-ts-h">Reviews &amp; Testimonials</div>
 <div class="iq-ts-s">Early feedback from recruiters and HR leads testing our pre-launch pilot</div>
 </div>
-<div class="iq-beta-grid">
+<div class="iq-ts-track-wrap">
+<div class="iq-ts-track">
+
 <div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
 <div class="iq-beta-text">&ldquo;Tested the pilot on 15 resumes for an engineering role. The top 3 ranked candidates were spot on and it saved me an hour of manual skimming.&rdquo;</div>
 <div class="iq-tp">
-<div class="iq-tav">AM</div>
+<div class="iq-tav">TA</div>
 <div>
-<div class="iq-tpn">Alex Miller</div>
-<div class="iq-tpc">Technical Recruiter &middot; Beta Tester</div>
+<div class="iq-tpn">Verified Beta Reviewer</div>
+<div class="iq-tpc">Technical Recruitment Agency</div>
 </div>
 </div>
 </div>
+
 <div class="iq-beta-card">
-<div class="iq-beta-text">&ldquo;The strengths and concerns breakdown cuts out the fluff. Really helpful when evaluating a quick batch of applicants on a Friday afternoon.&rdquo;</div>
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;The strengths and concerns breakdown cuts out the fluff. Really helpful when evaluating a quick batch of applicants on a busy Friday.&rdquo;</div>
 <div class="iq-tp">
-<div class="iq-tav">SK</div>
+<div class="iq-tav">HR</div>
 <div>
-<div class="iq-tpn">Sarah Khan</div>
-<div class="iq-tpc">Talent Acquisition &middot; Early Access</div>
+<div class="iq-tpn">Early Access Partner</div>
+<div class="iq-tpc">Fast-Growth Tech Team</div>
 </div>
 </div>
 </div>
+
 <div class="iq-beta-card">
-<div class="iq-beta-text">&ldquo;Super straightforward. Uploaded CVs, got instant match scores, and exported the Excel sheet in seconds. Looking forward to the official launch.&rdquo;</div>
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;Super straightforward. Uploaded CVs, got instant match scores, and downloaded the shortlist report in seconds. Clean, objective, and fast.&rdquo;</div>
 <div class="iq-tp">
-<div class="iq-tav">DL</div>
+<div class="iq-tav">SF</div>
 <div>
-<div class="iq-tpn">David Lee</div>
-<div class="iq-tpc">Independent Recruiter &middot; Beta Tester</div>
+<div class="iq-tpn">Verified Pilot User</div>
+<div class="iq-tpc">Executive Staffing Firm</div>
 </div>
 </div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;Saved our hiring team roughly 12 hours during our first week screening for two open positions. The candidate fit ranking is remarkably accurate.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">VP</div>
+<div>
+<div class="iq-tpn">Early Access Reviewer</div>
+<div class="iq-tpc">People &amp; Talent Operations</div>
+</div>
+</div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in under a minute.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">TR</div>
+<div>
+<div class="iq-tpn">Verified Beta Partner</div>
+<div class="iq-tpc">High-Volume Hiring Agency</div>
+</div>
+</div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;The objective scorecard gives us complete confidence that we aren&rsquo;t overlooking top candidates due to keyword variations. Truly impressive matching.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">TO</div>
+<div>
+<div class="iq-tpn">Verified Pilot Reviewer</div>
+<div class="iq-tpc">Recruitment Operations Group</div>
+</div>
+</div>
+</div>
+
+<!-- Duplicate for infinite seamless scroll -->
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;Tested the pilot on 15 resumes for an engineering role. The top 3 ranked candidates were spot on and it saved me an hour of manual skimming.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">TA</div>
+<div>
+<div class="iq-tpn">Verified Beta Reviewer</div>
+<div class="iq-tpc">Technical Recruitment Agency</div>
+</div>
+</div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;The strengths and concerns breakdown cuts out the fluff. Really helpful when evaluating a quick batch of applicants on a busy Friday.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">HR</div>
+<div>
+<div class="iq-tpn">Early Access Partner</div>
+<div class="iq-tpc">Fast-Growth Tech Team</div>
+</div>
+</div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;Super straightforward. Uploaded CVs, got instant match scores, and downloaded the shortlist report in seconds. Clean, objective, and fast.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">SF</div>
+<div>
+<div class="iq-tpn">Verified Pilot User</div>
+<div class="iq-tpc">Executive Staffing Firm</div>
+</div>
+</div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;Saved our hiring team roughly 12 hours during our first week screening for two open positions. The candidate fit ranking is remarkably accurate.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">VP</div>
+<div>
+<div class="iq-tpn">Early Access Reviewer</div>
+<div class="iq-tpc">People &amp; Talent Operations</div>
+</div>
+</div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in under a minute.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">TR</div>
+<div>
+<div class="iq-tpn">Verified Beta Partner</div>
+<div class="iq-tpc">High-Volume Hiring Agency</div>
+</div>
+</div>
+</div>
+
+<div class="iq-beta-card">
+<div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<div class="iq-beta-text">&ldquo;The objective scorecard gives us complete confidence that we aren&rsquo;t overlooking top candidates due to keyword variations. Truly impressive matching.&rdquo;</div>
+<div class="iq-tp">
+<div class="iq-tav">TO</div>
+<div>
+<div class="iq-tpn">Verified Pilot Reviewer</div>
+<div class="iq-tpc">Recruitment Operations Group</div>
+</div>
+</div>
+</div>
+
 </div>
 </div>
 </div>
@@ -2196,7 +2474,7 @@ Each uploaded resume (PDF, Word DOCX, or TXT) evaluated against your job descrip
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-You can screen up to 10 candidate CVs per batch completely free with zero credit card required. You get instant access to 0&ndash;100 match scores, candidate rankings, strengths &amp; concerns breakdowns, and executive Excel exports.
+You can screen up to 10 candidate CVs per batch completely free with zero credit card required. You get instant access to 0&ndash;100 match scores, candidate rankings, strengths &amp; concerns breakdowns, and executive shortlist report downloads.
 </div>
 </details>
 
@@ -2226,7 +2504,7 @@ Yes, 100%. We take candidate privacy and data protection seriously. Uploaded CVs
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-TalentIQ is designed to work smoothly beside your existing ATS (Greenhouse, Lever, Workday, Ashby, BambooHR). Simply export applicant resumes from your ATS, drop them into TalentIQ, and download interview-ready Excel reports formatted for hiring managers.
+TalentIQ is designed to work smoothly beside your existing ATS (Greenhouse, Lever, Workday, Ashby, BambooHR). Simply export applicant resumes from your ATS, drop them into TalentIQ, and download interview-ready candidate reports formatted for hiring managers.
 </div>
 </details>
 
@@ -2236,7 +2514,7 @@ TalentIQ is designed to work smoothly beside your existing ATS (Greenhouse, Leve
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-You maintain 100% ownership of all uploaded job descriptions, candidate resumes, scorecards, and reports. All shortlists and candidate evaluations can be exported in 1 click as structured <code>.xlsx</code> spreadsheets.
+You maintain 100% ownership of all uploaded job descriptions, candidate resumes, scorecards, and reports. All shortlists and candidate evaluations can be exported in 1 click as structured report downloads.
 </div>
 </details>
 
