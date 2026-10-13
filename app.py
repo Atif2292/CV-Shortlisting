@@ -19,7 +19,7 @@ load_dotenv()
 
 from utils.pdf_parser import extract_pdf_text
 from utils.docx_parser import extract_docx_text
-from utils.ai_scoring import extract_resume_keywords, rank_candidates_batch
+from utils.ai_scoring import extract_resume_keywords, rank_candidates_batch, extract_job_context
 from utils.cleanup import delete_uploaded_files
 import altair as alt
 
@@ -1602,12 +1602,7 @@ with col3:
             if not demo_files:
                 st.error("Demo CVs not found on server.")
             else:
-                job_context = {
-                    "title": "Senior Python Backend Engineer",
-                    "skills": "Python, FastAPI, AWS, PostgreSQL, Docker",
-                    "years_experience": 5,
-                    "description": jd_text,
-                }
+                job_context = extract_job_context(jd_text)
                 candidates = []
                 bar = st.progress(0, text="Loading 5 Demo CVs…")
                 _info = st.empty()
@@ -1620,7 +1615,11 @@ with col3:
                     try:
                         text = _read_cv(str(df), df.name)
                         if text.strip():
-                            candidates.append(extract_resume_keywords(cv_text=text, required_skills="Python, FastAPI, AWS, PostgreSQL, Docker"))
+                            candidates.append(extract_resume_keywords(
+                                cv_text=text,
+                                required_skills=job_context.get("skills", ""),
+                                filename=df.name,
+                            ))
                     except Exception as ex:
                         st.warning(f"⚠️ Error reading {df.name}: {ex}")
                     bar.progress(idx / 5 * 0.5, text=f"Parsing demo CVs — {idx}/5 done…")
@@ -1667,15 +1666,7 @@ with col3:
                     saved_paths.append(str(dest))
                     saved_names.append(f.name)
 
-                first_line = next(
-                    (ln.strip() for ln in jd_text.splitlines() if ln.strip()), ""
-                )[:80]
-                job_context = {
-                    "title":            first_line,
-                    "skills":           "",
-                    "years_experience": 0,
-                    "description":      jd_text,
-                }
+                job_context = extract_job_context(jd_text)
 
                 candidates = []
                 bar   = st.progress(0, text="Reading CVs…")
@@ -1692,7 +1683,11 @@ with col3:
                         if not text.strip():
                             st.warning(f"⚠️ No text in {fname} — skipping.")
                             continue
-                        candidates.append(extract_resume_keywords(cv_text=text, required_skills=""))
+                        candidates.append(extract_resume_keywords(
+                            cv_text=text,
+                            required_skills=job_context.get("skills", ""),
+                            filename=fname,
+                        ))
                     except Exception as ex:
                         st.warning(f"⚠️ Error reading {fname}: {ex}")
                     bar.progress(idx / len(saved_paths) * 0.5,

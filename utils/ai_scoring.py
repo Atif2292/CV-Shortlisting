@@ -2,32 +2,38 @@
 utils/ai_scoring.py
 
 Two-phase screening pipeline:
-  Phase 1 — extract_resume_keywords(): local regex extraction, zero LLM calls.
-  Phase 2 — rank_candidates_batch(): one LLM call for the entire batch.
-
-Set USE_MOCK = False and add OPENAI_API_KEY to .env to use real GPT-4o.
+  Phase 1 — extract_resume_keywords(): local regex & structure extraction, zero LLM calls.
+  Phase 2 — rank_candidates_batch(): holistic candidate ranking via GPT-4o with deterministic,
+            explainable heuristic fallback when running offline or without an API key.
 """
 
 import os
 import re
 import json
-import random
+from pathlib import Path
 
 USE_MOCK = False
 
-# ── Common tech keywords for skill detection ──────────────────────────────────
+# ── Common tech keywords for skill detection across modern engineering roles ──
 TECH_KEYWORDS = [
-    "python", "javascript", "typescript", "java", "c++", "c#", "go", "rust", "ruby",
-    "swift", "kotlin", "scala", "php",
-    "react", "vue", "angular", "next.js", "svelte",
-    "node.js", "express", "fastapi", "django", "flask", "spring",
-    "postgresql", "mysql", "mongodb", "redis", "elasticsearch", "cassandra", "sqlite",
+    # Languages
+    "python", "javascript", "typescript", "java", "c++", "c#", ".net", "go", "golang",
+    "rust", "ruby", "swift", "kotlin", "scala", "php", "julia", "bash", "shell",
+    # Frameworks & Libraries
+    "fastapi", "django", "flask", "spring", "spring boot", "react", "vue", "angular",
+    "next.js", "svelte", "node.js", "nodejs", "express", "laravel", "rails",
+    # Databases & Caching
+    "postgresql", "mysql", "mongodb", "redis", "elasticsearch", "cassandra",
+    "sqlite", "dynamodb", "sql", "nosql",
+    # Cloud & Infrastructure
     "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "ansible",
-    "git", "ci/cd", "jenkins", "github actions",
+    "ci/cd", "jenkins", "github actions", "linux",
+    # Data & AI / ML
     "machine learning", "deep learning", "nlp", "tensorflow", "pytorch", "scikit-learn",
-    "pandas", "numpy", "spark", "kafka", "airflow",
-    "rest", "graphql", "grpc", "microservices",
-    "agile", "scrum", "linux", "bash", "sql", "nosql", "html", "css", "tailwind",
+    "pandas", "numpy", "spark", "kafka", "airflow", "tableau", "jupyter", "llm", "rag",
+    # Architecture & Practices
+    "rest", "rest api", "graphql", "grpc", "microservices", "agile", "scrum",
+    "html", "css", "tailwind", "figma",
 ]
 
 EDUCATION_PATTERNS = [
@@ -38,84 +44,121 @@ EDUCATION_PATTERNS = [
 ]
 
 EXPERIENCE_RE = [
-    r'(\d+)\+?\s+years?\s+of\s+(?:professional\s+)?experience',
-    r'(\d+)\+?\s+years?\s+(?:of\s+)?(?:work|industry|relevant)',
-    r'experience\s+of\s+(\d+)\+?\s+years?',
+    r'(\d+)\+?\s+years?\s+(?:of\s+)?(?:professional|work|industry|relevant|internship|hands-on)?\s*experience',
+    r'experience\s+(?:of\s+)?(\d+)\+?\s+years?',
+    r'(\d+)\+?\s+years?\s+(?:managing|building|working|in|specialising|specializing)',
     r'(\d+)\+?\s+yrs?\s+(?:of\s+)?experience',
 ]
 
-# ── Mock data pools ───────────────────────────────────────────────────────────
-MOCK_NAMES = [
-    "Arjun Sharma", "Priya Patel", "Rahul Mehta", "Sneha Iyer",
-    "Kiran Desai", "Amit Nair", "Divya Krishnan", "Rohan Gupta",
-    "Anjali Singh", "Vikram Joshi", "Pooja Reddy", "Suresh Kumar",
-    "Nisha Verma", "Aakash Malhotra", "Ritu Banerjee", "Dev Kapoor",
-    "Meera Pillai", "Saurabh Tiwari", "Kavya Rao", "Nikhil Bose",
-]
-MOCK_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "proton.me"]
 
-STRENGTHS_POOL = [
-    "Strong problem-solving skills demonstrated through projects",
-    "Excellent communication and teamwork abilities",
-    "Relevant industry experience matching job requirements",
-    "Proficient in required tech stack",
-    "Track record of delivering projects on time",
-    "Leadership experience managing small teams",
-    "Open source contributions showing initiative",
-    "Certifications aligned with role requirements",
-    "Fast learner with diverse technical background",
-    "Strong academic foundation in Computer Science",
-    "Experience with Agile/Scrum methodologies",
-    "Portfolio demonstrates hands-on practical skills",
-]
+def _has_skill(kw: str, text_lower: str) -> bool:
+    """Check if skill keyword appears in text with proper word boundaries."""
+    kw = kw.strip().lower()
+    if not kw:
+        return False
+    if kw in ["c++", "c#", ".net"]:
+        return bool(re.search(r'(?:^|[\s,;/()|])' + re.escape(kw) + r'(?:$|[\s,;/()|])', text_lower))
+    return bool(re.search(r'\b' + re.escape(kw) + r'\b', text_lower))
 
-CONCERNS_POOL = [
-    "Limited years of experience for a senior role",
-    "No direct experience with required cloud platform",
-    "Gap in employment history not explained",
-    "Skills listed without evidence of applied usage",
-    "No formal degree in relevant field",
-    "Overqualified — may not stay long-term",
-    "Primarily startup experience, no enterprise exposure",
-    "Missing some key technical skills from job spec",
-    "Location may require relocation support",
-    "Salary expectations may exceed budget",
-]
 
-RECOMMENDATIONS_POOL = [
-    "Strong candidate who aligns well with the role. Recommended for technical interview.",
-    "Good overall profile with minor gaps. Worth a screening call to assess fit.",
-    "Meets most requirements. Recommend advancing to the next stage.",
-    "Solid background but lacks some key skills. Consider for a junior variant of the role.",
-    "Impressive profile that exceeds expectations. Fast-track to final round.",
-    "Average match. Recommend only if stronger candidates are unavailable.",
-    "Some red flags in experience gaps. Needs clarification before proceeding.",
-    "Well-rounded candidate with a strong portfolio. Highly recommended.",
-    "Good technical skills but limited leadership experience for this role.",
-    "Borderline candidate. Suggest a brief phone screen to evaluate further.",
-]
+def extract_job_context(jd_text: str) -> dict:
+    """Extract job title, required skills, and years of experience from job description text."""
+    if not jd_text or not jd_text.strip():
+        return {
+            "title": "General Role",
+            "skills": "",
+            "years_experience": 0,
+            "description": "",
+        }
+
+    lines = [ln.strip() for ln in jd_text.splitlines() if ln.strip()]
+    first_line = lines[0][:80] if lines else "Target Position"
+    title = first_line
+
+    # If line has Job Title: X, extract X
+    m_title = re.search(r'(?:job\s+title|role|position)\s*:\s*([^\n\r]+)', jd_text, re.IGNORECASE)
+    if m_title:
+        title = m_title.group(1).strip()[:80]
+
+    # Extract years of experience
+    exp_years = 0
+    m_exp = re.search(r'(\d+)\+?\s*years?(?:\s+(?:of\s+)?(?:experience|exp))?', jd_text, re.IGNORECASE)
+    if m_exp:
+        exp_years = int(m_exp.group(1))
+
+    # Extract tech skills from JD text
+    text_lower = jd_text.lower()
+    found_skills = [kw for kw in TECH_KEYWORDS if _has_skill(kw, text_lower)]
+
+    return {
+        "title": title,
+        "skills": ", ".join(found_skills[:12]),
+        "years_experience": exp_years,
+        "description": jd_text.strip(),
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Phase 1 — Local keyword extraction (no LLM)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def extract_resume_keywords(cv_text: str, required_skills: str = "") -> dict:
+def _extract_name(cv_text: str, filename: str = "") -> str:
+    """Extract candidate name from CV text, filename, or email prefix."""
+    # 1. Inspect first 5 non-empty lines of CV text
+    lines = [l.strip() for l in cv_text.splitlines() if l.strip()]
+    skip_headers = {
+        "curriculum vitae", "resume", "cv", "profile", "contact",
+        "personal information", "personal details", "summary", "about me",
+        "work experience", "skills", "education",
+    }
+    for line in lines[:5]:
+        clean_line = re.sub(r'[^A-Za-z\s\.]', '', line).strip()
+        if clean_line.lower() in skip_headers:
+            continue
+        # Standard Name: 2 to 4 capitalized words, length between 3 and 40
+        if re.match(r'^[A-Za-z]+([\s][A-Za-z]+){1,3}$', clean_line) and 3 <= len(clean_line) <= 40:
+            return clean_line
+
+    # 2. Extract from filename if available
+    if filename:
+        stem = Path(filename).stem
+        clean_stem = re.sub(r'^\d+[\s_-]*', '', stem)
+        clean_stem = re.sub(r'[\s_-]*(?:resume|cv|profile|final)[\s_-]*', '', clean_stem, flags=re.IGNORECASE)
+        clean_stem = re.sub(r'[_.-]+', ' ', clean_stem).strip()
+        if re.match(r'^[A-Za-z]+([\s][A-Za-z]+){1,3}$', clean_stem) and 3 <= len(clean_stem) <= 40:
+            return clean_stem.title()
+
+    # 3. Extract from email prefix
+    m = re.search(r'([\w\.]+)@[\w\.-]+\.\w+', cv_text)
+    if m:
+        parts = m.group(1).split('.')
+        if len(parts) == 2 and all(p.isalpha() and len(p) >= 2 for p in parts):
+            return f"{parts[0].title()} {parts[1].title()}"
+
+    return "Candidate"
+
+
+def _extract_email(cv_text: str) -> str:
+    m = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', cv_text)
+    return m.group() if m else ""
+
+
+def extract_resume_keywords(cv_text: str, required_skills: str = "", filename: str = "") -> dict:
     """
     Extract structured data from raw CV text using regex and string matching.
-    Returns a compact dict suitable for batching into a single LLM ranking call.
+    Returns a rich candidate dictionary for AI or heuristic evaluation.
     """
     text_lower = cv_text.lower()
 
     # Required skills from the job posting
     req_list = [s.strip().lower() for s in required_skills.split(",") if s.strip()]
-    matched_required = [s for s in req_list if s in text_lower]
+    matched_required = [s for s in req_list if _has_skill(s, text_lower)]
 
     # General tech keywords
-    detected_tech = [kw for kw in TECH_KEYWORDS if kw in text_lower]
+    detected_tech = [kw for kw in TECH_KEYWORDS if _has_skill(kw, text_lower)]
 
-    # Merge, dedup, cap at 20
-    all_skills = list(dict.fromkeys(matched_required + detected_tech))[:20]
+    # Merge and dedup
+    all_skills = list(dict.fromkeys(matched_required + detected_tech))[:25]
 
     # Years of experience
     exp_years = None
@@ -132,46 +175,49 @@ def extract_resume_keywords(cv_text: str, required_skills: str = "") -> dict:
             education = label
             break
 
-    # Heuristic: lines that look like job titles
-    title_kws = {"engineer", "developer", "architect", "manager", "lead", "director",
-                 "analyst", "scientist", "consultant", "specialist", "designer"}
+    # Extract lines that represent job titles / roles
+    title_kws = {
+        "engineer", "developer", "architect", "manager", "lead", "director",
+        "analyst", "scientist", "consultant", "specialist", "designer", "intern",
+    }
     job_titles = []
     for line in cv_text.splitlines():
         line = line.strip()
         if (4 < len(line) < 80
                 and any(kw in line.lower() for kw in title_kws)
-                and not any(c in line for c in ("|", "@", "http", ".com"))):
+                and not any(c in line for c in ("@", "http", ".com"))):
             job_titles.append(line)
-            if len(job_titles) >= 3:
+            if len(job_titles) >= 4:
                 break
 
     return {
-        "name":                    _extract_name(cv_text),
+        "name":                    _extract_name(cv_text, filename),
         "email":                   _extract_email(cv_text),
         "skills_detected":         all_skills,
         "required_skills_matched": matched_required,
         "experience_years":        exp_years,
         "education":               education,
         "recent_roles":            job_titles,
-        "cv_snippet":              cv_text[:400].replace("\n", " ").strip(),
+        "cv_snippet":              cv_text[:3000].replace("\n", " ").strip(),
     }
 
 
-def _extract_name(cv_text: str) -> str:
-    lines = [l.strip() for l in cv_text.splitlines() if l.strip()]
-    if lines and re.match(r'^[A-Za-z]+([\s][A-Za-z]+){1,3}$', lines[0]):
-        return lines[0]
-    return ""
-
-
-def _extract_email(cv_text: str) -> str:
-    m = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', cv_text)
-    return m.group() if m else ""
-
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Phase 2 — Batch LLM ranking (one call for all candidates)
+# Phase 2 — Batch ranking (OpenAI GPT-4o with deterministic fallback)
 # ─────────────────────────────────────────────────────────────────────────────
+
+def _get_openai_api_key() -> str:
+    """Fetch OpenAI API key from environment or Streamlit secrets."""
+    key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not key:
+        try:
+            import streamlit as st
+            if "OPENAI_API_KEY" in st.secrets:
+                key = str(st.secrets["OPENAI_API_KEY"]).strip()
+        except Exception:
+            pass
+    return key
+
 
 BATCH_SYSTEM_PROMPT = """You are an expert senior technical recruiter performing a batch candidate ranking.
 
@@ -197,22 +243,20 @@ Every candidate in the input must appear in the output array."""
 
 def rank_candidates_batch(candidates: list, job_context: dict) -> list:
     """
-    Phase 2: single LLM call that ranks ALL candidates at once.
-
-    candidates — list of dicts from extract_resume_keywords()
-    job_context — {title, skills, years_experience, description}
-    Returns a list of result dicts sorted best-first, or [] on failure.
+    Phase 2: single LLM call that ranks ALL candidates at once, with
+    intelligent deterministic heuristic fallback.
     """
     if not candidates:
         return []
 
-    if USE_MOCK or not os.getenv("OPENAI_API_KEY"):
+    api_key = _get_openai_api_key()
+    if USE_MOCK or not api_key:
         return _mock_rank_batch(candidates, job_context)
 
     from openai import OpenAI
 
     try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        client = OpenAI(api_key=api_key)
 
         user_msg = (
             f"JOB POSTING:\n"
@@ -241,57 +285,142 @@ def rank_candidates_batch(candidates: list, job_context: dict) -> list:
             raise ValueError("Expected a JSON array from the LLM")
         return results
     except Exception as exc:
-        print(f"[ai_scoring] Batch ranking error (falling back to mock): {exc}")
+        print(f"[ai_scoring] Batch ranking error (falling back to deterministic scoring): {exc}")
         return _mock_rank_batch(candidates, job_context)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Mock batch ranking
+# Deterministic Heuristic Scoring (Explainable, Accurate, Grounded in Resume Data)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _mock_rank_batch(candidates: list, job_context: dict) -> list:
-    """Deterministic mock ranking — no API call."""
-    required = [s.strip() for s in job_context.get("skills", "").split(",") if s.strip()]
+    """
+    Deterministic, explainable heuristic ranking:
+    Calculates candidate match score from required skill coverage, experience alignment,
+    seniority fit, and education/certifications.
+    """
+    raw_skills = job_context.get("skills", "")
+    req_skills = [s.strip().lower() for s in raw_skills.split(",") if s.strip()]
+    target_exp = int(job_context.get("years_experience") or 3)
+    title_lower = job_context.get("title", "").lower()
+
     ranked = []
 
     for idx, cand in enumerate(candidates):
-        snippet = cand.get("cv_snippet", "")
-        seed = len(snippet) + (hash(snippet[:50]) % 1000 if snippet else idx * 37)
-        rng = random.Random(seed)
+        cand_name = cand.get("name") or f"Candidate #{idx + 1}"
+        email = cand.get("email") or f"{cand_name.lower().replace(' ', '.')}@example.com"
+        cand_skills = cand.get("skills_detected", [])
+        snippet_lower = cand.get("cv_snippet", "").lower()
+        cand_exp = cand.get("experience_years")
+        education = cand.get("education") or "Bachelor's"
+        roles = cand.get("recent_roles", [])
 
-        score = rng.randint(30, 95)
-        strengths = rng.sample(STRENGTHS_POOL, 3)
-        concerns  = rng.sample(CONCERNS_POOL,  2)
-
-        matched = cand.get("required_skills_matched") or cand.get("skills_detected", [])
-        n_match  = max(1, int(len(required) * score / 100)) if required else 0
-        if required:
-            skill_str = ", ".join(rng.sample(required, min(n_match, len(required))))
+        # 1. Skill scoring (up to 50 points)
+        if req_skills:
+            matched_req = [s for s in req_skills if s in cand_skills or _has_skill(s, snippet_lower)]
+            missing_req = [s for s in req_skills if s not in matched_req]
+            skill_ratio = len(matched_req) / len(req_skills)
+            skill_pts = skill_ratio * 42
+            tech_depth = min(8, len(cand_skills) * 0.5)
+            skill_score = min(50, skill_pts + tech_depth)
         else:
-            skill_str = ", ".join(matched[:3]) if matched else "General skills"
+            matched_req = cand_skills[:5]
+            missing_req = []
+            skill_score = min(50, len(cand_skills) * 2.5)
 
-        name  = cand.get("name") or rng.choice(MOCK_NAMES)
-        email = cand.get("email") or (
-            f"{rng.choice(MOCK_NAMES).lower().replace(' ', '.')}"
-            f"{rng.randint(10, 99)}@{rng.choice(MOCK_DOMAINS)}"
-        )
+        # 2. Experience scoring (up to 30 points)
+        if cand_exp is not None:
+            if cand_exp >= target_exp:
+                exp_score = 30
+            elif cand_exp > 0:
+                exp_score = round(30 * (cand_exp / max(1, target_exp)))
+            else:
+                exp_score = 8
+        else:
+            # Estimate from number of roles mentioned
+            exp_score = min(22, 12 + len(roles) * 3)
+
+        # 3. Role / Seniority alignment (up to 10 points)
+        senior_kw = ["senior", "lead", "architect", "principal", "head"]
+        has_senior = any(any(sk in r.lower() for sk in senior_kw) for r in roles)
+        target_senior = any(sk in title_lower for sk in senior_kw)
+
+        if target_senior and has_senior:
+            role_score = 10
+        elif any(any(w in r.lower() for w in ["engineer", "developer", "scientist"]) for r in roles):
+            role_score = 8
+        else:
+            role_score = 5
+
+        # 4. Education & Certifications (up to 10 points)
+        edu_score = 7
+        if education in ["Master's", "PhD"]:
+            edu_score = 9
+        if "certified" in snippet_lower or "solutions architect" in snippet_lower:
+            edu_score = min(10, edu_score + 2)
+
+        # Final score calculation (clamped between 25 and 98)
+        match_score = min(98, max(25, round(skill_score + exp_score + role_score + edu_score)))
+
+        # Strengths (grounded in candidate's actual qualifications)
+        strengths = []
+        if matched_req:
+            top_skills = [s.title() for s in matched_req[:4]]
+            strengths.append(f"Strong match in core skills: {', '.join(top_skills)}")
+        if cand_exp is not None and cand_exp >= target_exp:
+            strengths.append(f"{cand_exp}+ years of experience aligns with role seniority requirement")
+        elif cand_exp is not None and cand_exp >= 3:
+            strengths.append(f"{cand_exp} years demonstrated experience in technical roles")
+        if education:
+            strengths.append(f"Holds {education} degree with relevant technical foundation")
+        if "certified" in snippet_lower:
+            strengths.append("Holds verified industry/cloud certifications")
+        if len(strengths) < 3:
+            strengths.append(f"Hands-on experience with modern tooling ({', '.join([s.title() for s in cand_skills[:3]])})")
+
+        # Concerns (grounded in actual missing criteria)
+        concerns = []
+        if missing_req:
+            top_missing = [s.title() for s in missing_req[:3]]
+            concerns.append(f"Missing core requirements: {', '.join(top_missing)}")
+        if cand_exp is not None and cand_exp < target_exp:
+            concerns.append(f"Experience ({cand_exp} yrs) is below requested {target_exp} yrs")
+        if not matched_req:
+            concerns.append("Limited direct evidence of target framework in recent projects")
+        if len(concerns) < 2:
+            concerns.append("Assess depth of distributed systems design in technical screen")
+
+        # Recommendation based on score
+        if match_score >= 85:
+            recommendation = "Outstanding match with deep stack alignment and requisite seniority. Strongly recommended for technical interview."
+        elif match_score >= 70:
+            recommendation = "Solid candidate meeting most requirements with manageable gaps. Recommended for screening call."
+        elif match_score >= 50:
+            recommendation = "Moderate match with relevant foundation but missing key requirements. Consider for junior/adjacent variant."
+        else:
+            recommendation = "Does not meet the core technical and seniority requirements for this role. Not recommended."
+
+        # Skills match string
+        skills_match_str = ", ".join([s.title() for s in (matched_req or cand_skills[:3])])
+
+        # Relevant experience sentence
+        exp_disp = f"{cand_exp} years" if cand_exp else "Demonstrated"
+        relevant_exp_sentence = f"{exp_disp} of relevant experience across {roles[0] if roles else 'software engineering'}."
 
         ranked.append({
             "candidate_index":    idx,
-            "candidate_name":     name,
+            "candidate_name":     cand_name,
             "email":              email,
-            "match_score":        score,
-            "percentile":         0,   # filled in after sort
-            "skills_match":       skill_str,
-            "relevant_experience": (
-                f"{rng.randint(1, 8)} years of relevant experience in similar roles, "
-                f"with exposure to {rng.choice(required) if required else 'the required stack'}."
-            ),
-            "strengths":          strengths,
-            "concerns":           concerns,
-            "recommendation":     rng.choice(RECOMMENDATIONS_POOL),
+            "match_score":        match_score,
+            "percentile":         0,
+            "skills_match":       skills_match_str,
+            "relevant_experience": relevant_exp_sentence,
+            "strengths":          strengths[:3],
+            "concerns":           concerns[:2],
+            "recommendation":     recommendation,
         })
 
+    # Sort descending by match score
     ranked.sort(key=lambda x: x["match_score"], reverse=True)
 
     n = len(ranked)
