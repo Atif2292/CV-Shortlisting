@@ -124,6 +124,8 @@ input[type="number"] {
     box-shadow: 0 0 0 3px rgba(37,99,235,.12) !important;
     outline: none !important;
 }
+/* Hide Streamlit's confusing Cmd+Enter instruction and duplicate counter */
+div[data-testid="InputInstructions"] { display: none !important; }
 label, .stFileUploader label {
     color: #4B5563 !important;
     font-size: .875rem !important;
@@ -1511,7 +1513,7 @@ with col1:
             char_count = len(jd_input)
             render_html(
                 f'<div class="iq-char">'
-                f'<span>{char_count:,} / 5,000</span>'
+                f'<span id="iq-live-chars">{char_count:,} / 5,000</span>'
                 f'</div>'
             )
             if jd_input.strip():
@@ -1533,11 +1535,60 @@ with col1:
                     jd_text = extracted.strip()
                     st.caption(f"✅ Extracted {len(jd_text):,} characters from {jd_file.name}")
 
-        # Status badge
+        # Status badge (with live 0ms client-side sync)
         if jd_text:
-            render_html(f'<div class="iq-status-ok">✅ Job description ready ({len(jd_text):,} chars)</div>')
+            render_html(f'<div id="iq-jd-status-badge" class="iq-status-ok">✅ Job description ready ({len(jd_text):,} chars)</div>')
         else:
-            render_html('<div class="iq-status-wait">⏳ Waiting for job description…</div>')
+            render_html('<div id="iq-jd-status-badge" class="iq-status-wait">✍️ Type or paste your job requirements above</div>')
+
+        render_html("""
+<img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>" style="display:none" onload="
+(function() {
+  if (window.__rankcv_sync_init) return;
+  window.__rankcv_sync_init = true;
+
+  function attachSync() {
+    try {
+      var ta = document.querySelector('textarea');
+      if (!ta || ta.dataset.fastSync) return;
+      ta.dataset.fastSync = 'true';
+
+      function sync() {
+        var val = ta.value.trim();
+        var len = val.length;
+        var c = document.getElementById('iq-live-chars');
+        if (c) c.textContent = len.toLocaleString() + ' / 5,000';
+        var b = document.getElementById('iq-jd-status-badge');
+        if (b) {
+          if (len > 0) {
+            b.className = 'iq-status-ok';
+            b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
+          } else {
+            b.className = 'iq-status-wait';
+            b.innerHTML = '✍️ Type or paste your job requirements above';
+          }
+        }
+      }
+
+      ta.addEventListener('input', sync);
+      ta.addEventListener('keyup', sync);
+      ta.addEventListener('change', sync);
+
+      document.addEventListener('click', function(e) {
+        if (e.target && e.target.closest && e.target.closest('button')) {
+          if (document.activeElement === ta) {
+            ta.blur();
+          }
+        }
+      }, true);
+    } catch(e) {}
+  }
+
+  attachSync();
+  setInterval(attachSync, 300);
+})()
+">
+""")
 
 
 # ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
