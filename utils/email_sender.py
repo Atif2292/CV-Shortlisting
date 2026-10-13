@@ -91,15 +91,15 @@ def send_test_email(api_key: str, from_email: str) -> tuple:
     status, data = _brevo_call(
         "POST", "/smtp/email", api_key,
         {
-            "sender":      {"name": "TalentSift", "email": from_email.strip()},
+            "sender":      {"name": "RankCV", "email": from_email.strip()},
             "to":          [{"email": from_email.strip()}],
-            "subject":     "✅ TalentSift — email connection verified",
+            "subject":     "✅ RankCV — email connection verified",
             "htmlContent": (
                 "<p style='font-family:sans-serif'>"
-                "Your email is working. TalentSift can now send shortlist "
+                "Your email is working. RankCV can now send shortlist "
                 "notifications to candidates.</p>"
             ),
-            "textContent": "Your email is working. TalentSift can now send shortlist notifications.",
+            "textContent": "Your email is working. RankCV can now send shortlist notifications.",
         },
     )
 
@@ -237,7 +237,7 @@ Best regards,
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>🎯 TalentSift</h1>
+      <h1>🎯 RankCV</h1>
       <p>Recruitment Screening Platform</p>
     </div>
     <div class="body">

@@ -1,4 +1,4 @@
-# 🎯 TalentSift — AI Recruitment Screening Application
+# 🎯 RankCV — AI Recruitment Screening Application
 
 An end-to-end AI-powered recruitment tool built with **Python + Streamlit + OpenAI GPT-4o**.
 

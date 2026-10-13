@@ -1,5 +1,5 @@
 """
-TalentIQ — AI-Powered CV Screening
+RankCV — AI-Powered CV Screening
 """
 
 import os
@@ -25,7 +25,7 @@ import altair as alt
 
 
 st.set_page_config(
-    page_title="TalentIQ — Screen CVs in Minutes",
+    page_title="RankCV — Screen CVs in Minutes",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -237,7 +237,7 @@ label, .stFileUploader label {
     padding: 1.1rem 0 1rem; border-bottom: 1px solid #E2E8F0;
     margin-bottom: 0; background: #F5F7FB;
 }
-.iq-logo { font-size: 1.45rem; font-weight: 900; color: #2563EB; letter-spacing: -.5px; }
+.iq-logo { font-size: 1.45rem; font-weight: 900; color: #0F172A; letter-spacing: -.5px; }
 .iq-logo b { color: #2563EB; font-weight: 900; }
 .iq-nav a.iq-nav-demo,
 .iq-nav a.iq-nav-demo:link,
@@ -1355,7 +1355,7 @@ def _exp_subtitle(text: str) -> str:
 # ─────────────────────────── Navbar ──────────────────────────────────────────
 render_html("""
 <div class="iq-nav">
-<div class="iq-logo">Talent<b>IQ</b></div>
+<div class="iq-logo">Rank<b>CV</b></div>
 <div style="display:flex;align-items:center;gap:1.3rem;">
 <a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
 <a href="#features" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Features</a>
@@ -1371,7 +1371,7 @@ render_html("""
 <div class="iq-hero">
 <div class="iq-eye">&#10022; &nbsp;AI-Powered CV Screening for HR &amp; Recruitment Teams</div>
 <div class="iq-h1">Shortlist Top Talent<br>in <span class="bl">Seconds.</span></div>
-<div class="iq-sub">Upload a job description and candidate CVs. TalentIQ automatically
+<div class="iq-sub">Upload a job description and candidate CVs. RankCV automatically
 scores, ranks, and summarises candidates with actionable match insights.</div>
 <div class="iq-trial-tag">
 <span class="iq-trial-pill">🎁 FREE TRIAL</span>
@@ -2048,8 +2048,8 @@ if st.session_state.get("show_full") and st.session_state.results:
     _buf   = io.BytesIO()
 
     with pd.ExcelWriter(_buf, engine="openpyxl") as _xw:
-        _df_xl.to_excel(_xw, index=False, sheet_name="TalentIQ Results")
-        _ws = _xw.sheets["TalentIQ Results"]
+        _df_xl.to_excel(_xw, index=False, sheet_name="RankCV Results")
+        _ws = _xw.sheets["RankCV Results"]
 
         # ── Header row style ─────────────────────────────────────────
         _hfill = _PFill("solid", fgColor="2563EB")
@@ -2092,7 +2092,7 @@ if st.session_state.get("show_full") and st.session_state.results:
     render_html(
         f'<div class="iq-dl-wrap">'
         f'<a class="iq-dl-btn" href="data:{_mime};base64,{_xl_b64}" '
-        f'download="talentiq_results.xlsx">'
+        f'download="rankcv_results.xlsx">'
         f'⬇️&nbsp;&nbsp;Download Shortlist Report (.xlsx)</a>'
         f'</div>'
     )
@@ -2103,7 +2103,7 @@ if st.session_state.get("show_full") and st.session_state.results:
     Ready to screen 100s of CVs across active roles?
   </div>
   <div style="font-size:.9rem;color:#64748B;max-width:540px;margin:0 auto 1.1rem;line-height:1.6">
-    TalentIQ helps recruitment &amp; HR teams automate bulk resume screening, candidate communications, and interview scheduling.
+    RankCV helps recruitment &amp; HR teams automate bulk resume screening, candidate communications, and interview scheduling.
   </div>
   <a class="iq-bp" href="https://wa.me/447379975532" target="_blank" style="padding:.65rem 1.6rem;font-size:.9rem">
     Book a Quick Walkthrough on WhatsApp &nbsp;&rarr;
@@ -2262,7 +2262,7 @@ render_html("""
 <div class="iq-pillars-box">
 <div class="iq-pillars-top">
 <div style="font-size:.72rem;font-weight:800;color:#2563EB;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem;">Built for High-Volume Hiring</div>
-<div style="font-size:1.55rem;font-weight:900;color:#0F172A;letter-spacing:-.5px;">Why Recruiters Choose TalentIQ</div>
+<div style="font-size:1.55rem;font-weight:900;color:#0F172A;letter-spacing:-.5px;">Why Recruiters Choose RankCV</div>
 <div style="font-size:.86rem;color:#64748B;margin-top:.25rem;">Speed up time-to-shortlist while maintaining strict candidate evaluation quality</div>
 </div>
 <div class="iq-pillars-grid">
@@ -2464,7 +2464,7 @@ render_html("""
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-Each uploaded resume (PDF, Word DOCX, or TXT) evaluated against your job description counts as one candidate parse. TalentIQ extracts work history, skill proficiencies, seniority level, and requirement alignment in seconds.
+Each uploaded resume (PDF, Word DOCX, or TXT) evaluated against your job description counts as one candidate parse. RankCV extracts work history, skill proficiencies, seniority level, and requirement alignment in seconds.
 </div>
 </details>
 
@@ -2484,7 +2484,7 @@ You can screen up to 10 candidate CVs per batch completely free with zero credit
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-TalentIQ uses contextual semantic evaluation to assess applicants against your specific job criteria. Rather than relying on rigid keyword matching, the AI evaluates project complexity, demonstrated skills, and seniority depth to produce fair, explainable rankings.
+RankCV uses contextual semantic evaluation to assess applicants against your specific job criteria. Rather than relying on rigid keyword matching, the AI evaluates project complexity, demonstrated skills, and seniority depth to produce fair, explainable rankings.
 </div>
 </details>
 
@@ -2500,11 +2500,11 @@ Yes, 100%. We take candidate privacy and data protection seriously. Uploaded CVs
 
 <details class="iq-faq-item">
 <summary class="iq-faq-summary">
-<span>Does TalentIQ integrate with our ATS?</span>
+<span>Does RankCV integrate with our ATS?</span>
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-TalentIQ is designed to work smoothly beside your existing ATS (Greenhouse, Lever, Workday, Ashby, BambooHR). Simply export applicant resumes from your ATS, drop them into TalentIQ, and download interview-ready candidate reports formatted for hiring managers.
+RankCV is designed to work smoothly beside your existing ATS (Greenhouse, Lever, Workday, Ashby, BambooHR). Simply export applicant resumes from your ATS, drop them into RankCV, and download interview-ready candidate reports formatted for hiring managers.
 </div>
 </details>
 
@@ -2524,7 +2524,7 @@ You maintain 100% ownership of all uploaded job descriptions, candidate resumes,
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-Parallel multi-file processing enables TalentIQ to parse, score, and rank a batch of 10 to 50 resumes in under 45 seconds&mdash;saving hours of manual resume skimming for each open role.
+Parallel multi-file processing enables RankCV to parse, score, and rank a batch of 10 to 50 resumes in under 45 seconds&mdash;saving hours of manual resume skimming for each open role.
 </div>
 </details>
 
@@ -2545,7 +2545,7 @@ If your recruiting team handles high-volume applicant pipelines or requires cust
 
 render_html("""
 <div class="iq-foot">
-<div class="iq-foot-txt">TalentIQ &middot; AI CV Screening &middot; Built with Streamlit &amp; GPT-4o</div>
+<div class="iq-foot-txt">RankCV &middot; AI CV Screening &middot; Built with Streamlit &amp; GPT-4o</div>
 </div>
 """)
 
