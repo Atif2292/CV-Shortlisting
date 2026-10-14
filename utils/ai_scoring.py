@@ -202,12 +202,17 @@ def extract_resume_keywords(cv_text: str, required_skills: str = "", filename: s
     }
 
 
+from utils.anonymizer import anonymize_candidate_batch, restore_candidate_identities
+
+
 # ─────────────────────────────────────────────────────────────────────────────
-# Phase 2 — Batch ranking (OpenAI GPT-4o with deterministic fallback)
+# Phase 2 — Batch ranking (OpenAI GPT-4o with deterministic fallback & BYOK)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _get_openai_api_key() -> str:
-    """Fetch OpenAI API key from environment or Streamlit secrets."""
+def _get_openai_api_key(custom_key: str = None) -> str:
+    """Fetch OpenAI API key from custom user input, environment, or Streamlit secrets."""
+    if custom_key and custom_key.strip():
+        return custom_key.strip()
     key = os.getenv("OPENAI_API_KEY", "").strip()
     if not key:
         try:
@@ -220,15 +225,17 @@ def _get_openai_api_key() -> str:
 
 
 BATCH_SYSTEM_PROMPT = """You are an expert senior technical recruiter performing a batch candidate ranking.
+Candidates are presented with privacy-preserved anonymous identifiers (Candidate #1, Candidate #2) in compliance with UK GDPR Article 5(1)(c) data minimisation and the UK Equality Act 2010.
+Evaluate candidates strictly on demonstrated technical competency, skill depth, and relevant experience alignment with zero demographic assumptions.
 
-You will receive a job description and a JSON array of candidate summaries.
+You will receive a job description and a JSON array of anonymised candidate summaries.
 Analyse ALL candidates holistically and produce a RELATIVISTIC ranking — scores must reflect each candidate's standing relative to the others in this specific batch, not just absolute fit.
 
 Return ONLY a JSON array (no markdown fences, no extra text), sorted best-first.
 Each element must have exactly these fields:
 {
   "candidate_index": <integer — same index as in the input array>,
-  "candidate_name": "<string>",
+  "candidate_name": "<string — keep the anonymous Candidate #X label>",
   "email": "<string>",
   "match_score": <integer 0-100>,
   "percentile": <integer 0-100, percentile rank within this batch>,
@@ -241,52 +248,85 @@ Each element must have exactly these fields:
 Every candidate in the input must appear in the output array."""
 
 
-def rank_candidates_batch(candidates: list, job_context: dict) -> list:
+def rank_candidates_batch(
+    candidates: list,
+    job_context: dict,
+    custom_api_key: str = None,
+    offline_mode: bool = False,
+    base_url: str = None,
+    return_audit: bool = False,
+):
     """
-    Phase 2: single LLM call that ranks ALL candidates at once, with
-    intelligent deterministic heuristic fallback.
+    Phase 2: privacy-preserving candidate ranking pipeline.
+    1. Anonymises all candidate PII (names, emails, phones, postcodes) before processing.
+    2. Runs either 100% Offline Local Engine (air-gapped) or Cloud LLM using client's BYOK key.
+    3. Restores real candidate identities locally in-memory for the recruiter.
     """
     if not candidates:
-        return []
+        return ([], {}) if return_audit else []
 
-    api_key = _get_openai_api_key()
-    if USE_MOCK or not api_key:
-        return _mock_rank_batch(candidates, job_context)
+    # Step 1: Strip PII and generate anonymised candidate representations
+    anon_candidates, identity_map, audit_stats = anonymize_candidate_batch(candidates)
 
-    from openai import OpenAI
+    mode_label = "100% Offline (Local Heuristic Engine)" if offline_mode else "Cloud AI (BYOK - Privacy Preserved)"
 
-    try:
-        client = OpenAI(api_key=api_key)
+    # Step 2: Evaluate candidates
+    if offline_mode:
+        raw_results = _mock_rank_batch(anon_candidates, job_context)
+    else:
+        api_key = _get_openai_api_key(custom_key=custom_api_key)
+        if USE_MOCK or not api_key:
+            mode_label = "100% Offline (Local Heuristic Engine)"
+            raw_results = _mock_rank_batch(anon_candidates, job_context)
+        else:
+            try:
+                from openai import OpenAI
+                client_kwargs = {"api_key": api_key}
+                if base_url and base_url.strip():
+                    client_kwargs["base_url"] = base_url.strip()
 
-        user_msg = (
-            f"JOB POSTING:\n"
-            f"Title: {job_context.get('title')}\n"
-            f"Required Skills: {job_context.get('skills')}\n"
-            f"Minimum Experience: {job_context.get('years_experience')} years\n"
-            f"Description: {job_context.get('description')}\n\n"
-            f"CANDIDATES ({len(candidates)} total):\n"
-            f"{json.dumps(candidates, indent=2)}\n\n"
-            f"Rank all {len(candidates)} candidates. Every candidate must appear in the output."
-        )
+                client = OpenAI(**client_kwargs)
 
-        resp = client.chat.completions.create(
-            model="gpt-4o",
-            temperature=0.2,
-            max_tokens=16000,
-            messages=[
-                {"role": "system", "content": BATCH_SYSTEM_PROMPT},
-                {"role": "user",   "content": user_msg},
-            ],
-        )
-        raw = resp.choices[0].message.content or ""
-        cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`")
-        results = json.loads(cleaned)
-        if not isinstance(results, list):
-            raise ValueError("Expected a JSON array from the LLM")
-        return results
-    except Exception as exc:
-        print(f"[ai_scoring] Batch ranking error (falling back to deterministic scoring): {exc}")
-        return _mock_rank_batch(candidates, job_context)
+                user_msg = (
+                    f"JOB POSTING:\n"
+                    f"Title: {job_context.get('title')}\n"
+                    f"Required Skills: {job_context.get('skills')}\n"
+                    f"Minimum Experience: {job_context.get('years_experience')} years\n"
+                    f"Description: {job_context.get('description')}\n\n"
+                    f"ANONYMISED CANDIDATES ({len(anon_candidates)} total - Zero PII):\n"
+                    f"{json.dumps(anon_candidates, indent=2)}\n\n"
+                    f"Rank all {len(anon_candidates)} candidates. Every candidate must appear in the output."
+                )
+
+                resp = client.chat.completions.create(
+                    model="gpt-4o",
+                    temperature=0.2,
+                    max_tokens=16000,
+                    messages=[
+                        {"role": "system", "content": BATCH_SYSTEM_PROMPT},
+                        {"role": "user",   "content": user_msg},
+                    ],
+                )
+                raw = resp.choices[0].message.content or ""
+                cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`")
+                raw_results = json.loads(cleaned)
+                if not isinstance(raw_results, list):
+                    raise ValueError("Expected a JSON array from the LLM")
+            except Exception as exc:
+                print(f"[ai_scoring] Cloud LLM error (falling back to local deterministic scoring): {exc}")
+                mode_label = "100% Offline (Local Heuristic Engine - Cloud Fallback)"
+                raw_results = _mock_rank_batch(anon_candidates, job_context)
+
+    # Step 3: Re-associate real candidate identities locally in-memory
+    restored_results = restore_candidate_identities(raw_results, identity_map)
+
+    # Attach processing mode and audit metadata to each candidate record
+    for r in restored_results:
+        r["processing_mode"] = mode_label
+
+    if return_audit:
+        return restored_results, audit_stats
+    return restored_results
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -408,7 +448,7 @@ def _mock_rank_batch(candidates: list, job_context: dict) -> list:
         relevant_exp_sentence = f"{exp_disp} of relevant experience across {roles[0] if roles else 'software engineering'}."
 
         ranked.append({
-            "candidate_index":    idx,
+            "candidate_index":    cand.get("candidate_index", idx),
             "candidate_name":     cand_name,
             "email":              email,
             "match_score":        match_score,
