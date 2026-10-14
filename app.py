@@ -1592,13 +1592,13 @@ sec_c1, sec_c2, sec_c3 = st.columns([1.6, 1.2, 1.2])
 with sec_c1:
     engine_choice = st.radio(
         "Screening Engine Mode:",
-        ["⚡ Cloud AI (BYOK - Privacy Preserved)", "🛡️ 100% Offline (Local Heuristic - Zero External Calls)"],
+        ["⚡ Cloud AI (BYOK - Privacy Preserved)", "🛡️ Private In-Memory Engine (Zero External AI Calls)"],
         index=0 if st.session_state.get("engine_mode", "cloud") == "cloud" else 1,
         horizontal=True,
         key="engine_choice_radio",
         label_visibility="collapsed"
     )
-    st.session_state.engine_mode = "offline" if "Offline" in engine_choice else "cloud"
+    st.session_state.engine_mode = "private" if ("Private" in engine_choice or "Offline" in engine_choice) else "cloud"
 
 with sec_c2:
     with st.popover("🔑 BYOK & Privacy Settings"):
@@ -1913,7 +1913,7 @@ with col3:
                     )
                     bar.progress(0.7, text=f"AI ranking {len(candidates)} candidates…")
                     try:
-                        _is_offline = (st.session_state.get("engine_mode") == "offline")
+                        _is_offline = (st.session_state.get("engine_mode") in ["private", "offline"])
                         _c_key = st.session_state.get("custom_api_key", "").strip()
                         _b_url = st.session_state.get("custom_base_url", "").strip()
                         results, audit_stats = rank_candidates_batch(
@@ -2006,7 +2006,7 @@ with col3:
                     )
                     bar.progress(0.55, text=f"AI ranking {len(candidates)} candidates…")
                     try:
-                        _is_offline = (st.session_state.get("engine_mode") == "offline")
+                        _is_offline = (st.session_state.get("engine_mode") in ["private", "offline"])
                         _c_key = st.session_state.get("custom_api_key", "").strip()
                         _b_url = st.session_state.get("custom_base_url", "").strip()
                         results, audit_stats = rank_candidates_batch(
@@ -2529,11 +2529,11 @@ if st.session_state.get("show_full") and st.session_state.results:
             {"Audit Parameter": "Statutory Framework", "Compliance Record": "UK General Data Protection Regulation (UK GDPR) & Data Protection Act 2018"},
             {"Audit Parameter": "Governing Jurisdiction", "Compliance Record": "England and Wales"},
             {"Audit Parameter": "Data Controller", "Compliance Record": "Employer / Client Recruitment Organization"},
-            {"Audit Parameter": "Data Processor Status", "Compliance Record": "RankCV (Software-only / Local-first Client, Zero Vendor Retention)"},
+            {"Audit Parameter": "Data Processor Status", "Compliance Record": "RankCV Web Application (In-Memory Processing Only, Zero Database Retention)"},
             {"Audit Parameter": "Article 22 Human Oversight", "Compliance Record": "VERIFIED — Human recruiter conducted independent review & holds sole decision authority"},
             {"Audit Parameter": "Article 5(1)(c) Data Minimisation", "Compliance Record": "VERIFIED — Candidate personal identifiers (names, emails, phones, postcodes) stripped prior to external AI evaluation"},
             {"Audit Parameter": "Candidate PII Scrubbing Record", "Compliance Record": f"Emails: {_audit_stats.get('emails', 0)} | Phones: {_audit_stats.get('phones', 0)} | Postcodes: {_audit_stats.get('postcodes', 0)} | Names: {_audit_stats.get('names', 0)}"},
-            {"Audit Parameter": "Processing Architecture", "Compliance Record": st.session_state.get("engine_mode", "cloud").upper()},
+            {"Audit Parameter": "Processing Architecture", "Compliance Record": "PRIVATE IN-MEMORY ENGINE (ZERO EXTERNAL AI TRANSFER)" if st.session_state.get("engine_mode") in ["private", "offline"] else "CLOUD AI (BYOK - PRIVACY PRESERVED)"},
             {"Audit Parameter": "Article 5(1)(e) Storage Limitation", "Compliance Record": "VERIFIED — Zero cloud storage. Uploaded CVs parsed ephemerally in-memory and immediately destroyed."},
             {"Audit Parameter": "Equality Act 2010 Compliance", "Compliance Record": "VERIFIED — Protected characteristics excluded from scoring algorithms to prevent algorithmic bias."},
             {"Audit Parameter": "Audit Timestamp (UTC)", "Compliance Record": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")},
@@ -2973,7 +2973,7 @@ RankCV uses contextual semantic evaluation to assess applicants against your spe
 <ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">
   <li><b>Article 5(1)(c) Data Minimisation:</b> Built-in PII Stripper automatically scrubs names, UK postcodes, phone numbers, email addresses, and demographic identifiers in-memory before evaluation.</li>
   <li><b>Data Controller Autonomy (BYOK):</b> Recruiter teams can plug in their own OpenAI or Azure UK/EU API key. Your organization remains the sole Data Controller with zero third-party model training retention.</li>
-  <li><b>100% Offline Air-Gapped Mode:</b> Toggle offline scoring at any time for zero external data egress—perfect for sensitive defense, NHS, or regulated enterprise hiring.</li>
+  <li><b>Private In-Memory Engine (Zero External AI Data Egress):</b> Recruiter teams can select the private internal engine for zero external data transfers—evaluating candidates in volatile RAM with zero third-party AI processing.</li>
   <li><b>Article 22 Human-in-the-Loop:</b> RankCV acts purely as decision support. No candidate is ever rejected automatically; recruiters retain full override power with customizable status tags and notes.</li>
   <li><b>Auditable Accountability:</b> Every batch exports an Excel file with an embedded <i>UK GDPR Compliance Audit Sheet</i>, providing timestamped methodology and statutory sign-off logs under England &amp; Wales governing law.</li>
 </ul>

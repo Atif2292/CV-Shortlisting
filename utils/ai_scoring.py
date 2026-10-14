@@ -268,7 +268,7 @@ def rank_candidates_batch(
     # Step 1: Strip PII and generate anonymised candidate representations
     anon_candidates, identity_map, audit_stats = anonymize_candidate_batch(candidates)
 
-    mode_label = "100% Offline (Local Heuristic Engine)" if offline_mode else "Cloud AI (BYOK - Privacy Preserved)"
+    mode_label = "Private In-Memory Engine (Zero External AI Calls)" if offline_mode else "Cloud AI (BYOK - Privacy Preserved)"
 
     # Step 2: Evaluate candidates
     if offline_mode:
@@ -276,7 +276,7 @@ def rank_candidates_batch(
     else:
         api_key = _get_openai_api_key(custom_key=custom_api_key)
         if USE_MOCK or not api_key:
-            mode_label = "100% Offline (Local Heuristic Engine)"
+            mode_label = "Private In-Memory Engine (Zero External AI Calls)"
             raw_results = _mock_rank_batch(anon_candidates, job_context)
         else:
             try:
@@ -314,7 +314,7 @@ def rank_candidates_batch(
                     raise ValueError("Expected a JSON array from the LLM")
             except Exception as exc:
                 print(f"[ai_scoring] Cloud LLM error (falling back to local deterministic scoring): {exc}")
-                mode_label = "100% Offline (Local Heuristic Engine - Cloud Fallback)"
+                mode_label = "Private In-Memory Engine (Cloud Fallback)"
                 raw_results = _mock_rank_batch(anon_candidates, job_context)
 
     # Step 3: Re-associate real candidate identities locally in-memory
