@@ -985,6 +985,40 @@ a.iq-nav-demo:active {
     border-top: 1px solid #F1F5F9;
     padding-top: .85rem;
 }
+
+/* ── Pricing & Payment Section ── */
+.iq-price-sec { max-width: 1040px; margin: 4.5rem auto 3rem; padding: 0 1.25rem; }
+.iq-price-hdr { text-align: center; margin-bottom: 2.8rem; }
+.iq-price-eye { display: inline-block; font-size: .78rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: .08em; background: #EFF6FF; border: 1px solid #BFDBFE; padding: .3rem .85rem; border-radius: 999px; margin-bottom: .6rem; }
+.iq-price-h2 { font-size: 2.25rem; font-weight: 800; color: #0B1120; margin-bottom: .6rem; letter-spacing: -.02em; }
+.iq-price-sub { font-size: 1.02rem; color: #64748B; max-width: 600px; margin: 0 auto; line-height: 1.55; }
+.iq-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+@media (max-width: 860px) { .iq-price-grid { grid-template-columns: 1fr; max-width: 520px; margin: 2rem auto 0; } }
+.iq-plan-card { background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 20px; padding: 2.4rem 2.2rem; display: flex; flex-direction: column; justify-content: space-between; transition: all .25s ease; box-shadow: 0 4px 20px rgba(15,23,42,.03); position: relative; }
+.iq-plan-card:hover { border-color: #93C5FD; box-shadow: 0 16px 36px rgba(37,99,235,.08); transform: translateY(-3px); }
+.iq-plan-card.featured { border: 2.5px solid #2563EB; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); box-shadow: 0 16px 40px rgba(37,99,235,.12); }
+.iq-plan-badge { display: inline-block; padding: .32rem .8rem; font-size: .72rem; font-weight: 800; border-radius: 999px; margin-bottom: 1.1rem; text-transform: uppercase; letter-spacing: .06em; }
+.iq-badge-starter { background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE; }
+.iq-badge-agency { background: #2563EB; color: #FFFFFF; box-shadow: 0 2px 10px rgba(37,99,235,.3); }
+.iq-plan-name { font-size: 1.6rem; font-weight: 800; color: #0F172A; margin-bottom: .35rem; letter-spacing: -.01em; }
+.iq-plan-desc { font-size: .9rem; color: #64748B; margin-bottom: 1.5rem; min-height: 42px; line-height: 1.5; }
+.iq-plan-price-wrap { display: flex; align-items: baseline; gap: .4rem; margin-bottom: 1.8rem; padding-bottom: 1.5rem; border-bottom: 1px solid #F1F5F9; }
+.iq-plan-curr { font-size: 1.65rem; font-weight: 700; color: #0F172A; }
+.iq-plan-amt { font-size: 3.4rem; font-weight: 900; color: #0F172A; line-height: 1; letter-spacing: -.03em; }
+.iq-plan-period { font-size: 1rem; font-weight: 600; color: #64748B; }
+.iq-plan-features { list-style: none; padding: 0; margin: 0 0 2.2rem 0; display: flex; flex-direction: column; gap: .9rem; }
+.iq-plan-feat-item { display: flex; align-items: flex-start; gap: .75rem; font-size: .93rem; color: #334155; line-height: 1.45; }
+.iq-feat-icon { color: #10B981; font-weight: 900; font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+.iq-feat-icon-gold { color: #F59E0B; font-weight: 900; font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+.iq-plan-btn { display: block; width: 100%; text-align: center; padding: .95rem 1.5rem; border-radius: 12px; font-weight: 800; font-size: 1rem; text-decoration: none !important; transition: all .2s ease; cursor: pointer; box-sizing: border-box; }
+.iq-btn-primary { background: #2563EB !important; color: #FFFFFF !important; box-shadow: 0 4px 16px rgba(37,99,235,.28); }
+.iq-btn-primary:hover { background: #1D4ED8 !important; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,99,235,.35); }
+.iq-btn-agency { background: #0F172A !important; color: #FFFFFF !important; box-shadow: 0 4px 16px rgba(15,23,42,.22); }
+.iq-btn-agency:hover { background: #1E293B !important; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,23,42,.3); }
+.iq-guarantee { text-align: center; margin-top: 1rem; font-size: .78rem; color: #94A3B8; display: flex; align-items: center; justify-content: center; gap: .4rem; }
+.iq-pay-badges { display: flex; align-items: center; justify-content: center; gap: .8rem; margin-top: 2.5rem; padding-top: 1.8rem; border-top: 1px solid #E2E8F0; flex-wrap: wrap; }
+.iq-pay-pill { display: inline-flex; align-items: center; gap: .45rem; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: .35rem .75rem; font-size: .8rem; font-weight: 700; color: #334155; box-shadow: 0 1px 3px rgba(0,0,0,.02); }
+
 .iq-foot { text-align:center; padding:2rem 0 1.5rem; border-top:1px solid #E2E8F0; margin-top:2rem; }
 .iq-foot-txt { font-size:.78rem; color:#94A3B8; }
 
@@ -1511,8 +1545,9 @@ render_html("""
 <div style="display:flex;align-items:center;gap:1.3rem;">
 <a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
 <a href="#features" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Features</a>
+<a href="#pricing" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Pricing</a>
 <a href="#faq" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">FAQ</a>
-<a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Book a Demo &nbsp;&rarr;</span></a>
+<a class="iq-nav-demo" href="#pricing" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Upgrade &nbsp;&rarr;</span></a>
 </div>
 </div>
 """)
@@ -2919,6 +2954,109 @@ render_html("""
 
 </div>
 </div>
+</div>
+""")
+
+
+# ─────────────────────────── Pricing & Payment ────────────────────────────────
+_stripe_pro_url = os.getenv("STRIPE_PRO_URL", "").strip()
+_stripe_agency_url = os.getenv("STRIPE_AGENCY_URL", "").strip()
+try:
+    if not _stripe_pro_url and "STRIPE_PRO_URL" in st.secrets:
+        _stripe_pro_url = str(st.secrets["STRIPE_PRO_URL"]).strip()
+    if not _stripe_agency_url and "STRIPE_AGENCY_URL" in st.secrets:
+        _stripe_agency_url = str(st.secrets["STRIPE_AGENCY_URL"]).strip()
+except Exception:
+    pass
+
+if not _stripe_pro_url:
+    _stripe_pro_url = "https://wa.me/447379975532?text=Hi%2C%20I%20would%20like%20to%20subscribe%20to%20the%20RankCV%20Professional%20Plan%20%28%C2%A399%2Fmonth%29"
+if not _stripe_agency_url:
+    _stripe_agency_url = "https://wa.me/447379975532?text=Hi%2C%20I%20would%20like%20to%20subscribe%20to%20the%20RankCV%20Agency%20Unlimited%20Plan%20%28%C2%A3199%2Fmonth%29"
+
+render_html(f"""
+<div id="pricing" class="iq-price-sec">
+  <div class="iq-price-hdr">
+    <div class="iq-price-eye">Transparent Pricing</div>
+    <div class="iq-price-h2">Simple Plans for Fast-Moving Hiring Teams</div>
+    <div class="iq-price-sub">Instant activation. Cancel anytime. Full UK GDPR Article 22 compliance and audit logs included in every tier.</div>
+  </div>
+
+  <div class="iq-price-grid">
+    <!-- Plan 1: Professional £99/mo -->
+    <div class="iq-plan-card">
+      <div>
+        <span class="iq-plan-badge iq-badge-starter">Boutique &amp; In-House HR</span>
+        <div class="iq-plan-name">Professional</div>
+        <div class="iq-plan-desc">Fast, plug-and-play AI CV screening with zero technical setup. Ready to use immediately.</div>
+        <div class="iq-plan-price-wrap">
+          <span class="iq-plan-curr">&pound;</span>
+          <span class="iq-plan-amt">99</span>
+          <span class="iq-plan-period">/ month</span>
+        </div>
+        <ul class="iq-plan-features">
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 300 CVs</b> screened per month</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 10</b> active job openings simultaneously</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Plug &amp; Play AI:</b> Powered by RankCV internal engine</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Private In-Memory Engine:</b> Zero external AI transfer</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR PII Stripper:</b> Names, postcodes redacted</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Showcase Podium:</b> Gold, Silver, Bronze</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Article 22 Human Override:</b> Status tags &amp; notes</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Excel Shortlist &amp; UK GDPR Audit</b> Sheet download</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span>1&ndash;2 Recruiter seats</span></li>
+        </ul>
+      </div>
+      <div>
+        <a class="iq-plan-btn iq-btn-primary" href="{_stripe_pro_url}" target="_blank">
+          Subscribe with Apple Pay / Card &nbsp;&rarr;
+        </a>
+        <div class="iq-guarantee">&#128274; 256-bit SSL encrypted &bull; Cancel anytime &bull; No setup fee</div>
+      </div>
+    </div>
+
+    <!-- Plan 2: Agency & Scale-up £199/mo (UNLIMITED) -->
+    <div class="iq-plan-card featured">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <span class="iq-plan-badge iq-badge-agency">&#9733; MOST POPULAR &bull; UNLIMITED</span>
+          <span style="font-size:.72rem;font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.2rem .6rem;border-radius:6px;">ENTERPRISE DPA</span>
+        </div>
+        <div class="iq-plan-name">Agency &amp; Enterprise</div>
+        <div class="iq-plan-desc">Unlimited candidate screening powered by your own company OpenAI or Azure API key.</div>
+        <div class="iq-plan-price-wrap">
+          <span class="iq-plan-curr">&pound;</span>
+          <span class="iq-plan-amt">199</span>
+          <span class="iq-plan-period">/ month</span>
+        </div>
+        <ul class="iq-plan-features">
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>UNLIMITED CV Screening</b> (Zero monthly volume caps)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>UNLIMITED Active Roles &amp; JDs</b></span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>Bring Your Own Key (BYOK):</b> OpenAI / Azure UK/EU</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Enterprise Data Ownership:</b> Under your company DPA</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS &amp; CRM Integration:</b> Bullhorn, Greenhouse, Lever</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Full UK GDPR Shield:</b> In-memory PII scrub &amp; Art. 22 audit</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 5 Team / Hiring Manager Seats</b></span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority 1-on-1 Assisted Setup &amp; Dedicated WhatsApp</b></span></li>
+        </ul>
+      </div>
+      <div>
+        <a class="iq-plan-btn iq-btn-agency" href="{_stripe_agency_url}" target="_blank">
+          Subscribe to Agency Unlimited &nbsp;&rarr;
+        </a>
+        <div class="iq-guarantee">&#128274; 256-bit SSL encrypted &bull; Cancel anytime &bull; Assisted onboarding</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trust & Payment Methods Footer -->
+  <div class="iq-pay-badges">
+    <span style="font-size:.82rem;font-weight:700;color:#64748B;margin-right:.5rem;">Accepted Payment Methods:</span>
+    <span class="iq-pay-pill"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-right:2px"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.08 1.74-.95 2.76.99.08 2.04-.51 2.68-1.26z"/></svg>Apple Pay</span>
+    <span class="iq-pay-pill" style="font-weight:800;color:#1A1F71">VISA</span>
+    <span class="iq-pay-pill"><span style="color:#EB001B">&#9679;</span><span style="color:#F79E1B;margin-left:-4px">&#9679;</span> Mastercard</span>
+    <span class="iq-pay-pill">UK Debit Cards</span>
+    <span class="iq-pay-pill" style="color:#6366F1;font-weight:800;">&#128274; Powered by Stripe UK (FCA Authorised)</span>
+  </div>
 </div>
 """)
 
