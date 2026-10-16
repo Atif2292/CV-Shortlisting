@@ -49,10 +49,22 @@ def build_css() -> str:
 html, body, [class*="css"] {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
 }
-[data-testid="stAppViewContainer"] { background: #F5F7FB !important; }
-[data-testid="stHeader"]           { display: none !important; }
-[data-testid="block-container"]    {
+[data-testid="stAppViewContainer"] {
+    background: #F5F7FB !important;
+    overflow-x: hidden !important;
+}
+[data-testid="stHeader"],
+header[data-testid="stHeader"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+[data-testid="block-container"] {
     background: #F5F7FB;
     padding: 0 2rem 4rem !important;
     max-width: 1280px;
@@ -68,34 +80,37 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 [data-testid="stMetricValue"]  { color:#0B1120!important; font-weight:800!important; font-size:1.55rem!important; }
 [data-testid="stMetricLabel"]  { color:#64748B!important; font-size:.8rem!important; }
 
-/* ── Panel cards (st.container border=True) ── */
-[data-testid="column"] {
+/* ── Workspace Panel Cards (Scoped only to panels with .iq-phead) ── */
+[data-testid="column"]:has(.iq-phead) {
     display: flex !important;
     flex-direction: column !important;
 }
-[data-testid="column"] > div[data-testid="stVerticalBlockBorderWrapper"] {
-    flex: 1 1 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 520px !important;
-}
-[data-testid="column"] > div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
+[data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"] {
     flex: 1 1 100% !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
-}
-[data-testid="stVerticalBlockBorderWrapper"] {
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
     border-radius: 16px !important;
     box-shadow: 0 2px 12px rgba(10,20,60,.06) !important;
     padding: 1.5rem !important;
-    transition: box-shadow .2s !important;
+    transition: box-shadow .2s, border-color .2s !important;
 }
-[data-testid="stVerticalBlockBorderWrapper"]:focus-within {
+[data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"]:focus-within {
     box-shadow: 0 4px 20px rgba(10,20,60,.1) !important;
     border-color: rgba(37,99,235,.25) !important;
+}
+/* Ensure regular columns and buttons have zero unwanted extra height */
+[data-testid="column"]:not(:has(.iq-phead)) {
+    min-height: unset !important;
+}
+[data-testid="column"]:not(:has(.iq-phead)) > div[data-testid="stVerticalBlockBorderWrapper"] {
+    min-height: unset !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
 
 /* ── Tabs ── */
