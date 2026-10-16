@@ -289,11 +289,23 @@ button[data-testid="baseButton-secondary"]:hover {
 /* ── Navbar ── */
 .iq-nav {
     display: flex; align-items: center; justify-content: space-between;
-    padding: .7rem 0 .65rem; border-bottom: 1px solid #E2E8F0;
+    padding: .75rem 0 .7rem; border-bottom: 1px solid #E2E8F0;
     margin-bottom: 0; background: #F5F7FB;
 }
-.iq-logo { font-size: 1.45rem; font-weight: 900; color: #0F172A; letter-spacing: -.5px; }
+.iq-logo { font-size: 1.45rem; font-weight: 900; color: #0F172A; letter-spacing: -.5px; flex-shrink: 0; }
 .iq-logo b { color: #2563EB; font-weight: 900; }
+.iq-nav-center {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.6rem; flex: 1; margin: 0 1.5rem;
+}
+.iq-nav-link {
+    font-size: .875rem; font-weight: 600; color: #64748B;
+    text-decoration: none !important; transition: color .15s ease;
+}
+.iq-nav-link:hover { color: #2563EB !important; }
+@media (max-width: 860px) {
+    .iq-nav-center { display: none; }
+}
 .iq-nav a.iq-nav-demo,
 .iq-nav a.iq-nav-demo:link,
 .iq-nav a.iq-nav-demo:visited,
@@ -311,6 +323,7 @@ a.iq-nav-demo:active,
     padding: .48rem 1.25rem !important; border-radius: 8px !important; border: none !important; cursor: pointer !important;
     box-shadow: 0 2px 8px rgba(37,99,235,.25) !important; transition: all .15s ease !important;
     text-decoration: none !important; display: inline-flex !important; align-items: center !important;
+    flex-shrink: 0;
 }
 .iq-nav a.iq-nav-demo:hover,
 .iq-nav a.iq-nav-demo:active,
@@ -1665,17 +1678,17 @@ def _exp_subtitle(text: str) -> str:
 # ─────────────────────────── Navbar ──────────────────────────────────────────
 render_html("""
 <div class="iq-nav">
-  <div style="display:flex;align-items:center;gap:2rem;">
-    <div class="iq-logo">Rank<b>CV</b></div>
-    <div style="display:flex;align-items:center;gap:1.4rem;">
-      <a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
-      <a href="#features" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Features</a>
-      <a href="#pricing" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Pricing</a>
-      <a href="#faq" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">FAQ</a>
-    </div>
+  <div class="iq-logo">Rank<b>CV</b></div>
+  <div class="iq-nav-center">
+    <a href="#screening-workspace" class="iq-nav-link">Screen CVs</a>
+    <a href="#how-it-works" class="iq-nav-link">How It Works</a>
+    <a href="#features" class="iq-nav-link">Features</a>
+    <a href="#pricing" class="iq-nav-link">Pricing</a>
+    <a href="#security" class="iq-nav-link">Security &amp; GDPR</a>
+    <a href="#faq" class="iq-nav-link">FAQ</a>
   </div>
   <div>
-    <a class="iq-nav-demo" href="#pricing" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Upgrade &nbsp;&rarr;</span></a>
+    <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Connect &nbsp;&rarr;</span></a>
   </div>
 </div>
 """)
@@ -1722,13 +1735,20 @@ render_html("""
 <div class="iq-fbar-t2">1-Click Shortlist Reports</div>
 </div>
 </div>
+<div class="iq-fbar-item">
+<div class="iq-fbar-icon">&#128737;&#65039;</div>
+<div>
+<div class="iq-fbar-t1">UK GDPR Shield</div>
+<div class="iq-fbar-t2">Article 22 Compliant</div>
+</div>
+</div>
 </div>
 """)
 
 
 # ─────────────────────────── UK GDPR Security & Engine Bar ───────────────────
 render_html("""
-<div class="iq-sec-bar">
+<div id="security" class="iq-sec-bar">
   <div class="iq-sec-top">
     <div class="iq-sec-title">
       <span>🛡️ UK GDPR Privacy Shield &amp; Screening Engine</span>
@@ -2738,6 +2758,7 @@ if st.session_state.get("show_full") and st.session_state.results:
 
 # ─────────────────────────── Features & Platform Capabilities ────────────────
 render_html("""
+<div id="how-it-works"></div>
 <div id="features" class="iq-feat-sec">
 <div class="iq-feat-hdr">
 <div class="iq-feat-eye">Platform Capabilities</div>
