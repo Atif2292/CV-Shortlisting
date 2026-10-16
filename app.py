@@ -86,16 +86,11 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
     flex-direction: column !important;
 }
 [data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"] {
-    flex: 1 1 100% !important;
-    min-height: 525px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
     border-radius: 16px !important;
     box-shadow: 0 2px 12px rgba(10,20,60,.06) !important;
-    padding: 1.5rem !important;
+    padding: 1.25rem 1.35rem !important;
     transition: box-shadow .2s, border-color .2s !important;
 }
 [data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"]:focus-within {
@@ -208,12 +203,12 @@ button[data-testid="baseButton-secondary"]:hover {
     border: 2px dashed #CBD5E1 !important;
     border-radius: 12px !important;
     background: #F8FAFC !important;
-    min-height: 290px !important;
+    min-height: 195px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
-    padding: 2rem 1.2rem !important;
+    padding: 1.2rem 1rem !important;
     transition: border-color .2s, background .2s !important;
     text-align: center !important;
 }
@@ -325,21 +320,21 @@ a.iq-nav-demo:active {
 }
 
 /* ── Hero — use <div> not h-tags to avoid Streamlit anchor icons ── */
-.iq-hero { text-align: center; padding: 4rem 1rem 2.8rem; max-width: 740px; margin: 0 auto; }
+.iq-hero { text-align: center; padding: 1.6rem 1rem .8rem; max-width: 860px; margin: 0 auto; }
 .iq-eye {
-    display: inline-block; font-size: .69rem; font-weight: 700;
-    letter-spacing: .17em; color: #2563EB; text-transform: uppercase;
-    background: rgba(37,99,235,.07); padding: .35rem 1rem;
-    border-radius: 99px; border: 1px solid rgba(37,99,235,.15); margin-bottom: 1.1rem;
+    display: inline-block; font-size: .68rem; font-weight: 700;
+    letter-spacing: .12em; color: #2563EB; text-transform: uppercase;
+    background: rgba(37,99,235,.07); padding: .25rem .75rem;
+    border-radius: 99px; border: 1px solid rgba(37,99,235,.15); margin-bottom: .6rem;
 }
 .iq-h1 {
-    font-size: 5rem; font-weight: 900; line-height: 1.03;
-    color: #0B1120; margin-bottom: 1.1rem; letter-spacing: -3.5px;
+    font-size: 2.35rem; font-weight: 900; line-height: 1.18;
+    color: #0B1120; margin-bottom: .35rem; letter-spacing: -.02em;
 }
 .iq-h1 .bl { color: #2563EB; }
 .iq-sub {
-    font-size: 1.07rem; color: #64748B; max-width: 500px;
-    margin: 0 auto 2rem; line-height: 1.75;
+    font-size: .95rem; color: #64748B; max-width: 620px;
+    margin: 0 auto; line-height: 1.45;
 }
 .iq-btns { display: flex; align-items: center; justify-content: center; gap: .9rem; flex-wrap: wrap; }
 .iq-bp {
@@ -1205,22 +1200,22 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 /* ── Feature bar ── */
 .iq-fbar {
     display:flex; background:#fff;
-    border:1px solid #E2E8F0; border-radius:16px;
-    margin:2.2rem 0 2.5rem; overflow:hidden;
+    border:1px solid #E2E8F0; border-radius:12px;
+    margin:1rem 0 1.2rem; overflow:hidden;
 }
 .iq-fbar-item {
-    flex:1; display:flex; align-items:center; gap:.85rem;
-    padding:1.1rem 1.4rem; border-right:1px solid #E2E8F0;
+    flex:1; display:flex; align-items:center; gap:.7rem;
+    padding:.7rem 1rem; border-right:1px solid #E2E8F0;
 }
 .iq-fbar-item:last-child { border-right:none; }
 .iq-fbar-icon {
-    width:42px; height:42px; border-radius:50%;
+    width:32px; height:32px; border-radius:50%;
     background:rgba(37,99,235,.08);
     display:flex; align-items:center; justify-content:center;
-    font-size:1.1rem; flex-shrink:0;
+    font-size:.92rem; flex-shrink:0;
 }
-.iq-fbar-t1 { font-size:.88rem; font-weight:700; color:#0B1120; line-height:1.35; }
-.iq-fbar-t2 { font-size:.78rem; color:#64748B; line-height:1.35; }
+.iq-fbar-t1 { font-size:.82rem; font-weight:700; color:#0B1120; line-height:1.25; }
+.iq-fbar-t2 { font-size:.72rem; color:#64748B; line-height:1.25; }
 
 /* ── Dashboard mockup ── */
 .iq-dash-outer {
@@ -1685,18 +1680,9 @@ render_html("""
 # ─────────────────────────── Hero ────────────────────────────────────────────
 render_html("""
 <div class="iq-hero">
-<div class="iq-eye">&#10022; &nbsp;AI-Powered CV Screening for HR &amp; Recruitment Teams</div>
-<div class="iq-h1">Shortlist Top Talent<br>in <span class="bl">Seconds.</span></div>
-<div class="iq-sub">Upload a job description and candidate CVs. RankCV automatically
-scores, ranks, and summarises candidates with actionable match insights.</div>
-<div class="iq-trial-tag">
-<span class="iq-trial-pill">🎁 FREE TRIAL</span>
-<span>Screen up to <b>10 CVs free</b> &mdash; test instant AI matching on your open roles</span>
-</div>
-<div class="iq-btns">
-<a class="iq-bp" href="#screening-workspace">Try Free (10 CVs) &nbsp;&darr;</a>
-<a class="iq-bs" href="https://wa.me/447379975532" target="_blank">Book a Demo &nbsp;&rarr;</a>
-</div>
+<div class="iq-eye">&#10022; &nbsp;Visual AI Resume Screening &amp; Candidate Ranking</div>
+<div class="iq-h1">Shortlist Top Talent <span class="bl">in Seconds</span></div>
+<div class="iq-sub">Upload a job description and candidate CVs to instantly screen, score, and rank top talent.</div>
 </div>
 """)
 
@@ -1817,7 +1803,112 @@ with sec_c3:
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
-render_html('<div id="screening-workspace" style="margin-top:1.5rem;"></div>')
+render_html("""
+<div id="screening-workspace" style="margin-top:1.2rem;"></div>
+<img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>" style="display:none" onerror="
+(function() {
+  function getJdTa() {
+    return document.querySelector('div[data-testid=\\"stTextArea\\"] textarea') || document.querySelector('textarea');
+  }
+
+  function syncLive() {
+    var ta = getJdTa();
+    if (!ta) return;
+
+    var val = ta.value || '';
+    var len = val.trim().length;
+    var c = document.getElementById('iq-live-chars');
+    if (c) c.textContent = len.toLocaleString() + ' / 5,000';
+    var b = document.getElementById('iq-jd-status-badge');
+    if (b) {
+      if (len > 0) {
+        b.className = 'iq-status-ok';
+        b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
+      } else {
+        b.className = 'iq-status-wait';
+        b.innerHTML = '✍️ Type or paste your job requirements above';
+      }
+    }
+
+    if (!ta.__fastSyncBound) {
+      ta.__fastSyncBound = true;
+      ['input', 'keyup', 'paste', 'change', 'blur'].forEach(function(ev) {
+        ta.addEventListener(ev, syncLive);
+      });
+    }
+  }
+
+  if (!window.__rankcv_blur_bound) {
+    window.__rankcv_blur_bound = true;
+    ['pointerdown', 'mousedown', 'touchstart'].forEach(function(ev) {
+      document.addEventListener(ev, function(e) {
+        var ta = getJdTa();
+        if (ta && document.activeElement === ta && e.target !== ta) {
+          ta.dispatchEvent(new Event('change', { bubbles: true }));
+          ta.blur();
+        }
+      }, true);
+    });
+  }
+
+  syncLive();
+  if (!window.__rankcv_sync_interval) {
+    window.__rankcv_sync_interval = setInterval(syncLive, 180);
+  }
+})()
+" onload="
+(function() {
+  function getJdTa() {
+    return document.querySelector('div[data-testid=\\"stTextArea\\"] textarea') || document.querySelector('textarea');
+  }
+
+  function syncLive() {
+    var ta = getJdTa();
+    if (!ta) return;
+
+    var val = ta.value || '';
+    var len = val.trim().length;
+    var c = document.getElementById('iq-live-chars');
+    if (c) c.textContent = len.toLocaleString() + ' / 5,000';
+    var b = document.getElementById('iq-jd-status-badge');
+    if (b) {
+      if (len > 0) {
+        b.className = 'iq-status-ok';
+        b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
+      } else {
+        b.className = 'iq-status-wait';
+        b.innerHTML = '✍️ Type or paste your job requirements above';
+      }
+    }
+
+    if (!ta.__fastSyncBound) {
+      ta.__fastSyncBound = true;
+      ['input', 'keyup', 'paste', 'change', 'blur'].forEach(function(ev) {
+        ta.addEventListener(ev, syncLive);
+      });
+    }
+  }
+
+  if (!window.__rankcv_blur_bound) {
+    window.__rankcv_blur_bound = true;
+    ['pointerdown', 'mousedown', 'touchstart'].forEach(function(ev) {
+      document.addEventListener(ev, function(e) {
+        var ta = getJdTa();
+        if (ta && document.activeElement === ta && e.target !== ta) {
+          ta.dispatchEvent(new Event('change', { bubbles: true }));
+          ta.blur();
+        }
+      }, true);
+    });
+  }
+
+  syncLive();
+  if (!window.__rankcv_sync_interval) {
+    window.__rankcv_sync_interval = setInterval(syncLive, 180);
+  }
+})()
+">
+""")
 col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
 
 # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
@@ -1894,12 +1985,8 @@ with col1:
         with tab_paste:
             jd_input = st.text_area(
                 "",
-                placeholder=(
-                    "We are looking for a Senior Python Backend Engineer "
-                    "with strong experience in FastAPI, PostgreSQL, AWS, "
-                    "Docker, and microservices architecture…"
-                ),
-                height=230,
+                placeholder="Paste your job description, role overview, and key requirements here…",
+                height=145,
                 max_chars=5000,
                 key="jd_paste",
                 label_visibility="collapsed",
@@ -1934,112 +2021,6 @@ with col1:
             render_html(f'<div id="iq-jd-status-badge" class="iq-status-ok">✅ Job description ready ({len(jd_text):,} chars)</div>')
         else:
             render_html('<div id="iq-jd-status-badge" class="iq-status-wait">✍️ Type or paste your job requirements above</div>')
-
-        render_html("""
-<img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>" style="display:none" onerror="
-(function() {
-  function getJdTa() {
-    return document.querySelector('div[data-testid=\"stTextArea\"] textarea') || document.querySelector('textarea');
-  }
-
-  function syncLive() {
-    var ta = getJdTa();
-    if (!ta) return;
-
-    var val = ta.value || '';
-    var len = val.trim().length;
-    var c = document.getElementById('iq-live-chars');
-    if (c) c.textContent = len.toLocaleString() + ' / 5,000';
-    var b = document.getElementById('iq-jd-status-badge');
-    if (b) {
-      if (len > 0) {
-        b.className = 'iq-status-ok';
-        b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
-      } else {
-        b.className = 'iq-status-wait';
-        b.innerHTML = '✍️ Type or paste your job requirements above';
-      }
-    }
-
-    if (!ta.__fastSyncBound) {
-      ta.__fastSyncBound = true;
-      ['input', 'keyup', 'paste', 'change', 'blur'].forEach(function(ev) {
-        ta.addEventListener(ev, syncLive);
-      });
-    }
-  }
-
-  if (!window.__rankcv_blur_bound) {
-    window.__rankcv_blur_bound = true;
-    ['pointerdown', 'mousedown', 'touchstart'].forEach(function(ev) {
-      document.addEventListener(ev, function(e) {
-        var ta = getJdTa();
-        if (ta && document.activeElement === ta && e.target !== ta) {
-          ta.dispatchEvent(new Event('change', { bubbles: true }));
-          ta.blur();
-        }
-      }, true);
-    });
-  }
-
-  syncLive();
-  if (!window.__rankcv_sync_interval) {
-    window.__rankcv_sync_interval = setInterval(syncLive, 180);
-  }
-})()
-" onload="
-(function() {
-  function getJdTa() {
-    return document.querySelector('div[data-testid=\"stTextArea\"] textarea') || document.querySelector('textarea');
-  }
-
-  function syncLive() {
-    var ta = getJdTa();
-    if (!ta) return;
-
-    var val = ta.value || '';
-    var len = val.trim().length;
-    var c = document.getElementById('iq-live-chars');
-    if (c) c.textContent = len.toLocaleString() + ' / 5,000';
-    var b = document.getElementById('iq-jd-status-badge');
-    if (b) {
-      if (len > 0) {
-        b.className = 'iq-status-ok';
-        b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
-      } else {
-        b.className = 'iq-status-wait';
-        b.innerHTML = '✍️ Type or paste your job requirements above';
-      }
-    }
-
-    if (!ta.__fastSyncBound) {
-      ta.__fastSyncBound = true;
-      ['input', 'keyup', 'paste', 'change', 'blur'].forEach(function(ev) {
-        ta.addEventListener(ev, syncLive);
-      });
-    }
-  }
-
-  if (!window.__rankcv_blur_bound) {
-    window.__rankcv_blur_bound = true;
-    ['pointerdown', 'mousedown', 'touchstart'].forEach(function(ev) {
-      document.addEventListener(ev, function(e) {
-        var ta = getJdTa();
-        if (ta && document.activeElement === ta && e.target !== ta) {
-          ta.dispatchEvent(new Event('change', { bubbles: true }));
-          ta.blur();
-        }
-      }, true);
-    });
-  }
-
-  syncLive();
-  if (!window.__rankcv_sync_interval) {
-    window.__rankcv_sync_interval = setInterval(syncLive, 180);
-  }
-})()
-">
-""")
 
 
 # ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
