@@ -1899,14 +1899,14 @@ with col2:
                 f'<div class="iq-status-ok">✅ <b>{total_uploaded}/10 CVs selected</b> ready for screening</div>'
             )
         else:
-            render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 5 demo CVs below…</div>')
+            render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 10 demo CVs below…</div>')
 
         render_html("<div style='height:.7rem'></div>")
         col_btn1, col_btn2 = st.columns([1.15, 1])
         with col_btn1:
             run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
         with col_btn2:
-            demo_btn = st.button("⚡  Try 5 Demo CVs", use_container_width=True)
+            demo_btn = st.button("⚡  Try 10 Demo CVs", use_container_width=True)
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
@@ -1927,18 +1927,18 @@ with col3:
                 st.session_state["_prev_role_choice"] = "Senior Python Backend Engineer"
 
             demo_dir = Path("dummy_cvs_pdf")
-            demo_files = sorted(demo_dir.glob("*.pdf"))[:5]
+            demo_files = sorted(demo_dir.glob("*.pdf"))[:10]
             if not demo_files:
                 st.error("Demo CVs not found on server.")
             else:
                 job_context = extract_job_context(jd_text)
                 candidates = []
-                bar = st.progress(0, text="Loading 5 Demo CVs…")
+                bar = st.progress(0, text=f"Loading {len(demo_files)} Demo CVs…")
                 _info = st.empty()
                 for idx, df in enumerate(demo_files, 1):
                     render_html(
                         f'<p style="font-size:.82rem;color:#64748B">'
-                        f'📄 <b style="color:#2563EB">{df.name}</b> ({idx}/5)</p>',
+                        f'📄 <b style="color:#2563EB">{df.name}</b> ({idx}/{len(demo_files)})</p>',
                         container=_info,
                     )
                     try:
@@ -1951,7 +1951,7 @@ with col3:
                             ))
                     except Exception as ex:
                         st.warning(f"⚠️ Error reading {df.name}: {ex}")
-                    bar.progress(idx / 5 * 0.5, text=f"Parsing demo CVs — {idx}/5 done…")
+                    bar.progress(idx / len(demo_files) * 0.5, text=f"Parsing demo CVs — {idx}/{len(demo_files)} done…")
 
                 if candidates:
                     render_html(
@@ -2254,7 +2254,7 @@ with col3:
 
 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
 <div style="font-size:.78rem; color:#475569; font-weight:600;">
-💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 5 Demo CVs</b> in Panel 2 to screen live candidate resumes.
+💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 10 Demo CVs</b> in Panel 2 to screen live candidate resumes.
 </div>
 </div>
 """)
