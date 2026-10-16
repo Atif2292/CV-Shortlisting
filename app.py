@@ -2959,20 +2959,15 @@ render_html("""
 
 
 # ─────────────────────────── Pricing & Payment ────────────────────────────────
-_stripe_pro_url = os.getenv("STRIPE_PRO_URL", "").strip()
-_stripe_agency_url = os.getenv("STRIPE_AGENCY_URL", "").strip()
+_stripe_pro_url = os.getenv("STRIPE_PRO_URL", "https://buy.stripe.com/4gM28rdxmck239y8Mk43S03").strip()
+_stripe_agency_url = os.getenv("STRIPE_AGENCY_URL", "https://buy.stripe.com/4gM00j2SIfwebG41jS43S02").strip()
 try:
-    if not _stripe_pro_url and "STRIPE_PRO_URL" in st.secrets:
+    if "STRIPE_PRO_URL" in st.secrets and str(st.secrets["STRIPE_PRO_URL"]).strip():
         _stripe_pro_url = str(st.secrets["STRIPE_PRO_URL"]).strip()
-    if not _stripe_agency_url and "STRIPE_AGENCY_URL" in st.secrets:
+    if "STRIPE_AGENCY_URL" in st.secrets and str(st.secrets["STRIPE_AGENCY_URL"]).strip():
         _stripe_agency_url = str(st.secrets["STRIPE_AGENCY_URL"]).strip()
 except Exception:
     pass
-
-if not _stripe_pro_url:
-    _stripe_pro_url = "https://wa.me/447379975532?text=Hi%2C%20I%20would%20like%20to%20subscribe%20to%20the%20RankCV%20Professional%20Plan%20%28%C2%A399%2Fmonth%29"
-if not _stripe_agency_url:
-    _stripe_agency_url = "https://wa.me/447379975532?text=Hi%2C%20I%20would%20like%20to%20subscribe%20to%20the%20RankCV%20Agency%20Unlimited%20Plan%20%28%C2%A3199%2Fmonth%29"
 
 render_html(f"""
 <div id="pricing" class="iq-price-sec">
@@ -2983,14 +2978,14 @@ render_html(f"""
   </div>
 
   <div class="iq-price-grid">
-    <!-- Plan 1: Professional £99/mo -->
+    <!-- Plan 1: Professional €99/mo -->
     <div class="iq-plan-card">
       <div>
         <span class="iq-plan-badge iq-badge-starter">Boutique &amp; In-House HR</span>
         <div class="iq-plan-name">Professional</div>
         <div class="iq-plan-desc">Fast, plug-and-play AI CV screening with zero technical setup. Ready to use immediately.</div>
         <div class="iq-plan-price-wrap">
-          <span class="iq-plan-curr">&pound;</span>
+          <span class="iq-plan-curr">&euro;</span>
           <span class="iq-plan-amt">99</span>
           <span class="iq-plan-period">/ month</span>
         </div>
@@ -3014,7 +3009,7 @@ render_html(f"""
       </div>
     </div>
 
-    <!-- Plan 2: Agency & Scale-up £199/mo (UNLIMITED) -->
+    <!-- Plan 2: Agency & Scale-up €199/mo (UNLIMITED) -->
     <div class="iq-plan-card featured">
       <div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
@@ -3024,7 +3019,7 @@ render_html(f"""
         <div class="iq-plan-name">Agency &amp; Enterprise</div>
         <div class="iq-plan-desc">Unlimited candidate screening powered by your own company OpenAI or Azure API key.</div>
         <div class="iq-plan-price-wrap">
-          <span class="iq-plan-curr">&pound;</span>
+          <span class="iq-plan-curr">&euro;</span>
           <span class="iq-plan-amt">199</span>
           <span class="iq-plan-period">/ month</span>
         </div>
