@@ -289,7 +289,7 @@ button[data-testid="baseButton-secondary"]:hover {
 /* ── Navbar ── */
 .iq-nav {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 1.1rem 0 1rem; border-bottom: 1px solid #E2E8F0;
+    padding: .7rem 0 .65rem; border-bottom: 1px solid #E2E8F0;
     margin-bottom: 0; background: #F5F7FB;
 }
 .iq-logo { font-size: 1.45rem; font-weight: 900; color: #0F172A; letter-spacing: -.5px; }
@@ -320,21 +320,21 @@ a.iq-nav-demo:active {
 }
 
 /* ── Hero — use <div> not h-tags to avoid Streamlit anchor icons ── */
-.iq-hero { text-align: center; padding: 1.6rem 1rem .8rem; max-width: 860px; margin: 0 auto; }
+.iq-hero { text-align: center; padding: 1rem 1rem .35rem; max-width: 860px; margin: 0 auto; }
 .iq-eye {
     display: inline-block; font-size: .68rem; font-weight: 700;
     letter-spacing: .12em; color: #2563EB; text-transform: uppercase;
-    background: rgba(37,99,235,.07); padding: .25rem .75rem;
-    border-radius: 99px; border: 1px solid rgba(37,99,235,.15); margin-bottom: .6rem;
+    background: rgba(37,99,235,.07); padding: .2rem .75rem;
+    border-radius: 99px; border: 1px solid rgba(37,99,235,.15); margin-bottom: .35rem;
 }
 .iq-h1 {
-    font-size: 2.35rem; font-weight: 900; line-height: 1.18;
-    color: #0B1120; margin-bottom: .35rem; letter-spacing: -.02em;
+    font-size: 2.15rem; font-weight: 900; line-height: 1.15;
+    color: #0B1120; margin-bottom: .25rem; letter-spacing: -.02em;
 }
 .iq-h1 .bl { color: #2563EB; }
 .iq-sub {
-    font-size: .95rem; color: #64748B; max-width: 620px;
-    margin: 0 auto; line-height: 1.45;
+    font-size: .92rem; color: #64748B; max-width: 620px;
+    margin: 0 auto .35rem; line-height: 1.4;
 }
 .iq-btns { display: flex; align-items: center; justify-content: center; gap: .9rem; flex-wrap: wrap; }
 .iq-bp {
@@ -1201,21 +1201,21 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 .iq-fbar {
     display:flex; background:#fff;
     border:1px solid #E2E8F0; border-radius:12px;
-    margin:1rem 0 1.2rem; overflow:hidden;
+    margin:.55rem 0 .75rem; overflow:hidden;
 }
 .iq-fbar-item {
-    flex:1; display:flex; align-items:center; gap:.7rem;
-    padding:.7rem 1rem; border-right:1px solid #E2E8F0;
+    flex:1; display:flex; align-items:center; gap:.65rem;
+    padding:.55rem .85rem; border-right:1px solid #E2E8F0;
 }
 .iq-fbar-item:last-child { border-right:none; }
 .iq-fbar-icon {
-    width:32px; height:32px; border-radius:50%;
+    width:30px; height:30px; border-radius:50%;
     background:rgba(37,99,235,.08);
     display:flex; align-items:center; justify-content:center;
-    font-size:.92rem; flex-shrink:0;
+    font-size:.88rem; flex-shrink:0;
 }
-.iq-fbar-t1 { font-size:.82rem; font-weight:700; color:#0B1120; line-height:1.25; }
-.iq-fbar-t2 { font-size:.72rem; color:#64748B; line-height:1.25; }
+.iq-fbar-t1 { font-size:.8rem; font-weight:700; color:#0B1120; line-height:1.2; }
+.iq-fbar-t2 { font-size:.7rem; color:#64748B; line-height:1.2; }
 
 /* ── Dashboard mockup ── */
 .iq-dash-outer {
@@ -1316,10 +1316,10 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 .iq-sec-bar {
     background: #FFFFFF;
     border: 1.5px solid #DBEAFE;
-    border-radius: 14px;
-    padding: 1.1rem 1.4rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 14px rgba(37,99,235,.05);
+    border-radius: 12px;
+    padding: .65rem 1.1rem;
+    margin-bottom: .75rem;
+    box-shadow: 0 2px 8px rgba(37,99,235,.04);
 }
 .iq-sec-top {
     display: flex;
@@ -1665,14 +1665,18 @@ def _exp_subtitle(text: str) -> str:
 # ─────────────────────────── Navbar ──────────────────────────────────────────
 render_html("""
 <div class="iq-nav">
-<div class="iq-logo">Rank<b>CV</b></div>
-<div style="display:flex;align-items:center;gap:1.3rem;">
-<a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
-<a href="#features" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Features</a>
-<a href="#pricing" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Pricing</a>
-<a href="#faq" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">FAQ</a>
-<a class="iq-nav-demo" href="#pricing" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Upgrade &nbsp;&rarr;</span></a>
-</div>
+  <div style="display:flex;align-items:center;gap:2rem;">
+    <div class="iq-logo">Rank<b>CV</b></div>
+    <div style="display:flex;align-items:center;gap:1.4rem;">
+      <a href="#screening-workspace" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Screen CVs</a>
+      <a href="#features" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Features</a>
+      <a href="#pricing" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">Pricing</a>
+      <a href="#faq" style="font-size:.875rem;font-weight:600;color:#64748B;text-decoration:none;">FAQ</a>
+    </div>
+  </div>
+  <div>
+    <a class="iq-nav-demo" href="#pricing" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Upgrade &nbsp;&rarr;</span></a>
+  </div>
 </div>
 """)
 
@@ -1803,7 +1807,7 @@ with sec_c3:
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
-render_html('<div id="screening-workspace" style="margin-top:1.2rem;"></div>')
+render_html('<div id="screening-workspace" style="margin-top:0.35rem;"></div>')
 col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
 
 # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
