@@ -1424,6 +1424,68 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 .iq-pbadge-silver { background: #F1F5F9; color: #334155; border: 1px solid #E2E8F0; }
 .iq-pbadge-bronze { background: #FFEDD5; color: #9A3412; border: 1px solid #FED7AA; }
 
+/* ── Podium Decision Strip & Active Card Animations ── */
+@keyframes decPop {
+    0% { transform: scale(0.92); opacity: 0; }
+    60% { transform: scale(1.03); }
+    100% { transform: scale(1); opacity: 1; }
+}
+.iq-decision-strip {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem .75rem;
+    border-radius: 8px;
+    font-size: .8rem;
+    font-weight: 700;
+    margin-top: .85rem;
+    animation: decPop .25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.iq-dec-strip-shortlisted {
+    background: #ECFDF5;
+    border: 1.5px solid #10B981;
+    color: #047857;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+}
+.iq-dec-strip-passed {
+    background: #FEF2F2;
+    border: 1.5px solid #EF4444;
+    color: #B91C1C;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.12);
+}
+.iq-dec-strip-consider {
+    background: #EFF6FF;
+    border: 1.5px solid #3B82F6;
+    color: #1D4ED8;
+}
+.iq-card-shortlisted {
+    border-color: #10B981 !important;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18) !important;
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.iq-card-passed {
+    border-color: #F87171 !important;
+    opacity: 0.9;
+    background: #FFFBFB !important;
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Specific styling for decision buttons */
+button[kind="primary"]:has(div:contains("Shortlist")),
+button[kind="primary"]:has(div:contains("Shortlisted")) {
+    background: linear-gradient(135deg, #059669, #10B981) !important;
+    border-color: #059669 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+}
+button[kind="primary"]:has(div:contains("Pass")),
+button[kind="primary"]:has(div:contains("Passed")) {
+    background: linear-gradient(135deg, #DC2626, #EF4444) !important;
+    border-color: #DC2626 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35) !important;
+}
+
 /* ── Human-in-the-Loop Override Panel ── */
 .iq-override-card {
     background: #F8FAFC;
@@ -2344,9 +2406,37 @@ if st.session_state.get("show_full") and st.session_state.results:
                 p_rec   = c_r.get("recommendation", "")
                 p_idx   = c_r.get("candidate_index", p_i)
 
+                # Fetch current recruiter decision status
+                if "recruiter_overrides" not in st.session_state:
+                    st.session_state.recruiter_overrides = {}
+                c_ov = st.session_state.recruiter_overrides.get(p_idx, {})
+                curr_status = c_ov.get("status", "Shortlisted" if p_score >= 70 else "Under Review")
+
+                if curr_status == "Shortlisted":
+                    card_status_cls = "iq-card-shortlisted"
+                    dec_strip_html = (
+                        '<div class="iq-decision-strip iq-dec-strip-shortlisted">'
+                        '<span>✅</span><span>Decision: <b>Shortlisted for Interview</b></span>'
+                        '</div>'
+                    )
+                elif curr_status == "Rejected":
+                    card_status_cls = "iq-card-passed"
+                    dec_strip_html = (
+                        '<div class="iq-decision-strip iq-dec-strip-passed">'
+                        '<span>❌</span><span>Decision: <b>Passed (Archived)</b></span>'
+                        '</div>'
+                    )
+                else:
+                    card_status_cls = ""
+                    dec_strip_html = (
+                        '<div class="iq-decision-strip iq-dec-strip-consider">'
+                        '<span>⚡</span><span>Decision: <b>Under Review</b></span>'
+                        '</div>'
+                    )
+
                 sk_badges = "".join(f'<span class="iq-cr-sk" style="font-size:.72rem;">{s}</span>' for s in p_skills)
                 render_html(f"""
-<div class="iq-podium-card {p_c}">
+<div class="iq-podium-card {p_c} {card_status_cls}">
   <span class="iq-podium-badge {pb_c}">{p_t}</span>
   <div>
     <div style="font-size:1.15rem;font-weight:800;color:#0F172A;margin-top:.4rem;">{p_name}</div>
@@ -2362,25 +2452,32 @@ if st.session_state.get("show_full") and st.session_state.results:
     <div style="font-size:.8rem;color:#334155;line-height:1.45;background:rgba(255,255,255,.7);padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(0,0,0,.05);">
       <b>Recruiter Rationale:</b> {p_rec}
     </div>
+    {dec_strip_html}
   </div>
 </div>
 """)
                 p_b1, p_b2 = st.columns([1, 1])
                 with p_b1:
-                    if st.button("✅ Shortlist", key=f"btn_short_{p_idx}", use_container_width=True):
-                        if "recruiter_overrides" not in st.session_state:
-                            st.session_state.recruiter_overrides = {}
+                    is_short = (curr_status == "Shortlisted")
+                    lbl_short = "✓ Shortlisted" if is_short else "✅ Shortlist"
+                    short_kind = "primary" if is_short else "secondary"
+                    if st.button(lbl_short, key=f"btn_short_{p_idx}", use_container_width=True, type=short_kind):
                         if p_idx not in st.session_state.recruiter_overrides:
                             st.session_state.recruiter_overrides[p_idx] = {}
                         st.session_state.recruiter_overrides[p_idx]["status"] = "Shortlisted"
+                        st.session_state[f"sel_stat_{p_idx}"] = "Shortlisted"
+                        st.toast(f"🎯 {p_name} added to Shortlist!", icon="✅")
                         st.rerun()
                 with p_b2:
-                    if st.button("❌ Pass", key=f"btn_pass_{p_idx}", use_container_width=True):
-                        if "recruiter_overrides" not in st.session_state:
-                            st.session_state.recruiter_overrides = {}
+                    is_pass = (curr_status == "Rejected")
+                    lbl_pass = "✕ Passed" if is_pass else "❌ Pass"
+                    pass_kind = "primary" if is_pass else "secondary"
+                    if st.button(lbl_pass, key=f"btn_pass_{p_idx}", use_container_width=True, type=pass_kind):
                         if p_idx not in st.session_state.recruiter_overrides:
                             st.session_state.recruiter_overrides[p_idx] = {}
                         st.session_state.recruiter_overrides[p_idx]["status"] = "Rejected"
+                        st.session_state[f"sel_stat_{p_idx}"] = "Rejected"
+                        st.toast(f"📋 {p_name} marked as Pass / Archive", icon="❌")
                         st.rerun()
 
     # ── Score Distribution Visualisation ─────────────────────────────
@@ -2531,6 +2628,8 @@ if st.session_state.get("show_full") and st.session_state.results:
             with ov_col1:
                 stat_options = ["Shortlisted", "Consider", "Rejected", "Under Review"]
                 curr_sel = c_ov.get("status", "Shortlisted")
+                if f"sel_stat_{c_idx}" in st.session_state and st.session_state[f"sel_stat_{c_idx}"] != curr_sel:
+                    st.session_state[f"sel_stat_{c_idx}"] = curr_sel
                 sel_idx = stat_options.index(curr_sel) if curr_sel in stat_options else 0
                 new_status = st.selectbox("Decision Status:", stat_options, index=sel_idx, key=f"sel_stat_{c_idx}")
                 st.session_state.recruiter_overrides[c_idx]["status"] = new_status
