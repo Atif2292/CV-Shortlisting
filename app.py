@@ -1046,37 +1046,37 @@ a.iq-nav-demo:active {
 }
 
 /* ── Pricing & Payment Section ── */
-.iq-price-sec { max-width: 1040px; margin: 4.5rem auto 3rem; padding: 0 1.25rem; }
-.iq-price-hdr { text-align: center; margin-bottom: 2.8rem; }
-.iq-price-eye { display: inline-block; font-size: .78rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: .08em; background: #EFF6FF; border: 1px solid #BFDBFE; padding: .3rem .85rem; border-radius: 999px; margin-bottom: .6rem; }
-.iq-price-h2 { font-size: 2.25rem; font-weight: 800; color: #0B1120; margin-bottom: .6rem; letter-spacing: -.02em; }
-.iq-price-sub { font-size: 1.02rem; color: #64748B; max-width: 600px; margin: 0 auto; line-height: 1.55; }
-.iq-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
-@media (max-width: 860px) { .iq-price-grid { grid-template-columns: 1fr; max-width: 520px; margin: 2rem auto 0; } }
-.iq-plan-card { background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 20px; padding: 2.4rem 2.2rem; display: flex; flex-direction: column; justify-content: space-between; transition: all .25s ease; box-shadow: 0 4px 20px rgba(15,23,42,.03); position: relative; }
-.iq-plan-card:hover { border-color: #93C5FD; box-shadow: 0 16px 36px rgba(37,99,235,.08); transform: translateY(-3px); }
-.iq-plan-card.featured { border: 2.5px solid #2563EB; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); box-shadow: 0 16px 40px rgba(37,99,235,.12); }
-.iq-plan-badge { display: inline-block; padding: .32rem .8rem; font-size: .72rem; font-weight: 800; border-radius: 999px; margin-bottom: 1.1rem; text-transform: uppercase; letter-spacing: .06em; }
+.iq-price-sec { max-width: 860px; margin: 3.5rem auto 2.5rem; padding: 0 1rem; }
+.iq-price-hdr { text-align: center; margin-bottom: 2rem; }
+.iq-price-eye { display: inline-block; font-size: .75rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: .08em; background: #EFF6FF; border: 1px solid #BFDBFE; padding: .25rem .75rem; border-radius: 999px; margin-bottom: .5rem; }
+.iq-price-h2 { font-size: 1.95rem; font-weight: 800; color: #0B1120; margin-bottom: .45rem; letter-spacing: -.02em; }
+.iq-price-sub { font-size: .92rem; color: #64748B; max-width: 540px; margin: 0 auto; line-height: 1.5; }
+.iq-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.35rem; margin-top: 1.6rem; }
+@media (max-width: 860px) { .iq-price-grid { grid-template-columns: 1fr; max-width: 440px; margin: 1.5rem auto 0; } }
+.iq-plan-card { background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 1.65rem 1.6rem; display: flex; flex-direction: column; justify-content: space-between; transition: all .25s ease; box-shadow: 0 2px 12px rgba(15,23,42,.03); position: relative; }
+.iq-plan-card:hover { border-color: #93C5FD; box-shadow: 0 12px 28px rgba(37,99,235,.08); transform: translateY(-2px); }
+.iq-plan-card.featured { border: 2px solid #2563EB; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); box-shadow: 0 12px 32px rgba(37,99,235,.1); }
+.iq-plan-badge { display: inline-block; padding: .24rem .65rem; font-size: .68rem; font-weight: 800; border-radius: 999px; margin-bottom: .8rem; text-transform: uppercase; letter-spacing: .06em; }
 .iq-badge-starter { background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE; }
-.iq-badge-agency { background: #2563EB; color: #FFFFFF; box-shadow: 0 2px 10px rgba(37,99,235,.3); }
-.iq-plan-name { font-size: 1.6rem; font-weight: 800; color: #0F172A; margin-bottom: .35rem; letter-spacing: -.01em; }
-.iq-plan-desc { font-size: .9rem; color: #64748B; margin-bottom: 1.5rem; min-height: 42px; line-height: 1.5; }
-.iq-plan-price-wrap { display: flex; align-items: baseline; gap: .4rem; margin-bottom: 1.8rem; padding-bottom: 1.5rem; border-bottom: 1px solid #F1F5F9; }
-.iq-plan-curr { font-size: 1.65rem; font-weight: 700; color: #0F172A; }
-.iq-plan-amt { font-size: 3.4rem; font-weight: 900; color: #0F172A; line-height: 1; letter-spacing: -.03em; }
-.iq-plan-period { font-size: 1rem; font-weight: 600; color: #64748B; }
-.iq-plan-features { list-style: none; padding: 0; margin: 0 0 2.2rem 0; display: flex; flex-direction: column; gap: .9rem; }
-.iq-plan-feat-item { display: flex; align-items: flex-start; gap: .75rem; font-size: .93rem; color: #334155; line-height: 1.45; }
-.iq-feat-icon { color: #10B981; font-weight: 900; font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-.iq-feat-icon-gold { color: #F59E0B; font-weight: 900; font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
-.iq-plan-btn { display: block; width: 100%; text-align: center; padding: .95rem 1.5rem; border-radius: 12px; font-weight: 800; font-size: 1rem; text-decoration: none !important; transition: all .2s ease; cursor: pointer; box-sizing: border-box; }
-.iq-btn-primary { background: #2563EB !important; color: #FFFFFF !important; box-shadow: 0 4px 16px rgba(37,99,235,.28); }
-.iq-btn-primary:hover { background: #1D4ED8 !important; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,99,235,.35); }
-.iq-btn-agency { background: #0F172A !important; color: #FFFFFF !important; box-shadow: 0 4px 16px rgba(15,23,42,.22); }
-.iq-btn-agency:hover { background: #1E293B !important; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,23,42,.3); }
-.iq-guarantee { text-align: center; margin-top: 1rem; font-size: .78rem; color: #94A3B8; display: flex; align-items: center; justify-content: center; gap: .4rem; }
-.iq-pay-badges { display: flex; align-items: center; justify-content: center; gap: .8rem; margin-top: 2.5rem; padding-top: 1.8rem; border-top: 1px solid #E2E8F0; flex-wrap: wrap; }
-.iq-pay-pill { display: inline-flex; align-items: center; gap: .45rem; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: .35rem .75rem; font-size: .8rem; font-weight: 700; color: #334155; box-shadow: 0 1px 3px rgba(0,0,0,.02); }
+.iq-badge-agency { background: #2563EB; color: #FFFFFF; box-shadow: 0 2px 8px rgba(37,99,235,.25); }
+.iq-plan-name { font-size: 1.35rem; font-weight: 800; color: #0F172A; margin-bottom: .25rem; letter-spacing: -.01em; }
+.iq-plan-desc { font-size: .83rem; color: #64748B; margin-bottom: 1rem; line-height: 1.45; }
+.iq-plan-price-wrap { display: flex; align-items: baseline; gap: .35rem; margin-bottom: 1.2rem; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9; }
+.iq-plan-curr { font-size: 1.35rem; font-weight: 700; color: #0F172A; }
+.iq-plan-amt { font-size: 2.6rem; font-weight: 900; color: #0F172A; line-height: 1; letter-spacing: -.03em; }
+.iq-plan-period { font-size: .88rem; font-weight: 600; color: #64748B; }
+.iq-plan-features { list-style: none; padding: 0; margin: 0 0 1.4rem 0; display: flex; flex-direction: column; gap: .55rem; }
+.iq-plan-feat-item { display: flex; align-items: flex-start; gap: .55rem; font-size: .84rem; color: #334155; line-height: 1.4; }
+.iq-feat-icon { color: #10B981; font-weight: 900; font-size: .92rem; flex-shrink: 0; margin-top: 1px; }
+.iq-feat-icon-gold { color: #F59E0B; font-weight: 900; font-size: .95rem; flex-shrink: 0; margin-top: 1px; }
+.iq-plan-btn { display: block; width: 100%; text-align: center; padding: .75rem 1.25rem; border-radius: 10px; font-weight: 800; font-size: .92rem; text-decoration: none !important; transition: all .2s ease; cursor: pointer; box-sizing: border-box; }
+.iq-btn-primary { background: #2563EB !important; color: #FFFFFF !important; box-shadow: 0 4px 14px rgba(37,99,235,.25); }
+.iq-btn-primary:hover { background: #1D4ED8 !important; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,.32); }
+.iq-btn-agency { background: #0F172A !important; color: #FFFFFF !important; box-shadow: 0 4px 14px rgba(15,23,42,.2); }
+.iq-btn-agency:hover { background: #1E293B !important; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(15,23,42,.26); }
+.iq-guarantee { text-align: center; margin-top: .75rem; font-size: .74rem; color: #94A3B8; display: flex; align-items: center; justify-content: center; gap: .35rem; }
+.iq-pay-badges { display: flex; align-items: center; justify-content: center; gap: .7rem; margin-top: 2rem; padding-top: 1.4rem; border-top: 1px solid #E2E8F0; flex-wrap: wrap; }
+.iq-pay-pill { display: inline-flex; align-items: center; gap: .4rem; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: .3rem .65rem; font-size: .76rem; font-weight: 700; color: #334155; }
 
 .iq-foot { text-align:center; padding:2rem 0 1.5rem; border-top:1px solid #E2E8F0; margin-top:2rem; }
 .iq-foot-txt { font-size:.78rem; color:#94A3B8; }
@@ -3030,13 +3030,11 @@ render_html(f"""
         <ul class="iq-plan-features">
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 300 CVs</b> screened per month</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 10</b> active job openings simultaneously</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Plug &amp; Play AI:</b> Powered by RankCV internal engine</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Plug &amp; Play AI:</b> Internal RankCV engine</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Private In-Memory Engine:</b> Zero external AI transfer</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR PII Stripper:</b> Names, postcodes redacted</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Showcase Podium:</b> Gold, Silver, Bronze</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Article 22 Human Override:</b> Status tags &amp; notes</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Full UK GDPR Shield:</b> Names &amp; postcodes redacted</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Podium &amp; Article 22</b> Human override tags</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Excel Shortlist &amp; UK GDPR Audit</b> Sheet download</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span>1&ndash;2 Recruiter seats</span></li>
         </ul>
       </div>
       <div>
@@ -3068,7 +3066,6 @@ render_html(f"""
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Enterprise Data Ownership:</b> Under your company DPA</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS &amp; CRM Integration:</b> Bullhorn, Greenhouse, Lever</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Full UK GDPR Shield:</b> In-memory PII scrub &amp; Art. 22 audit</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 5 Team / Hiring Manager Seats</b></span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority 1-on-1 Assisted Setup &amp; Dedicated WhatsApp</b></span></li>
         </ul>
       </div>
