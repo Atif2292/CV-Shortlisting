@@ -3157,7 +3157,7 @@ If your recruiting team handles high-volume applicant pipelines or requires cust
 
 render_html("""
 <div class="iq-foot">
-<div class="iq-foot-txt">RankCV &middot; AI CV Screening &middot; Built with Streamlit &amp; GPT-4o</div>
+<div class="iq-foot-txt">RankCV &middot; AI CV Screening &amp; Candidate Ranking Platform</div>
 </div>
 """)
 
