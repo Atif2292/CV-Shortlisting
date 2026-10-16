@@ -87,6 +87,7 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 }
 [data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"] {
     flex: 1 1 100% !important;
+    min-height: 525px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
@@ -207,12 +208,12 @@ button[data-testid="baseButton-secondary"]:hover {
     border: 2px dashed #CBD5E1 !important;
     border-radius: 12px !important;
     background: #F8FAFC !important;
-    min-height: 230px !important;
+    min-height: 290px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
-    padding: 1.5rem !important;
+    padding: 2rem 1.2rem !important;
     transition: border-color .2s, background .2s !important;
     text-align: center !important;
 }
@@ -1060,38 +1061,38 @@ a.iq-nav-demo:active {
     padding-top: .85rem;
 }
 
-/* ── Pricing & Payment Section ── */
-.iq-price-sec { max-width: 860px; margin: 3.5rem auto 2.5rem; padding: 0 1rem; }
-.iq-price-hdr { text-align: center; margin-bottom: 2rem; }
-.iq-price-eye { display: inline-block; font-size: .75rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: .08em; background: #EFF6FF; border: 1px solid #BFDBFE; padding: .25rem .75rem; border-radius: 999px; margin-bottom: .5rem; }
-.iq-price-h2 { font-size: 1.95rem; font-weight: 800; color: #0B1120; margin-bottom: .45rem; letter-spacing: -.02em; }
-.iq-price-sub { font-size: .92rem; color: #64748B; max-width: 540px; margin: 0 auto; line-height: 1.5; }
-.iq-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.35rem; margin-top: 1.6rem; }
-@media (max-width: 860px) { .iq-price-grid { grid-template-columns: 1fr; max-width: 440px; margin: 1.5rem auto 0; } }
-.iq-plan-card { background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 1.65rem 1.6rem; display: flex; flex-direction: column; justify-content: space-between; transition: all .25s ease; box-shadow: 0 2px 12px rgba(15,23,42,.03); position: relative; }
-.iq-plan-card:hover { border-color: #93C5FD; box-shadow: 0 12px 28px rgba(37,99,235,.08); transform: translateY(-2px); }
-.iq-plan-card.featured { border: 2px solid #2563EB; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); box-shadow: 0 12px 32px rgba(37,99,235,.1); }
-.iq-plan-badge { display: inline-block; padding: .24rem .65rem; font-size: .68rem; font-weight: 800; border-radius: 999px; margin-bottom: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+/* ── Pricing & Payment Section (Compact & Minimal) ── */
+.iq-price-sec { max-width: 660px; margin: 2.2rem auto 1.8rem; padding: 0 1rem; }
+.iq-price-hdr { text-align: center; margin-bottom: 1.25rem; }
+.iq-price-eye { display: inline-block; font-size: .68rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: .08em; background: #EFF6FF; border: 1px solid #BFDBFE; padding: .18rem .6rem; border-radius: 999px; margin-bottom: .35rem; }
+.iq-price-h2 { font-size: 1.45rem; font-weight: 800; color: #0B1120; margin-bottom: .25rem; letter-spacing: -.02em; }
+.iq-price-sub { font-size: .82rem; color: #64748B; max-width: 480px; margin: 0 auto; line-height: 1.45; }
+.iq-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-top: 1.1rem; }
+@media (max-width: 720px) { .iq-price-grid { grid-template-columns: 1fr; max-width: 360px; margin: 1.1rem auto 0; } }
+.iq-plan-card { background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 1.15rem 1.25rem; display: flex; flex-direction: column; justify-content: space-between; transition: all .25s ease; box-shadow: 0 2px 8px rgba(15,23,42,.03); position: relative; }
+.iq-plan-card:hover { border-color: #93C5FD; box-shadow: 0 8px 20px rgba(37,99,235,.08); transform: translateY(-2px); }
+.iq-plan-card.featured { border: 2px solid #2563EB; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); box-shadow: 0 8px 22px rgba(37,99,235,.09); }
+.iq-plan-badge { display: inline-block; padding: .18rem .5rem; font-size: .62rem; font-weight: 800; border-radius: 999px; margin-bottom: .55rem; text-transform: uppercase; letter-spacing: .05em; }
 .iq-badge-starter { background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE; }
-.iq-badge-agency { background: #2563EB; color: #FFFFFF; box-shadow: 0 2px 8px rgba(37,99,235,.25); }
-.iq-plan-name { font-size: 1.35rem; font-weight: 800; color: #0F172A; margin-bottom: .25rem; letter-spacing: -.01em; }
-.iq-plan-desc { font-size: .83rem; color: #64748B; margin-bottom: 1rem; line-height: 1.45; }
-.iq-plan-price-wrap { display: flex; align-items: baseline; gap: .35rem; margin-bottom: 1.2rem; padding-bottom: 1rem; border-bottom: 1px solid #F1F5F9; }
-.iq-plan-curr { font-size: 1.35rem; font-weight: 700; color: #0F172A; }
-.iq-plan-amt { font-size: 2.6rem; font-weight: 900; color: #0F172A; line-height: 1; letter-spacing: -.03em; }
-.iq-plan-period { font-size: .88rem; font-weight: 600; color: #64748B; }
-.iq-plan-features { list-style: none; padding: 0; margin: 0 0 1.4rem 0; display: flex; flex-direction: column; gap: .55rem; }
-.iq-plan-feat-item { display: flex; align-items: flex-start; gap: .55rem; font-size: .84rem; color: #334155; line-height: 1.4; }
-.iq-feat-icon { color: #10B981; font-weight: 900; font-size: .92rem; flex-shrink: 0; margin-top: 1px; }
-.iq-feat-icon-gold { color: #F59E0B; font-weight: 900; font-size: .95rem; flex-shrink: 0; margin-top: 1px; }
-.iq-plan-btn { display: block; width: 100%; text-align: center; padding: .75rem 1.25rem; border-radius: 10px; font-weight: 800; font-size: .92rem; text-decoration: none !important; transition: all .2s ease; cursor: pointer; box-sizing: border-box; }
-.iq-btn-primary { background: #2563EB !important; color: #FFFFFF !important; box-shadow: 0 4px 14px rgba(37,99,235,.25); }
-.iq-btn-primary:hover { background: #1D4ED8 !important; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,.32); }
-.iq-btn-agency { background: #0F172A !important; color: #FFFFFF !important; box-shadow: 0 4px 14px rgba(15,23,42,.2); }
-.iq-btn-agency:hover { background: #1E293B !important; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(15,23,42,.26); }
-.iq-guarantee { text-align: center; margin-top: .75rem; font-size: .74rem; color: #94A3B8; display: flex; align-items: center; justify-content: center; gap: .35rem; }
-.iq-pay-badges { display: flex; align-items: center; justify-content: center; gap: .7rem; margin-top: 2rem; padding-top: 1.4rem; border-top: 1px solid #E2E8F0; flex-wrap: wrap; }
-.iq-pay-pill { display: inline-flex; align-items: center; gap: .4rem; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: .3rem .65rem; font-size: .76rem; font-weight: 700; color: #334155; }
+.iq-badge-agency { background: #2563EB; color: #FFFFFF; box-shadow: 0 2px 6px rgba(37,99,235,.2); }
+.iq-plan-name { font-size: 1.15rem; font-weight: 800; color: #0F172A; margin-bottom: .15rem; letter-spacing: -.01em; }
+.iq-plan-desc { font-size: .78rem; color: #64748B; margin-bottom: .7rem; line-height: 1.4; }
+.iq-plan-price-wrap { display: flex; align-items: baseline; gap: .25rem; margin-bottom: .8rem; padding-bottom: .7rem; border-bottom: 1px solid #F1F5F9; }
+.iq-plan-curr { font-size: 1.15rem; font-weight: 700; color: #0F172A; }
+.iq-plan-amt { font-size: 2.05rem; font-weight: 900; color: #0F172A; line-height: 1; letter-spacing: -.03em; }
+.iq-plan-period { font-size: .78rem; font-weight: 600; color: #64748B; }
+.iq-plan-features { list-style: none; padding: 0; margin: 0 0 1rem 0; display: flex; flex-direction: column; gap: .45rem; }
+.iq-plan-feat-item { display: flex; align-items: flex-start; gap: .45rem; font-size: .78rem; color: #334155; line-height: 1.35; }
+.iq-feat-icon { color: #10B981; font-weight: 900; font-size: .85rem; flex-shrink: 0; margin-top: 1px; }
+.iq-feat-icon-gold { color: #F59E0B; font-weight: 900; font-size: .88rem; flex-shrink: 0; margin-top: 1px; }
+.iq-plan-btn { display: block; width: 100%; text-align: center; padding: .62rem 1rem; border-radius: 9px; font-weight: 800; font-size: .84rem; text-decoration: none !important; transition: all .2s ease; cursor: pointer; box-sizing: border-box; }
+.iq-btn-primary { background: #2563EB !important; color: #FFFFFF !important; box-shadow: 0 3px 10px rgba(37,99,235,.22); }
+.iq-btn-primary:hover { background: #1D4ED8 !important; transform: translateY(-1px); box-shadow: 0 5px 14px rgba(37,99,235,.28); }
+.iq-btn-agency { background: #0F172A !important; color: #FFFFFF !important; box-shadow: 0 3px 10px rgba(15,23,42,.18); }
+.iq-btn-agency:hover { background: #1E293B !important; transform: translateY(-1px); box-shadow: 0 5px 14px rgba(15,23,42,.24); }
+.iq-guarantee { text-align: center; margin-top: .55rem; font-size: .7rem; color: #94A3B8; display: flex; align-items: center; justify-content: center; gap: .3rem; }
+.iq-pay-badges { display: flex; align-items: center; justify-content: center; gap: .5rem; margin-top: 1.3rem; padding-top: 1rem; border-top: 1px solid #E2E8F0; flex-wrap: wrap; }
+.iq-pay-pill { display: inline-flex; align-items: center; gap: .35rem; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 7px; padding: .25rem .55rem; font-size: .72rem; font-weight: 700; color: #334155; }
 
 .iq-foot { text-align:center; padding:2rem 0 1.5rem; border-top:1px solid #E2E8F0; margin-top:2rem; }
 .iq-foot-txt { font-size:.78rem; color:#94A3B8; }
@@ -1935,50 +1936,107 @@ with col1:
             render_html('<div id="iq-jd-status-badge" class="iq-status-wait">✍️ Type or paste your job requirements above</div>')
 
         render_html("""
-<img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>" style="display:none" onload="
+<img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>" style="display:none" onerror="
 (function() {
-  if (window.__rankcv_sync_init) return;
-  window.__rankcv_sync_init = true;
-
-  function attachSync() {
-    try {
-      var ta = document.querySelector('textarea');
-      if (!ta || ta.dataset.fastSync) return;
-      ta.dataset.fastSync = 'true';
-
-      function sync() {
-        var val = ta.value.trim();
-        var len = val.length;
-        var c = document.getElementById('iq-live-chars');
-        if (c) c.textContent = len.toLocaleString() + ' / 5,000';
-        var b = document.getElementById('iq-jd-status-badge');
-        if (b) {
-          if (len > 0) {
-            b.className = 'iq-status-ok';
-            b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
-          } else {
-            b.className = 'iq-status-wait';
-            b.innerHTML = '✍️ Type or paste your job requirements above';
-          }
-        }
-      }
-
-      ta.addEventListener('input', sync);
-      ta.addEventListener('keyup', sync);
-      ta.addEventListener('change', sync);
-
-      document.addEventListener('click', function(e) {
-        if (e.target && e.target.closest && e.target.closest('button')) {
-          if (document.activeElement === ta) {
-            ta.blur();
-          }
-        }
-      }, true);
-    } catch(e) {}
+  function getJdTa() {
+    return document.querySelector('div[data-testid=\"stTextArea\"] textarea') || document.querySelector('textarea');
   }
 
-  attachSync();
-  setInterval(attachSync, 300);
+  function syncLive() {
+    var ta = getJdTa();
+    if (!ta) return;
+
+    var val = ta.value || '';
+    var len = val.trim().length;
+    var c = document.getElementById('iq-live-chars');
+    if (c) c.textContent = len.toLocaleString() + ' / 5,000';
+    var b = document.getElementById('iq-jd-status-badge');
+    if (b) {
+      if (len > 0) {
+        b.className = 'iq-status-ok';
+        b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
+      } else {
+        b.className = 'iq-status-wait';
+        b.innerHTML = '✍️ Type or paste your job requirements above';
+      }
+    }
+
+    if (!ta.__fastSyncBound) {
+      ta.__fastSyncBound = true;
+      ['input', 'keyup', 'paste', 'change', 'blur'].forEach(function(ev) {
+        ta.addEventListener(ev, syncLive);
+      });
+    }
+  }
+
+  if (!window.__rankcv_blur_bound) {
+    window.__rankcv_blur_bound = true;
+    ['pointerdown', 'mousedown', 'touchstart'].forEach(function(ev) {
+      document.addEventListener(ev, function(e) {
+        var ta = getJdTa();
+        if (ta && document.activeElement === ta && e.target !== ta) {
+          ta.dispatchEvent(new Event('change', { bubbles: true }));
+          ta.blur();
+        }
+      }, true);
+    });
+  }
+
+  syncLive();
+  if (!window.__rankcv_sync_interval) {
+    window.__rankcv_sync_interval = setInterval(syncLive, 180);
+  }
+})()
+" onload="
+(function() {
+  function getJdTa() {
+    return document.querySelector('div[data-testid=\"stTextArea\"] textarea') || document.querySelector('textarea');
+  }
+
+  function syncLive() {
+    var ta = getJdTa();
+    if (!ta) return;
+
+    var val = ta.value || '';
+    var len = val.trim().length;
+    var c = document.getElementById('iq-live-chars');
+    if (c) c.textContent = len.toLocaleString() + ' / 5,000';
+    var b = document.getElementById('iq-jd-status-badge');
+    if (b) {
+      if (len > 0) {
+        b.className = 'iq-status-ok';
+        b.innerHTML = '✅ Job description ready (' + len.toLocaleString() + ' chars)';
+      } else {
+        b.className = 'iq-status-wait';
+        b.innerHTML = '✍️ Type or paste your job requirements above';
+      }
+    }
+
+    if (!ta.__fastSyncBound) {
+      ta.__fastSyncBound = true;
+      ['input', 'keyup', 'paste', 'change', 'blur'].forEach(function(ev) {
+        ta.addEventListener(ev, syncLive);
+      });
+    }
+  }
+
+  if (!window.__rankcv_blur_bound) {
+    window.__rankcv_blur_bound = true;
+    ['pointerdown', 'mousedown', 'touchstart'].forEach(function(ev) {
+      document.addEventListener(ev, function(e) {
+        var ta = getJdTa();
+        if (ta && document.activeElement === ta && e.target !== ta) {
+          ta.dispatchEvent(new Event('change', { bubbles: true }));
+          ta.blur();
+        }
+      }, true);
+    });
+  }
+
+  syncLive();
+  if (!window.__rankcv_sync_interval) {
+    window.__rankcv_sync_interval = setInterval(syncLive, 180);
+  }
 })()
 ">
 """)
@@ -2017,14 +2075,14 @@ with col2:
                 f'<div class="iq-status-ok">✅ <b>{total_uploaded}/10 CVs selected</b> ready for screening</div>'
             )
         else:
-            render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 10 demo CVs below…</div>')
+            render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 5 demo CVs below…</div>')
 
         render_html("<div style='height:.7rem'></div>")
         col_btn1, col_btn2 = st.columns([1.15, 1])
         with col_btn1:
             run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
         with col_btn2:
-            demo_btn = st.button("⚡  Try 10 Demo CVs", use_container_width=True)
+            demo_btn = st.button("⚡  Try 5 Demo CVs", use_container_width=True)
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
@@ -2045,7 +2103,7 @@ with col3:
                 st.session_state["_prev_role_choice"] = "Senior Python Backend Engineer"
 
             demo_dir = Path("dummy_cvs_pdf")
-            demo_files = sorted(demo_dir.glob("*.pdf"))[:10]
+            demo_files = sorted(demo_dir.glob("*.pdf"))[:5]
             if not demo_files:
                 st.error("Demo CVs not found on server.")
             else:
@@ -2116,8 +2174,20 @@ with col3:
         # ── Trigger manual screening ─────────────────────────────────────────
         if run_btn:
             errors = []
-            if not jd_text:
+            active_jd = jd_text.strip() if jd_text else ""
+            if not active_jd:
+                active_jd = st.session_state.get("jd_paste", "").strip()
+            if not active_jd:
+                sel_r = st.session_state.get("sample_role_sel")
+                if sel_r and sel_r in SAMPLE_ROLES and SAMPLE_ROLES[sel_r].strip():
+                    active_jd = SAMPLE_ROLES[sel_r].strip()
+                    st.session_state["jd_paste"] = active_jd
+
+            if not active_jd:
                 errors.append("Please provide a Job Description in Panel 1 (paste text or choose a sample).")
+            else:
+                jd_text = active_jd
+
             if total_uploaded == 0:
                 errors.append("Please upload at least one candidate CV in Panel 2.")
             if total_uploaded > 10:
@@ -3133,61 +3203,53 @@ render_html(f"""
     <!-- Plan 1: Professional €99/mo -->
     <div class="iq-plan-card">
       <div>
-        <span class="iq-plan-badge iq-badge-starter">Boutique &amp; In-House HR</span>
+        <span class="iq-plan-badge iq-badge-starter">Boutique &amp; In-House</span>
         <div class="iq-plan-name">Professional</div>
-        <div class="iq-plan-desc">Fast, plug-and-play AI CV screening with zero technical setup. Ready to use immediately.</div>
+        <div class="iq-plan-desc">Plug-and-play AI screening with zero technical setup.</div>
         <div class="iq-plan-price-wrap">
           <span class="iq-plan-curr">&euro;</span>
           <span class="iq-plan-amt">99</span>
           <span class="iq-plan-period">/ month</span>
         </div>
         <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 300 CVs</b> screened per month</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 10</b> active job openings simultaneously</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Plug &amp; Play AI:</b> Internal RankCV engine</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Private In-Memory Engine:</b> Zero external AI transfer</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Full UK GDPR Shield:</b> Names &amp; postcodes redacted</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Podium &amp; Article 22</b> Human override tags</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Excel Shortlist &amp; UK GDPR Audit</b> Sheet download</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 300 CVs</b> (10 active roles / month)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Private In-Memory Engine</b> (UK GDPR Art. 22)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Podium</b> &amp; Excel shortlist export</span></li>
         </ul>
       </div>
       <div>
         <a class="iq-plan-btn iq-btn-primary" href="{_stripe_pro_url}" target="_blank">
-          Subscribe with Apple Pay / Card &nbsp;&rarr;
+          Subscribe &nbsp;&rarr;
         </a>
-        <div class="iq-guarantee">&#128274; 256-bit SSL encrypted &bull; Cancel anytime &bull; No setup fee</div>
+        <div class="iq-guarantee">&#128274; SSL encrypted &bull; Cancel anytime</div>
       </div>
     </div>
 
     <!-- Plan 2: Agency & Scale-up €199/mo (UNLIMITED) -->
     <div class="iq-plan-card featured">
       <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-          <span class="iq-plan-badge iq-badge-agency">&#9733; MOST POPULAR &bull; UNLIMITED</span>
-          <span style="font-size:.72rem;font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.2rem .6rem;border-radius:6px;">ENTERPRISE DPA</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+          <span class="iq-plan-badge iq-badge-agency">&#9733; UNLIMITED</span>
+          <span style="font-size:.65rem;font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.15rem .45rem;border-radius:5px;">ENTERPRISE DPA</span>
         </div>
         <div class="iq-plan-name">Agency &amp; Enterprise</div>
-        <div class="iq-plan-desc">Unlimited candidate screening powered by your own company OpenAI or Azure API key.</div>
+        <div class="iq-plan-desc">Unlimited candidate screening powered by your own company key.</div>
         <div class="iq-plan-price-wrap">
           <span class="iq-plan-curr">&euro;</span>
           <span class="iq-plan-amt">199</span>
           <span class="iq-plan-period">/ month</span>
         </div>
         <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>UNLIMITED CV Screening</b> (Zero monthly volume caps)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>UNLIMITED Active Roles &amp; JDs</b></span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>Bring Your Own Key (BYOK):</b> OpenAI / Azure UK/EU</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Enterprise Data Ownership:</b> Under your company DPA</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS &amp; CRM Integration:</b> Bullhorn, Greenhouse, Lever</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Full UK GDPR Shield:</b> In-memory PII scrub &amp; Art. 22 audit</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority 1-on-1 Assisted Setup &amp; Dedicated WhatsApp</b></span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>UNLIMITED CV Screening</b> (Zero volume caps)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>Bring Your Own Key</b> (OpenAI / Azure BYOK)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS / CRM Integration</b> &amp; Priority 1-on-1 setup</span></li>
         </ul>
       </div>
       <div>
         <a class="iq-plan-btn iq-btn-agency" href="{_stripe_agency_url}" target="_blank">
-          Subscribe to Agency Unlimited &nbsp;&rarr;
+          Subscribe to Agency &nbsp;&rarr;
         </a>
-        <div class="iq-guarantee">&#128274; 256-bit SSL encrypted &bull; Cancel anytime &bull; Assisted onboarding</div>
+        <div class="iq-guarantee">&#128274; SSL encrypted &bull; Assisted onboarding</div>
       </div>
     </div>
   </div>
