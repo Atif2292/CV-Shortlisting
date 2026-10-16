@@ -715,8 +715,12 @@ a.iq-nav-demo:active {
     border-radius: 99px; border: 1px solid #BFDBFE; margin-bottom: .85rem;
 }
 .iq-feat-h2 {
-    font-size: 2.15rem; font-weight: 900; color: #0F172A;
-    letter-spacing: -1px; margin-bottom: .5rem; line-height: 1.2;
+    font-size: clamp(1.4rem, 2.2vw, 2.15rem); font-weight: 900; color: #0F172A;
+    letter-spacing: -0.5px; margin-bottom: .5rem; line-height: 1.2;
+    white-space: nowrap;
+}
+@media (max-width: 860px) {
+    .iq-feat-h2 { white-space: normal; }
 }
 .iq-feat-sub { font-size: 1rem; color: #64748B; max-width: 650px; margin: 0 auto; line-height: 1.5; }
 .iq-feat-grid {
@@ -756,122 +760,135 @@ a.iq-nav-demo:active {
 .iq-feat-title { font-size: 1.12rem; font-weight: 800; color: #0F172A; margin-bottom: .45rem; line-height: 1.3; }
 .iq-feat-desc { font-size: .84rem; color: #64748B; line-height: 1.6; }
 
-/* ── High-Fidelity Bento Grid & UI Mockups ── */
+/* ── High-Fidelity Bento Grid & UI Mockups (4 Cards in One Line) ── */
 .iq-bento-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.15rem;
     margin-bottom: 3rem;
+}
+@media (max-width: 1080px) {
+    .iq-bento-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+@media (max-width: 600px) {
+    .iq-bento-grid {
+        grid-template-columns: 1fr;
+    }
 }
 .iq-bento-card {
     background: #FFFFFF;
     border: 1.5px solid #E2E8F0;
-    border-radius: 20px;
-    padding: 1.8rem;
+    border-radius: 16px;
+    padding: 1.35rem 1.1rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: transform .18s, box-shadow .18s, border-color .18s;
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
 }
 .iq-bento-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.08);
-    border-color: #CBD5E1;
+    box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08);
+    border-color: #BFDBFE;
 }
 .iq-bento-tag {
     display: inline-block;
-    font-size: .68rem;
+    font-size: .65rem;
     font-weight: 700;
-    letter-spacing: .08em;
+    letter-spacing: .06em;
     text-transform: uppercase;
     color: #2563EB;
     background: #EFF6FF;
     border: 1px solid #DBEAFE;
-    padding: .2rem .65rem;
+    padding: .18rem .55rem;
     border-radius: 6px;
-    margin-bottom: .75rem;
+    margin-bottom: .6rem;
     width: fit-content;
 }
 .iq-bento-title {
-    font-size: 1.22rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #0F172A;
-    line-height: 1.25;
-    margin-bottom: .45rem;
+    line-height: 1.3;
+    margin-bottom: .35rem;
 }
 .iq-bento-sub {
-    font-size: .84rem;
+    font-size: .78rem;
     color: #64748B;
-    line-height: 1.55;
-    margin-bottom: 1.2rem;
+    line-height: 1.45;
+    margin-bottom: .95rem;
+    min-height: 48px;
 }
 .iq-mockup-box {
     background: #F8FAFC;
     border: 1.5px solid #E2E8F0;
-    border-radius: 14px;
-    padding: 1rem 1.15rem;
+    border-radius: 12px;
+    padding: .75rem;
 }
 /* ── Visual Recruitment Funnel (Layman visual graphics) ── */
 .iq-funnel-step {
     display: flex; align-items: center; justify-content: space-between;
-    background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px;
-    padding: .55rem .85rem; margin-bottom: .45rem;
+    background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px;
+    padding: .4rem .55rem; margin-bottom: .4rem;
     box-shadow: 0 1px 3px rgba(15,23,42,.03);
 }
-.iq-funnel-left { display: flex; align-items: center; gap: .6rem; }
-.iq-funnel-icon { font-size: 1.1rem; }
-.iq-funnel-txt { font-size: .8rem; font-weight: 700; color: #0F172A; }
-.iq-funnel-sub { font-size: .68rem; color: #64748B; }
+.iq-funnel-left { display: flex; align-items: center; gap: .45rem; }
+.iq-funnel-icon { font-size: .95rem; }
+.iq-funnel-txt { font-size: .74rem; font-weight: 700; color: #0F172A; }
+.iq-funnel-sub { font-size: .64rem; color: #64748B; }
 .iq-funnel-badge {
-    font-size: .67rem; font-weight: 700; padding: .18rem .55rem;
-    border-radius: 6px; background: #EFF6FF; color: #2563EB;
+    font-size: .62rem; font-weight: 700; padding: .15rem .45rem;
+    border-radius: 4px; background: #EFF6FF; color: #2563EB;
+    white-space: nowrap;
 }
 .iq-funnel-badge-green { background: #DCFCE7; color: #15803D; }
 .iq-funnel-highlight {
     background: #ECFDF5; border: 1px solid #A7F3D0;
-    border-radius: 10px; padding: .55rem; text-align: center;
-    font-size: .76rem; font-weight: 800; color: #065F46; margin-top: .55rem;
+    border-radius: 8px; padding: .45rem .5rem; text-align: center;
+    font-size: .7rem; font-weight: 700; color: #065F46; margin-top: .45rem;
 }
 
-.iq-gauge-row { margin-bottom: .6rem; }
+.iq-gauge-row { margin-bottom: .5rem; }
 .iq-gauge-row:last-child { margin-bottom: 0; }
-.iq-gauge-info { display: flex; justify-content: space-between; font-size: .75rem; font-weight: 700; color: #334155; margin-bottom: .25rem; }
-.iq-gauge-track { height: 6px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
+.iq-gauge-info { display: flex; justify-content: space-between; font-size: .7rem; font-weight: 700; color: #334155; margin-bottom: .2rem; }
+.iq-gauge-track { height: 5px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
 .iq-gauge-bar { height: 100%; border-radius: 99px; }
 
 .iq-cand-mini-row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: .45rem 0; border-bottom: 1px solid #EDF2F7;
+    padding: .38rem 0; border-bottom: 1px solid #EDF2F7;
 }
 .iq-cand-mini-row:last-child { border-bottom: none; }
-.iq-cand-mini-left { display: flex; align-items: center; gap: .5rem; }
-.iq-medal { font-size: 1rem; }
-.iq-cand-mini-name { font-size: .82rem; font-weight: 800; color: #0F172A; }
-.iq-cand-mini-role { font-size: .7rem; color: #64748B; }
+.iq-cand-mini-left { display: flex; align-items: center; gap: .45rem; }
+.iq-medal { font-size: .95rem; }
+.iq-cand-mini-name { font-size: .76rem; font-weight: 800; color: #0F172A; }
+.iq-cand-mini-role { font-size: .66rem; color: #64748B; }
 .iq-score-pill {
-    font-size: .68rem; font-weight: 700; padding: .2rem .55rem; border-radius: 6px;
+    font-size: .64rem; font-weight: 700; padding: .18rem .45rem; border-radius: 4px; white-space: nowrap;
 }
 .iq-score-pill-green { background: #DCFCE7; color: #15803D; }
 .iq-score-pill-blue { background: #DBEAFE; color: #1D4ED8; }
 
-.iq-excel-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: .65rem; }
+.iq-excel-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: .55rem; }
 .iq-excel-hdr-row {
-    display: grid; grid-template-columns: 35px 1.4fr .8fr 1.6fr;
-    background: #F1F5F9; padding: .35rem .6rem; font-size: .66rem;
-    font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: .04em;
+    display: grid; grid-template-columns: 18px 1.25fr .75fr 1.35fr;
+    background: #F1F5F9; padding: .3rem .45rem; font-size: .58rem;
+    font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: .02em;
     border-bottom: 1px solid #CBD5E1;
 }
 .iq-excel-data-row {
-    display: grid; grid-template-columns: 35px 1.4fr .8fr 1.6fr;
-    padding: .35rem .6rem; font-size: .72rem; color: #334155;
+    display: grid; grid-template-columns: 18px 1.25fr .75fr 1.35fr;
+    padding: .3rem .45rem; font-size: .66rem; color: #334155;
     border-bottom: 1px solid #F1F5F9; align-items: center;
 }
 .iq-excel-data-row:last-child { border-bottom: none; }
-.iq-excel-footer { display: flex; justify-content: space-between; align-items: center; font-size: .73rem; color: #64748B; }
+.iq-excel-footer { display: flex; justify-content: space-between; align-items: center; font-size: .66rem; color: #64748B; }
 .iq-dl-badge {
     background: #10B981; color: #FFFFFF; font-weight: 700;
-    font-size: .68rem; padding: .25rem .65rem; border-radius: 6px;
+    font-size: .62rem; padding: .2rem .45rem; border-radius: 4px;
 }
 
 /* ── Why Recruiters Choose Pillars ── */
