@@ -69,6 +69,22 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 [data-testid="stMetricLabel"]  { color:#64748B!important; font-size:.8rem!important; }
 
 /* ── Panel cards (st.container border=True) ── */
+[data-testid="column"] {
+    display: flex !important;
+    flex-direction: column !important;
+}
+[data-testid="column"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+    flex: 1 1 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 520px !important;
+}
+[data-testid="column"] > div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
+    flex: 1 1 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+}
 [data-testid="stVerticalBlockBorderWrapper"] {
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
@@ -134,17 +150,37 @@ label, .stFileUploader label {
 
 /* ── Buttons ── */
 .stButton > button {
-    background: linear-gradient(135deg,#2563EB,#3B82F6) !important;
-    color: #fff !important; border: none !important;
     border-radius: 10px !important; font-weight: 700 !important;
-    font-size: 1rem !important; padding: .78rem 1.6rem !important;
-    box-shadow: 0 4px 14px rgba(37,99,235,.38) !important;
+    font-size: .95rem !important; padding: .75rem 1.4rem !important;
     transition: all .18s !important; letter-spacing: -.01em !important;
 }
-.stButton > button:hover {
+.stButton > button,
+.stButton > button[kind="primary"],
+button[data-testid="baseButton-primary"] {
+    background: linear-gradient(135deg,#2563EB,#3B82F6) !important;
+    color: #fff !important; border: none !important;
+    box-shadow: 0 4px 14px rgba(37,99,235,.35) !important;
+}
+.stButton > button:hover,
+.stButton > button[kind="primary"]:hover,
+button[data-testid="baseButton-primary"]:hover {
     background: linear-gradient(135deg,#1D4ED8,#2563EB) !important;
-    box-shadow: 0 6px 22px rgba(37,99,235,.48) !important;
+    box-shadow: 0 6px 20px rgba(37,99,235,.45) !important;
     transform: translateY(-1px) !important; opacity:1!important;
+}
+.stButton > button[kind="secondary"],
+button[data-testid="baseButton-secondary"] {
+    background: #FFFFFF !important;
+    color: #2563EB !important;
+    border: 1.5px solid #DBEAFE !important;
+    box-shadow: 0 2px 6px rgba(37,99,235,.06) !important;
+}
+.stButton > button[kind="secondary"]:hover,
+button[data-testid="baseButton-secondary"]:hover {
+    background: #EFF6FF !important;
+    border-color: #2563EB !important;
+    color: #1D4ED8 !important;
+    transform: translateY(-1px) !important;
 }
 
 /* ── Progress / upload ── */
@@ -156,6 +192,12 @@ label, .stFileUploader label {
     border: 2px dashed #CBD5E1 !important;
     border-radius: 12px !important;
     background: #F8FAFC !important;
+    min-height: 230px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 1.5rem !important;
     transition: border-color .2s, background .2s !important;
     text-align: center !important;
 }
@@ -1698,7 +1740,7 @@ with sec_c3:
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
 render_html('<div id="screening-workspace" style="margin-top:1.5rem;"></div>')
-col1, col2, col3 = st.columns([1, 1, 1.15], gap="large")
+col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
 
 # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
 SAMPLE_ROLES = {
@@ -1871,19 +1913,18 @@ with col2:
         render_html("""
 <div class="iq-phead">
   <div class="iq-pnum">2</div>Upload Candidate CVs
+</div>
+<div class="iq-cr-head">
+  <div style="font-size:.82rem;font-weight:700;color:#64748B;">Candidate Resumes (PDF, DOCX, TXT)</div>
+  <div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">🎁 10 CVs Free Trial</div>
 </div>""")
-
-        render_html(
-            '<div class="iq-trial-info">🎁 <b>Free Trial:</b> Screen up to <b>10 CVs per batch</b>. '
-            'Upload resumes in PDF, DOCX, DOC, TXT, or MS Excel (XLSX, XLS, CSV).</div>'
-        )
 
         cv_files = st.file_uploader(
             "Upload CVs (PDF, DOC/DOCX, TXT, MS Excel — up to 10 files)",
             type=["pdf", "docx", "doc", "txt", "xlsx", "xls", "csv"],
             accept_multiple_files=True,
             key="cv_up",
-            label_visibility="visible",
+            label_visibility="collapsed",
         )
         total_uploaded = len(cv_files or [])
 
