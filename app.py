@@ -84,13 +84,19 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 [data-testid="column"]:has(.iq-phead) {
     display: flex !important;
     flex-direction: column !important;
+    height: 100% !important;
 }
 [data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"] {
+    flex: 1 1 100% !important;
+    min-height: 525px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
     border-radius: 16px !important;
     box-shadow: 0 2px 12px rgba(10,20,60,.06) !important;
-    padding: 1.25rem 1.35rem !important;
+    padding: 1.5rem !important;
     transition: box-shadow .2s, border-color .2s !important;
 }
 [data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"]:focus-within {
@@ -203,12 +209,12 @@ button[data-testid="baseButton-secondary"]:hover {
     border: 2px dashed #CBD5E1 !important;
     border-radius: 12px !important;
     background: #F8FAFC !important;
-    min-height: 195px !important;
+    min-height: 290px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
-    padding: 1.2rem 1rem !important;
+    padding: 2rem 1.2rem !important;
     transition: border-color .2s, background .2s !important;
     text-align: center !important;
 }
@@ -289,17 +295,17 @@ button[data-testid="baseButton-secondary"]:hover {
 /* ── Navbar ── */
 .iq-nav {
     display: flex; align-items: center; justify-content: space-between;
-    padding: .75rem 0 .7rem; border-bottom: 1px solid #E2E8F0;
+    padding: 1.1rem 0 1rem; border-bottom: 1px solid #E2E8F0;
     margin-bottom: 0; background: #F5F7FB;
 }
-.iq-logo { font-size: 1.45rem; font-weight: 900; color: #0F172A; letter-spacing: -.5px; flex-shrink: 0; }
+.iq-logo { font-size: 1.55rem; font-weight: 900; color: #0F172A; letter-spacing: -.5px; flex-shrink: 0; }
 .iq-logo b { color: #2563EB; font-weight: 900; }
 .iq-nav-center {
     display: flex; align-items: center; justify-content: center;
-    gap: 1.6rem; flex: 1; margin: 0 1.5rem;
+    gap: 2rem;
 }
 .iq-nav-link {
-    font-size: .875rem; font-weight: 600; color: #64748B;
+    font-size: .92rem; font-weight: 600; color: #64748B;
     text-decoration: none !important; transition: color .15s ease;
 }
 .iq-nav-link:hover { color: #2563EB !important; }
@@ -319,9 +325,9 @@ a.iq-nav-demo:hover,
 a.iq-nav-demo:focus,
 a.iq-nav-demo:active,
 .iq-nav-demo {
-    font-size: .875rem !important; font-weight: 700 !important; color: #FFFFFF !important; background: #2563EB !important;
-    padding: .48rem 1.25rem !important; border-radius: 8px !important; border: none !important; cursor: pointer !important;
-    box-shadow: 0 2px 8px rgba(37,99,235,.25) !important; transition: all .15s ease !important;
+    font-size: .92rem !important; font-weight: 700 !important; color: #FFFFFF !important; background: #2563EB !important;
+    padding: .55rem 1.4rem !important; border-radius: 9px !important; border: none !important; cursor: pointer !important;
+    box-shadow: 0 2px 10px rgba(37,99,235,.25) !important; transition: all .15s ease !important;
     text-decoration: none !important; display: inline-flex !important; align-items: center !important;
     flex-shrink: 0;
 }
@@ -333,21 +339,21 @@ a.iq-nav-demo:active {
 }
 
 /* ── Hero — use <div> not h-tags to avoid Streamlit anchor icons ── */
-.iq-hero { text-align: center; padding: 1rem 1rem .35rem; max-width: 860px; margin: 0 auto; }
+.iq-hero { text-align: center; padding: 2.6rem 1rem 1.6rem; max-width: 860px; margin: 0 auto; }
 .iq-eye {
-    display: inline-block; font-size: .68rem; font-weight: 700;
-    letter-spacing: .12em; color: #2563EB; text-transform: uppercase;
-    background: rgba(37,99,235,.07); padding: .2rem .75rem;
-    border-radius: 99px; border: 1px solid rgba(37,99,235,.15); margin-bottom: .35rem;
+    display: inline-block; font-size: .72rem; font-weight: 700;
+    letter-spacing: .14em; color: #2563EB; text-transform: uppercase;
+    background: rgba(37,99,235,.07); padding: .32rem 1rem;
+    border-radius: 99px; border: 1px solid rgba(37,99,235,.15); margin-bottom: .75rem;
 }
 .iq-h1 {
-    font-size: 2.15rem; font-weight: 900; line-height: 1.15;
-    color: #0B1120; margin-bottom: .25rem; letter-spacing: -.02em;
+    font-size: 2.75rem; font-weight: 900; line-height: 1.15;
+    color: #0B1120; margin-bottom: .55rem; letter-spacing: -.025em;
 }
 .iq-h1 .bl { color: #2563EB; }
 .iq-sub {
-    font-size: .92rem; color: #64748B; max-width: 620px;
-    margin: 0 auto .35rem; line-height: 1.4;
+    font-size: 1.05rem; color: #64748B; max-width: 650px;
+    margin: 0 auto .85rem; line-height: 1.55;
 }
 .iq-btns { display: flex; align-items: center; justify-content: center; gap: .9rem; flex-wrap: wrap; }
 .iq-bp {
@@ -1213,22 +1219,22 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 /* ── Feature bar ── */
 .iq-fbar {
     display:flex; background:#fff;
-    border:1px solid #E2E8F0; border-radius:12px;
-    margin:.55rem 0 .75rem; overflow:hidden;
+    border:1px solid #E2E8F0; border-radius:16px;
+    margin:1.6rem 0 1.8rem; overflow:hidden;
 }
 .iq-fbar-item {
-    flex: 1 1 0; display:flex; align-items:center; gap:.7rem;
-    padding:.65rem 1rem; border-right:1px solid #E2E8F0;
+    flex: 1 1 0; display:flex; align-items:center; gap:.85rem;
+    padding:1.1rem 1.4rem; border-right:1px solid #E2E8F0;
 }
 .iq-fbar-item:last-child { border-right:none; }
 .iq-fbar-icon {
-    width:30px; height:30px; border-radius:50%;
+    width:42px; height:42px; border-radius:50%;
     background:rgba(37,99,235,.08);
     display:flex; align-items:center; justify-content:center;
-    font-size:.88rem; flex-shrink:0;
+    font-size:1.1rem; flex-shrink:0;
 }
-.iq-fbar-t1 { font-size:.8rem; font-weight:700; color:#0B1120; line-height:1.2; }
-.iq-fbar-t2 { font-size:.7rem; color:#64748B; line-height:1.2; }
+.iq-fbar-t1 { font-size:.88rem; font-weight:700; color:#0B1120; line-height:1.35; }
+.iq-fbar-t2 { font-size:.78rem; color:#64748B; line-height:1.35; }
 
 /* ── Dashboard mockup ── */
 .iq-dash-outer {
@@ -1329,10 +1335,10 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 .iq-sec-bar {
     background: #FFFFFF;
     border: 1.5px solid #DBEAFE;
-    border-radius: 12px;
-    padding: .65rem 1.1rem;
-    margin-bottom: .75rem;
-    box-shadow: 0 2px 8px rgba(37,99,235,.04);
+    border-radius: 14px;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.4rem;
+    box-shadow: 0 4px 14px rgba(37,99,235,.05);
 }
 .iq-sec-top {
     display: flex;
@@ -1340,10 +1346,10 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
     justify-content: space-between;
     flex-wrap: wrap;
     gap: .8rem;
-    margin-bottom: .6rem;
+    margin-bottom: .85rem;
 }
 .iq-sec-title {
-    font-size: .95rem;
+    font-size: 1rem;
     font-weight: 800;
     color: #0F172A;
     display: flex;
@@ -1357,13 +1363,13 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
     flex-wrap: wrap;
 }
 .iq-sec-pill {
-    font-size: .74rem;
+    font-size: .78rem;
     font-weight: 700;
-    padding: .28rem .7rem;
+    padding: .35rem .85rem;
     border-radius: 99px;
     display: inline-flex;
     align-items: center;
-    gap: .3rem;
+    gap: .35rem;
 }
 .iq-pill-green {
     background: #ECFDF5;
@@ -1820,7 +1826,7 @@ with sec_c3:
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
-render_html('<div id="screening-workspace" style="margin-top:0.35rem;"></div>')
+render_html('<div id="screening-workspace" style="margin-top:0.8rem;"></div>')
 col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
 
 # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
@@ -1898,7 +1904,7 @@ with col1:
             jd_input = st.text_area(
                 "",
                 placeholder="Paste your job description, role overview, and key requirements here…",
-                height=145,
+                height=230,
                 max_chars=5000,
                 key="jd_paste",
                 label_visibility="collapsed",
