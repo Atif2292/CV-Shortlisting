@@ -56,13 +56,36 @@ html, body, [class*="css"] {
     background: #F5F7FB !important;
     overflow-x: hidden !important;
 }
+/* ── ELIMINATE ALL STREAMLIT BRANDING, MENUS, FOOTERS & ARTIFACTS ── */
+#MainMenu,
+header,
+footer,
 [data-testid="stHeader"],
-header[data-testid="stHeader"] {
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+[data-testid="stBottom"],
+.viewerBadge_container,
+[class*="viewerBadge"],
+[class*="StatusWidget"],
+[class*="ProfileButton"],
+.stDeployButton,
+div[data-testid="stToolbarActions"],
+button[title*="Streamlit"],
+a[href*="streamlit.io"],
+a[href*="streamlit.app"] {
     display: none !important;
+    visibility: hidden !important;
     height: 0 !important;
     min-height: 0 !important;
-    padding: 0 !important;
+    max-height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
     margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
 }
 [data-testid="block-container"] {
     background: #F5F7FB;
