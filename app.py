@@ -1217,8 +1217,8 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
     margin:.55rem 0 .75rem; overflow:hidden;
 }
 .iq-fbar-item {
-    flex:1; display:flex; align-items:center; gap:.65rem;
-    padding:.55rem .85rem; border-right:1px solid #E2E8F0;
+    flex: 1 1 0; display:flex; align-items:center; gap:.7rem;
+    padding:.65rem 1rem; border-right:1px solid #E2E8F0;
 }
 .iq-fbar-item:last-child { border-right:none; }
 .iq-fbar-icon {
@@ -1733,13 +1733,6 @@ render_html("""
 <div>
 <div class="iq-fbar-t1">Save Hours Weekly</div>
 <div class="iq-fbar-t2">1-Click Shortlist Reports</div>
-</div>
-</div>
-<div class="iq-fbar-item">
-<div class="iq-fbar-icon">&#128737;&#65039;</div>
-<div>
-<div class="iq-fbar-t1">UK GDPR Shield</div>
-<div class="iq-fbar-t2">Article 22 Compliant</div>
 </div>
 </div>
 </div>
