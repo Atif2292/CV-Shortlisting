@@ -1694,7 +1694,7 @@ render_html("""
     <a href="#faq" class="iq-nav-link">FAQ</a>
   </div>
   <div>
-    <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Connect &nbsp;&rarr;</span></a>
+    <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Connect</span></a>
   </div>
 </div>
 """)
