@@ -1104,11 +1104,11 @@ a.iq-nav-demo:active {
 }
 
 /* ── Pricing & Payment Section (Compact & Minimal) ── */
-.iq-price-sec { max-width: 660px; margin: 2.2rem auto 1.8rem; padding: 0 1rem; }
+.iq-price-sec { max-width: 740px; margin: 2.2rem auto 1.8rem; padding: 0 1rem; }
 .iq-price-hdr { text-align: center; margin-bottom: 1.25rem; }
 .iq-price-eye { display: inline-block; font-size: .68rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: .08em; background: #EFF6FF; border: 1px solid #BFDBFE; padding: .18rem .6rem; border-radius: 999px; margin-bottom: .35rem; }
 .iq-price-h2 { font-size: 1.45rem; font-weight: 800; color: #0B1120; margin-bottom: .25rem; letter-spacing: -.02em; }
-.iq-price-sub { font-size: .82rem; color: #64748B; max-width: 480px; margin: 0 auto; line-height: 1.45; }
+.iq-price-sub { font-size: .82rem; color: #64748B; max-width: 520px; margin: 0 auto; line-height: 1.45; }
 .iq-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-top: 1.1rem; }
 @media (max-width: 720px) { .iq-price-grid { grid-template-columns: 1fr; max-width: 360px; margin: 1.1rem auto 0; } }
 .iq-plan-card { background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 1.15rem 1.25rem; display: flex; flex-direction: column; justify-content: space-between; transition: all .25s ease; box-shadow: 0 2px 8px rgba(15,23,42,.03); position: relative; }
@@ -1119,10 +1119,12 @@ a.iq-nav-demo:active {
 .iq-badge-agency { background: #2563EB; color: #FFFFFF; box-shadow: 0 2px 6px rgba(37,99,235,.2); }
 .iq-plan-name { font-size: 1.15rem; font-weight: 800; color: #0F172A; margin-bottom: .15rem; letter-spacing: -.01em; }
 .iq-plan-desc { font-size: .78rem; color: #64748B; margin-bottom: .7rem; line-height: 1.4; }
-.iq-plan-price-wrap { display: flex; align-items: baseline; gap: .25rem; margin-bottom: .8rem; padding-bottom: .7rem; border-bottom: 1px solid #F1F5F9; }
+.iq-plan-price-row { margin-bottom: .8rem; padding-bottom: .7rem; border-bottom: 1px solid #F1F5F9; }
+.iq-plan-price-wrap { display: flex; align-items: baseline; gap: .25rem; }
 .iq-plan-curr { font-size: 1.15rem; font-weight: 700; color: #0F172A; }
 .iq-plan-amt { font-size: 2.05rem; font-weight: 900; color: #0F172A; line-height: 1; letter-spacing: -.03em; }
 .iq-plan-period { font-size: .78rem; font-weight: 600; color: #64748B; }
+.iq-plan-annual-sub { font-size: .72rem; color: #2563EB; font-weight: 700; margin-top: .15rem; }
 .iq-plan-features { list-style: none; padding: 0; margin: 0 0 1rem 0; display: flex; flex-direction: column; gap: .45rem; }
 .iq-plan-feat-item { display: flex; align-items: flex-start; gap: .45rem; font-size: .78rem; color: #334155; line-height: 1.35; }
 .iq-feat-icon { color: #10B981; font-weight: 900; font-size: .85rem; flex-shrink: 0; margin-top: 1px; }
@@ -1133,6 +1135,12 @@ a.iq-nav-demo:active {
 .iq-btn-agency { background: #0F172A !important; color: #FFFFFF !important; box-shadow: 0 3px 10px rgba(15,23,42,.18); }
 .iq-btn-agency:hover { background: #1E293B !important; transform: translateY(-1px); box-shadow: 0 5px 14px rgba(15,23,42,.24); }
 .iq-guarantee { text-align: center; margin-top: .55rem; font-size: .7rem; color: #94A3B8; display: flex; align-items: center; justify-content: center; gap: .3rem; }
+.iq-terms-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .65rem; margin-top: 1.15rem; }
+@media (max-width: 720px) { .iq-terms-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 440px) { .iq-terms-grid { grid-template-columns: 1fr; } }
+.iq-term-item { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: .65rem .75rem; text-align: left; box-shadow: 0 1px 3px rgba(15,23,42,.03); }
+.iq-term-title { font-size: .74rem; font-weight: 800; color: #0F172A; margin-bottom: .2rem; display: flex; align-items: center; gap: .35rem; }
+.iq-term-desc { font-size: .68rem; color: #64748B; line-height: 1.35; margin: 0; }
 .iq-pay-badges { display: flex; align-items: center; justify-content: center; gap: .5rem; margin-top: 1.3rem; padding-top: 1rem; border-top: 1px solid #E2E8F0; flex-wrap: wrap; }
 .iq-pay-pill { display: inline-flex; align-items: center; gap: .35rem; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 7px; padding: .25rem .55rem; font-size: .72rem; font-weight: 700; color: #334155; }
 
@@ -3128,57 +3136,87 @@ render_html(f"""
   </div>
 
   <div class="iq-price-grid">
-    <!-- Plan 1: Professional €99/mo -->
+    <!-- Plan 1: Professional £99/mo -->
     <div class="iq-plan-card">
       <div>
         <span class="iq-plan-badge iq-badge-starter">Boutique &amp; In-House</span>
         <div class="iq-plan-name">Professional</div>
-        <div class="iq-plan-desc">Plug-and-play AI screening with zero technical setup.</div>
-        <div class="iq-plan-price-wrap">
-          <span class="iq-plan-curr">&euro;</span>
-          <span class="iq-plan-amt">99</span>
-          <span class="iq-plan-period">/ month</span>
+        <div class="iq-plan-desc">Plug-and-play AI screening for in-house recruiters &amp; boutique teams.</div>
+        <div class="iq-plan-price-row">
+          <div class="iq-plan-price-wrap">
+            <span class="iq-plan-curr">&pound;</span>
+            <span class="iq-plan-amt">99</span>
+            <span class="iq-plan-period">/ month</span>
+          </div>
+          <div class="iq-plan-annual-sub">&pound;990 / year &bull; 2 months free</div>
         </div>
         <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Up to 300 CVs</b> (10 active roles / month)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Private In-Memory Engine</b> (UK GDPR Art. 22)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Podium</b> &amp; Excel shortlist export</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>500 CVs per month</b> (1 seat &bull; up to 10 live jobs)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>BYOK or Private Engine</b> (Zero data retention default)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Podium</b> &amp; Excel shortlist report</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR Article 22</b> audit compliance sheet</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard email support</b> &amp; instant activation</span></li>
         </ul>
       </div>
       <div>
         <a class="iq-plan-btn iq-btn-primary" href="{_stripe_pro_url}" target="_blank">
-          Subscribe &nbsp;&rarr;
+          Subscribe to Pro &nbsp;&rarr;
         </a>
-        <div class="iq-guarantee">&#128274; SSL encrypted &bull; Cancel anytime</div>
+        <div class="iq-guarantee">&#128274; 14-day / 25 CV free trial &bull; Cancel anytime</div>
       </div>
     </div>
 
-    <!-- Plan 2: Agency & Scale-up €199/mo (UNLIMITED) -->
+    <!-- Plan 2: Agency £199/mo -->
     <div class="iq-plan-card featured">
       <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-          <span class="iq-plan-badge iq-badge-agency">&#9733; UNLIMITED</span>
-          <span style="font-size:.65rem;font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.15rem .45rem;border-radius:5px;">ENTERPRISE DPA</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem;">
+          <span class="iq-plan-badge iq-badge-agency">&#9733; Agency &amp; Scale-up</span>
+          <span style="font-size:.62rem;font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.15rem .45rem;border-radius:5px;">FOUNDING LOCK</span>
         </div>
-        <div class="iq-plan-name">Agency &amp; Enterprise</div>
-        <div class="iq-plan-desc">Unlimited candidate screening powered by your own company key.</div>
-        <div class="iq-plan-price-wrap">
-          <span class="iq-plan-curr">&euro;</span>
-          <span class="iq-plan-amt">199</span>
-          <span class="iq-plan-period">/ month</span>
+        <div class="iq-plan-name">Agency</div>
+        <div class="iq-plan-desc">High-volume screening with ATS connectors for staffing firms &amp; agencies.</div>
+        <div class="iq-plan-price-row">
+          <div class="iq-plan-price-wrap">
+            <span class="iq-plan-curr">&pound;</span>
+            <span class="iq-plan-amt">199</span>
+            <span class="iq-plan-period">/ month</span>
+          </div>
+          <div class="iq-plan-annual-sub">&pound;1,990 / year &bull; 2 months free</div>
         </div>
         <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>UNLIMITED CV Screening</b> (Zero volume caps)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>Bring Your Own Key</b> (OpenAI / Azure BYOK)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS / CRM Integration</b> &amp; Priority 1-on-1 setup</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>1,500 CVs per month</b> (5 seats &bull; Unlimited live jobs)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Everything in Professional</b> included</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS / CRM integrations</b> (Zapier + native connectors)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Azure UK South endpoint</b> (London residency)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority email support</b> &amp; 1 guided setup session</span></li>
         </ul>
       </div>
       <div>
         <a class="iq-plan-btn iq-btn-agency" href="{_stripe_agency_url}" target="_blank">
           Subscribe to Agency &nbsp;&rarr;
         </a>
-        <div class="iq-guarantee">&#128274; SSL encrypted &bull; Assisted onboarding</div>
+        <div class="iq-guarantee">&#128274; First 20 lock rate for 12 mos &bull; Guided setup</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Supporting terms -->
+  <div class="iq-terms-grid">
+    <div class="iq-term-item">
+      <div class="iq-term-title">&#10024; Free Trial</div>
+      <div class="iq-term-desc">14 days or 25 CVs, no card needed. Full scoring &amp; audit reports.</div>
+    </div>
+    <div class="iq-term-item">
+      <div class="iq-term-title">&#128176; Annual Billing</div>
+      <div class="iq-term-desc">Two months free (&pound;990 or &pound;1,990 a year). Save 17% automatically.</div>
+    </div>
+    <div class="iq-term-item">
+      <div class="iq-term-title">&#128200; Overage</div>
+      <div class="iq-term-desc">&pound;0.12 per extra CV, with automated warnings at 80% and 100%.</div>
+    </div>
+    <div class="iq-term-item">
+      <div class="iq-term-title">&#128274; Founding Lock</div>
+      <div class="iq-term-desc">The first 20 customers keep their subscription price for 12 months.</div>
     </div>
   </div>
 
@@ -3201,19 +3239,9 @@ render_html("""
 <div class="iq-faq-hdr">
 <div class="iq-faq-eye">Frequently Asked Questions</div>
 <div class="iq-faq-h2">Got Questions? We&rsquo;ve Got Answers</div>
-<div class="iq-faq-sub">Everything you need to know about AI resume screening, batch evaluations, and candidate data privacy.</div>
+<div class="iq-faq-sub">Everything you need to know about plans, CV limits, candidate data privacy, and UK GDPR Article 22 compliance.</div>
 </div>
 <div class="iq-faq-list">
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>What counts as a resume parse?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-Each uploaded resume (PDF, Word DOCX, or TXT) evaluated against your job description counts as one candidate parse. RankCV extracts work history, skill proficiencies, seniority level, and requirement alignment in seconds.
-</div>
-</details>
 
 <details class="iq-faq-item">
 <summary class="iq-faq-summary">
@@ -3221,17 +3249,63 @@ Each uploaded resume (PDF, Word DOCX, or TXT) evaluated against your job descrip
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-You can screen up to 10 candidate CVs per batch completely free with zero credit card required. You get instant access to 0&ndash;100 match scores, candidate rankings, strengths &amp; concerns breakdowns, and executive shortlist report downloads.
+You can test RankCV with <b>14 days or up to 25 candidate CVs completely free&mdash;no credit card required</b>. You get instant access to 0&ndash;100 match scores, 3-panel candidate evaluation, AI strengths &amp; concerns breakdowns, and executive shortlist report downloads with embedded UK GDPR audit sheets.
 </div>
 </details>
 
 <details class="iq-faq-item">
 <summary class="iq-faq-summary">
-<span>How does the AI score and rank candidates?</span>
+<span>What are the plan limits and how does overage work?</span>
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-RankCV uses contextual semantic evaluation to assess applicants against your specific job criteria. Rather than relying on rigid keyword matching, the AI evaluates project complexity, demonstrated skills, and seniority depth to produce fair, explainable rankings.
+The <b>Professional</b> plan includes <b>500 CVs per month</b> (1 seat and up to 10 active live jobs). The <b>Agency</b> plan includes <b>1,500 CVs per month</b> (5 seats and unlimited active live jobs).<br><br>
+If your team requires extra capacity during a hiring surge, overage is billed transparently at <b>&pound;0.12 per extra CV</b>. To prevent unexpected charges, our system sends automated warning alerts when your team reaches <b>80% and 100%</b> of your monthly quota.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>Is there a discount for annual billing?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+Yes. Both plans offer an annual billing option with <b>two months free</b>:
+<ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">
+  <li><b>Professional Annual:</b> &pound;990 / year (saving &pound;198 vs. monthly).</li>
+  <li><b>Agency Annual:</b> &pound;1,990 / year (saving &pound;398 vs. monthly).</li>
+</ul>
+Annual billing can be activated during checkout or adjusted from your billing portal at any time.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>What is the Founding Customer price guarantee?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+The <b>first 20 customers</b> who subscribe to either Professional or Agency keep their introductory subscription price for a full <b>12 months</b>. Even as we expand features and native ATS connectors, your subscription rate is 100% price-locked.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>How do BYOK and local processing guarantee candidate data privacy?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+<b>BYOK (Bring Your Own Key) and Private In-Memory Processing are the default on both plans.</b> Your candidate data is processed strictly in volatile RAM or directed to your sovereign Azure UK South (London) endpoint. No candidate CV data is ever stored on external disks or used for AI model training, preserving your statutory status as sole Data Controller under the UK Data Protection Act 2018.
+</div>
+</details>
+
+<details class="iq-faq-item">
+<summary class="iq-faq-summary">
+<span>What ATS integrations and setup assistance are included in Agency?</span>
+<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</summary>
+<div class="iq-faq-body">
+The Agency plan includes <b>native ATS and CRM integrations</b> via Zapier plus direct connectors for platforms like Greenhouse, Lever, Workday, Ashby, and BambooHR. It also includes <b>1 guided setup session</b> with our UK integration team to configure your custom scoring rubrics, ATS webhooks, and team workflows.
 </div>
 </details>
 
@@ -3244,31 +3318,11 @@ RankCV uses contextual semantic evaluation to assess applicants against your spe
 <b>Yes, absolutely.</b> RankCV is architected specifically to comply with the <b>UK GDPR, the Data Protection Act 2018, and ICO guidance</b> on automated decision support:
 <ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">
   <li><b>Article 5(1)(c) Data Minimisation:</b> Built-in PII Stripper automatically scrubs names, UK postcodes, phone numbers, email addresses, and demographic identifiers in-memory before evaluation.</li>
-  <li><b>Data Controller Autonomy (BYOK):</b> Recruiter teams can plug in their own OpenAI or Azure UK/EU API key. Your organization remains the sole Data Controller with zero third-party model training retention.</li>
-  <li><b>Private In-Memory Engine (Zero External AI Data Egress):</b> Recruiter teams can select the private internal engine for zero external data transfers—evaluating candidates in volatile RAM with zero third-party AI processing.</li>
+  <li><b>Data Controller Autonomy (BYOK):</b> Recruiter teams can plug in their own OpenAI or Azure UK endpoint. Your organization remains the sole Data Controller with zero third-party model training retention.</li>
+  <li><b>Private In-Memory Engine (Zero External AI Data Egress):</b> Recruiter teams can select the private internal engine for zero external data transfers&mdash;evaluating candidates in volatile RAM with zero third-party AI processing.</li>
   <li><b>Article 22 Human-in-the-Loop:</b> RankCV acts purely as decision support. No candidate is ever rejected automatically; recruiters retain full override power with customizable status tags and notes.</li>
   <li><b>Auditable Accountability:</b> Every batch exports an Excel file with an embedded <i>UK GDPR Compliance Audit Sheet</i>, providing timestamped methodology and statutory sign-off logs under England &amp; Wales governing law.</li>
 </ul>
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>Does RankCV integrate with our ATS?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-RankCV is designed to work smoothly beside your existing ATS (Greenhouse, Lever, Workday, Ashby, BambooHR). Simply export applicant resumes from your ATS, drop them into RankCV, and download interview-ready candidate reports formatted for hiring managers.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>What is data ownership and portability?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-You maintain 100% ownership of all uploaded job descriptions, candidate resumes, scorecards, and reports. All shortlists and candidate evaluations can be exported in 1 click as structured report downloads.
 </div>
 </details>
 
@@ -3279,16 +3333,6 @@ You maintain 100% ownership of all uploaded job descriptions, candidate resumes,
 </summary>
 <div class="iq-faq-body">
 Parallel multi-file processing enables RankCV to parse, score, and rank a batch of 10 to 50 resumes in under 45 seconds&mdash;saving hours of manual resume skimming for each open role.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>What happens when I need higher volume or custom team features?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-If your recruiting team handles high-volume applicant pipelines or requires custom scoring rubrics, click <a href="https://wa.me/447379975532" target="_blank" style="color:#2563EB;font-weight:700;text-decoration:none;">Book a Demo</a> to connect directly with our team on WhatsApp for dedicated volume onboarding.
 </div>
 </details>
 
