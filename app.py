@@ -80,34 +80,62 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 [data-testid="stMetricValue"]  { color:#0B1120!important; font-weight:800!important; font-size:1.55rem!important; }
 [data-testid="stMetricLabel"]  { color:#64748B!important; font-size:.8rem!important; }
 
-/* ── Workspace Panel Cards (Scoped only to panels with .iq-phead) ── */
-[data-testid="column"]:has(.iq-phead) {
+/* ── Workspace Panel Cards (Equal Size, Equal Height) ── */
+div[data-testid="stHorizontalBlock"]:has(.iq-phead) {
+    display: flex !important;
+    align-items: stretch !important;
+}
+div[data-testid="column"]:has(.iq-phead),
+.stColumn:has(.iq-phead) {
     display: flex !important;
     flex-direction: column !important;
+    align-self: stretch !important;
+    flex: 1 1 0 !important;
     height: 100% !important;
 }
-[data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"] {
-    flex: 1 1 100% !important;
-    min-height: 525px !important;
+/* Intermediate wrappers inside workspace column */
+div[data-testid="column"]:has(.iq-phead) > div,
+div[data-testid="column"]:has(.iq-phead) [data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
+    flex: 1 1 auto !important;
+    height: 100% !important;
+}
+/* The card container border wrapper */
+div[data-testid="column"]:has(.iq-phead) [data-testid="stVerticalBlockBorderWrapper"],
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.iq-phead) {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 100% !important;
+    height: 100% !important;
+    min-height: 605px !important;
     justify-content: space-between !important;
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
     border-radius: 16px !important;
     box-shadow: 0 2px 12px rgba(10,20,60,.06) !important;
     padding: 1.5rem !important;
+    box-sizing: border-box !important;
     transition: box-shadow .2s, border-color .2s !important;
 }
-[data-testid="column"]:has(.iq-phead) > div[data-testid="stVerticalBlockBorderWrapper"]:focus-within {
+div[data-testid="column"]:has(.iq-phead) [data-testid="stVerticalBlockBorderWrapper"]:focus-within,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.iq-phead):focus-within {
     box-shadow: 0 4px 20px rgba(10,20,60,.1) !important;
     border-color: rgba(37,99,235,.25) !important;
 }
-/* Ensure regular columns and buttons have zero unwanted extra height */
-[data-testid="column"]:not(:has(.iq-phead)) {
+/* Inside the card border wrapper, make the inner vertical block take 100% height and space-between */
+div[data-testid="column"]:has(.iq-phead) [data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 100% !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+}
+/* Ensure regular non-workspace columns have zero extra height or styling */
+div[data-testid="column"]:not(:has(.iq-phead)) {
     min-height: unset !important;
 }
-[data-testid="column"]:not(:has(.iq-phead)) > div[data-testid="stVerticalBlockBorderWrapper"] {
+div[data-testid="column"]:not(:has(.iq-phead)) > div[data-testid="stVerticalBlockBorderWrapper"] {
     min-height: unset !important;
     background: transparent !important;
     border: none !important;
@@ -1904,7 +1932,7 @@ with col1:
             jd_input = st.text_area(
                 "",
                 placeholder="Paste your job description, role overview, and key requirements here…",
-                height=230,
+                height=270,
                 max_chars=5000,
                 key="jd_paste",
                 label_visibility="collapsed",
