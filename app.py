@@ -1931,6 +1931,18 @@ SAMPLE_ROLES = {
         "- Strong SQL and data pipeline optimization skills\n"
         "- Proven track record taking models from research to high-throughput production deployment"
     ),
+    "IT Sales Manager (B2B SaaS)": (
+        "Job Title: IT Sales Manager (B2B SaaS)\n"
+        "Location: London / Hybrid\n"
+        "Experience: 6+ years\n\n"
+        "About the Role:\n"
+        "We are looking for an IT Sales Manager to lead enterprise B2B sales cycles, manage pipeline, and drive software license revenue.\n\n"
+        "Key Requirements:\n"
+        "- 6+ years experience in B2B IT sales, enterprise sales, and SaaS software solutions\n"
+        "- Proven track record of quota attainment, pipeline management, and deal closing\n"
+        "- Strong experience with CRM (Salesforce / HubSpot), lead generation, and client acquisition\n"
+        "- Excellent client presentation, negotiation, and contract closing skills"
+    ),
 }
 
 def _on_role_select():
@@ -2057,8 +2069,6 @@ with col3:
         if demo_btn:
             if not jd_text.strip():
                 jd_text = SAMPLE_ROLES["Senior Python Backend Engineer"]
-                st.session_state["jd_paste"] = jd_text
-                st.session_state["_prev_role_choice"] = "Senior Python Backend Engineer"
 
             demo_dir = Path("dummy_cvs_pdf")
             demo_files = sorted(demo_dir.glob("*.pdf"))[:5]
@@ -2971,7 +2981,7 @@ render_html("""
 <div class="iq-pillars-grid">
 <div class="iq-pillar-item">
 <div class="iq-pillar-stat">45s</div>
-<div class="iq-pillar-title">Minutes, Not Days</div>
+<div class="iq-pillar-title">Seconds, Not Days</div>
 <div class="iq-pillar-desc">Cut CV screening from days of manual reading to seconds with parallel batch parsing and automated scoring.</div>
 </div>
 <div class="iq-pillar-item">
@@ -3175,7 +3185,7 @@ render_html(f"""
         </div>
         <ul class="iq-plan-features">
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>500 CVs per month</b> (1 seat &bull; up to 10 live jobs)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>BYOK or Private Engine</b> (Zero data retention default)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Connect your own OpenAI account</b> (BYOK supported)</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Podium</b> &amp; Excel shortlist report</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR Article 22</b> audit compliance sheet</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard email support</b> &amp; instant activation</span></li>
@@ -3210,7 +3220,7 @@ render_html(f"""
           <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>1,500 CVs per month</b> (5 seats &bull; Unlimited live jobs)</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Everything in Professional</b> included</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS / CRM integrations</b> (Zapier + native connectors)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Azure UK South endpoint</b> (London residency)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Connect your own OpenAI account</b> (Dedicated agency quota)</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority email support</b> &amp; 1 guided setup session</span></li>
         </ul>
       </div>
@@ -3314,11 +3324,12 @@ The <b>first 20 customers</b> who subscribe to either Professional or Agency kee
 
 <details class="iq-faq-item">
 <summary class="iq-faq-summary">
-<span>How do BYOK and local processing guarantee candidate data privacy?</span>
+<span>Where does my candidate data go?</span>
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-<b>BYOK (Bring Your Own Key) and Private In-Memory Processing are the default on both plans.</b> Your candidate data is processed strictly in volatile RAM or directed to your sovereign Azure UK South (London) endpoint. No candidate CV data is ever stored on external disks or used for AI model training, preserving your statutory status as sole Data Controller under the UK Data Protection Act 2018.
+<b>RankCV does not save or store your candidate CVs, text, or screening results on any persistent database or disk.</b> Files uploaded during your screening session are held in temporary memory and purged once the session ends.<br><br>
+When using Cloud AI, resume text is evaluated via OpenAI's commercial API. Under OpenAI's standard commercial terms, API data is <b>not used to train AI models</b> and is retained for up to 30 days solely for abuse monitoring before deletion. You can also <b>connect your own OpenAI account (BYOK)</b> under settings to maintain direct control over your organization's data retention and compliance terms.
 </div>
 </details>
 
@@ -3334,17 +3345,16 @@ The Agency plan includes <b>native ATS and CRM integrations</b> via Zapier plus 
 
 <details class="iq-faq-item">
 <summary class="iq-faq-summary">
-<span>Can an HR department use RankCV without breaking UK GDPR rules?</span>
+<span>How does RankCV help hiring teams comply with UK GDPR?</span>
 <svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 </summary>
 <div class="iq-faq-body">
-<b>Yes, absolutely.</b> RankCV is architected specifically to comply with the <b>UK GDPR, the Data Protection Act 2018, and ICO guidance</b> on automated decision support:
+RankCV is designed as an <b>objective decision-support tool</b> to assist human recruiters, aligned with UK GDPR, the Data Protection Act 2018, and ICO guidance:
 <ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">
-  <li><b>Article 5(1)(c) Data Minimisation:</b> Built-in PII Stripper automatically scrubs names, UK postcodes, phone numbers, email addresses, and demographic identifiers in-memory before evaluation.</li>
-  <li><b>Data Controller Autonomy (BYOK):</b> Recruiter teams can plug in their own OpenAI or Azure UK endpoint. Your organization remains the sole Data Controller with zero third-party model training retention.</li>
-  <li><b>Private In-Memory Engine (Zero External AI Data Egress):</b> Recruiter teams can select the private internal engine for zero external data transfers&mdash;evaluating candidates in volatile RAM with zero third-party AI processing.</li>
-  <li><b>Article 22 Human-in-the-Loop:</b> RankCV acts purely as decision support. No candidate is ever rejected automatically; recruiters retain full override power with customizable status tags and notes.</li>
-  <li><b>Auditable Accountability:</b> Every batch exports an Excel file with an embedded <i>UK GDPR Compliance Audit Sheet</i>, providing timestamped methodology and statutory sign-off logs under England &amp; Wales governing law.</li>
+  <li><b>Article 22 Human-in-the-Loop:</b> No candidate is ever rejected automatically. Recruiters retain complete oversight to review, adjust scores, add notes, and approve final shortlists.</li>
+  <li><b>Data Minimisation:</b> Built-in PII Stripper allows scrubbing identifying details (names, postcodes, phone numbers, emails) prior to evaluation.</li>
+  <li><b>Zero Persistent Storage:</b> Uploaded CVs are not stored in any external database by RankCV, reducing your attack surface and data retention footprint.</li>
+  <li><b>Accountability Audit Trail:</b> Every batch exports an Excel report documenting scoring criteria and human recruiter sign-offs.</li>
 </ul>
 </div>
 </details>

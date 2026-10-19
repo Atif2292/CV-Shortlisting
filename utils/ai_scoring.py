@@ -34,6 +34,17 @@ TECH_KEYWORDS = [
     # Architecture & Practices
     "rest", "rest api", "graphql", "grpc", "microservices", "agile", "scrum",
     "html", "css", "tailwind", "figma",
+    # Sales, B2B & Commercial
+    "it sales", "b2b sales", "enterprise sales", "saas sales", "lead generation",
+    "account management", "pipeline management", "crm", "salesforce", "hubspot",
+    "quota attainment", "quota", "cold calling", "prospecting", "deal closing",
+    "solution selling", "business development", "client acquisition", "negotiation",
+    "sales strategy", "key account", "contract negotiation", "channel sales",
+    # Marketing & Growth
+    "seo", "sem", "digital marketing", "content marketing", "google analytics",
+    "growth marketing", "social media", "email marketing", "copywriting",
+    # Product & Operations
+    "product management", "product strategy", "roadmap", "user research", "jira",
 ]
 
 EDUCATION_PATTERNS = [
@@ -399,46 +410,73 @@ def _mock_rank_batch(candidates: list, job_context: dict) -> list:
         if "certified" in snippet_lower or "solutions architect" in snippet_lower:
             edu_score = min(10, edu_score + 2)
 
-        # Final score calculation (clamped between 25 and 98)
-        match_score = min(98, max(25, round(skill_score + exp_score + role_score + edu_score)))
+        # Domain mismatch detection (e.g. Pure Tech Engineer applying for Sales / Commercial role)
+        sales_terms = ["sales", "account executive", "business development", "bdr", "sdr", "account manager", "commercial", "client acquisition"]
+        is_sales_job = any(st in title_lower for st in sales_terms) or any(st in raw_skills.lower() for st in ["it sales", "b2b sales", "crm", "lead generation", "pipeline management", "quota"])
+        
+        cand_roles_lower = " ".join(r.lower() for r in roles)
+        is_pure_tech_cand = any(tk in cand_roles_lower for tk in ["engineer", "developer", "architect", "programmer", "data scientist"])
+        cand_sales_overlap = any(s in cand_skills for s in ["it sales", "b2b sales", "enterprise sales", "saas sales", "lead generation", "account management", "pipeline management", "crm", "salesforce", "hubspot", "quota attainment", "quota", "business development", "client acquisition"])
 
-        # Strengths (grounded in candidate's actual qualifications)
-        strengths = []
-        if matched_req:
-            top_skills = [s.title() for s in matched_req[:4]]
-            strengths.append(f"Strong match in core skills: {', '.join(top_skills)}")
-        if cand_exp is not None and cand_exp >= target_exp:
-            strengths.append(f"{cand_exp}+ years of experience aligns with role seniority requirement")
-        elif cand_exp is not None and cand_exp >= 3:
-            strengths.append(f"{cand_exp} years demonstrated experience in technical roles")
-        if education:
-            strengths.append(f"Holds {education} degree with relevant technical foundation")
-        if "certified" in snippet_lower:
-            strengths.append("Holds verified industry/cloud certifications")
-        if len(strengths) < 3:
-            strengths.append(f"Hands-on experience with modern tooling ({', '.join([s.title() for s in cand_skills[:3]])})")
+        domain_mismatch = (is_sales_job and is_pure_tech_cand and not cand_sales_overlap)
 
-        # Concerns (grounded in actual missing criteria)
-        concerns = []
-        if missing_req:
-            top_missing = [s.title() for s in missing_req[:3]]
-            concerns.append(f"Missing core requirements: {', '.join(top_missing)}")
-        if cand_exp is not None and cand_exp < target_exp:
-            concerns.append(f"Experience ({cand_exp} yrs) is below requested {target_exp} yrs")
-        if not matched_req:
-            concerns.append("Limited direct evidence of target framework in recent projects")
-        if len(concerns) < 2:
-            concerns.append("Assess depth of distributed systems design in technical screen")
+        if domain_mismatch:
+            # Severely cap score: pure tech developers are unsuitable for sales manager positions
+            match_score = min(28, max(15, round(exp_score * 0.35 + edu_score * 0.5)))
+            strengths = []
+            if cand_skills:
+                strengths.append(f"Demonstrated technical skills in software development ({', '.join([s.title() for s in cand_skills[:3]])})")
+            if education:
+                strengths.append(f"Holds {education} degree")
+            if not strengths:
+                strengths.append("Verified academic and technical background")
 
-        # Recommendation based on score
-        if match_score >= 85:
-            recommendation = "Outstanding match with deep stack alignment and requisite seniority. Strongly recommended for technical interview."
-        elif match_score >= 70:
-            recommendation = "Solid candidate meeting most requirements with manageable gaps. Recommended for screening call."
-        elif match_score >= 50:
-            recommendation = "Moderate match with relevant foundation but missing key requirements. Consider for junior/adjacent variant."
+            concerns = [
+                "Zero demonstrated experience in B2B/IT sales, pipeline management, or quota achievement",
+                "Candidate profile is technical software development, not commercial or client-facing sales"
+            ]
+            recommendation = "Unsuitable for this position. Candidate qualifications are purely technical development rather than commercial sales management."
         else:
-            recommendation = "Does not meet the core technical and seniority requirements for this role. Not recommended."
+            # Final score calculation (clamped between 25 and 98)
+            match_score = min(98, max(25, round(skill_score + exp_score + role_score + edu_score)))
+
+            # Strengths (grounded in candidate's actual qualifications)
+            strengths = []
+            if matched_req:
+                top_skills = [s.title() for s in matched_req[:4]]
+                strengths.append(f"Strong match in core skills: {', '.join(top_skills)}")
+            if cand_exp is not None and cand_exp >= target_exp:
+                strengths.append(f"{cand_exp}+ years of experience aligns with role seniority requirement")
+            elif cand_exp is not None and cand_exp >= 3:
+                strengths.append(f"{cand_exp} years demonstrated experience in technical roles")
+            if education:
+                strengths.append(f"Holds {education} degree with relevant technical foundation")
+            if "certified" in snippet_lower:
+                strengths.append("Holds verified industry/cloud certifications")
+            if len(strengths) < 3:
+                strengths.append(f"Hands-on experience with modern tooling ({', '.join([s.title() for s in cand_skills[:3]])})")
+
+            # Concerns (grounded in actual missing criteria)
+            concerns = []
+            if missing_req:
+                top_missing = [s.title() for s in missing_req[:3]]
+                concerns.append(f"Missing core requirements: {', '.join(top_missing)}")
+            if cand_exp is not None and cand_exp < target_exp:
+                concerns.append(f"Experience ({cand_exp} yrs) is below requested {target_exp} yrs")
+            if not matched_req:
+                concerns.append("Limited direct evidence of target framework in recent projects")
+            if len(concerns) < 2:
+                concerns.append("Assess depth of domain design and practical execution in screen")
+
+            # Recommendation based on score
+            if match_score >= 85:
+                recommendation = "Outstanding match with deep stack alignment and requisite seniority. Strongly recommended for interview."
+            elif match_score >= 70:
+                recommendation = "Solid candidate meeting most requirements with manageable gaps. Recommended for screening call."
+            elif match_score >= 50:
+                recommendation = "Moderate match with relevant foundation but missing key requirements. Consider for junior/adjacent variant."
+            else:
+                recommendation = "Does not meet the core technical and seniority requirements for this role. Not recommended."
 
         # Skills match string
         skills_match_str = ", ".join([s.title() for s in (matched_req or cand_skills[:3])])
