@@ -10,14 +10,22 @@ jobs:
   heartbeat:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Keep-Alive Ping to RankCV Engine
+      - name: Send Keep-Alive Ping to RankCV Engine & Backend Worker
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
+          # 1. Ping main app endpoint
+          STATUS1=$(curl -s -o /dev/null -w "%{http_code}" -L \
             -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-            "https://cv-shortlisting-heyjnwnkxygbb9saat9jjs.streamlit.app/?embed=true")
-          echo "Keep-alive ping returned HTTP status: $STATUS at $(date -u)"
-          if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 303 ]; then
+            "https://cv-shortlisting-heyjnwnkxygbb9saat9jjs.streamlit.app/")
+          echo "Main app endpoint returned: $STATUS1 at $(date -u)"
+
+          # 2. Ping core health endpoint (keeps worker container active)
+          STATUS2=$(curl -s -o /dev/null -w "%{http_code}" -L \
+            -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+            "https://cv-shortlisting-heyjnwnkxygbb9saat9jjs.streamlit.app/~/+/_stcore/health")
+          echo "Core health endpoint returned: $STATUS2 at $(date -u)"
+
+          if [ "$STATUS2" -eq 200 ] || [ "$STATUS1" -eq 200 ] || [ "$STATUS1" -eq 303 ]; then
             echo "✅ Engine is warm and active."
           else
-            echo "⚠️ Unexpected status $STATUS"
+            echo "⚠️ Unexpected status: app=$STATUS1 health=$STATUS2"
           fi

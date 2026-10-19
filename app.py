@@ -25,7 +25,7 @@ import altair as alt
 
 
 st.set_page_config(
-    page_title="RankCV — Screen CVs in Minutes",
+    page_title="RankCV — Screen CVs in Seconds",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -1776,7 +1776,7 @@ render_html("""
 <div class="iq-fbar-icon">&#9889;</div>
 <div>
 <div class="iq-fbar-t1">Screen 100s of CVs</div>
-<div class="iq-fbar-t2">In minutes, not days</div>
+<div class="iq-fbar-t2">In seconds, not days</div>
 </div>
 </div>
 <div class="iq-fbar-item">
@@ -3056,7 +3056,7 @@ render_html("""
 
 <div class="iq-beta-card">
 <div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-<div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in under a minute.&rdquo;</div>
+<div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in seconds.&rdquo;</div>
 <div class="iq-tp">
 <div>
 <div class="iq-tpn">Verified Beta Partner</div>
@@ -3123,7 +3123,7 @@ render_html("""
 
 <div class="iq-beta-card">
 <div class="iq-beta-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-<div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in under a minute.&rdquo;</div>
+<div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in seconds.&rdquo;</div>
 <div class="iq-tp">
 <div>
 <div class="iq-tpn">Verified Beta Partner</div>
