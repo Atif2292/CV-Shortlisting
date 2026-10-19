@@ -1,0 +1,23 @@
+name: RankCV Keep-Alive Heartbeat
+
+on:
+  schedule:
+    # Run every 10 minutes, 24/7/365 to keep the server warm and prevent inactivity sleep
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive Ping to RankCV Engine
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
+            -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+            "https://cv-shortlisting-heyjnwnkxygbb9saat9jjs.streamlit.app/?embed=true")
+          echo "Keep-alive ping returned HTTP status: $STATUS at $(date -u)"
+          if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 303 ]; then
+            echo "✅ Engine is warm and active."
+          else
+            echo "⚠️ Unexpected status $STATUS"
+          fi
