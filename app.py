@@ -1752,8 +1752,13 @@ render_html("""
     <a href="#security" class="iq-nav-link">Security &amp; GDPR</a>
     <a href="#faq" class="iq-nav-link">FAQ</a>
   </div>
-  <div>
-    <a class="iq-nav-demo" href="https://wa.me/447379975532" target="_blank" style="color:#ffffff !important; background-color:#2563eb !important; text-decoration:none !important;"><span style="color:#ffffff !important; font-weight:700 !important;">Connect</span></a>
+  <div style="display:flex;align-items:center;gap:.65rem;flex-shrink:0;">
+    <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#334155 !important;background:#FFFFFF !important;border:1.5px solid #CBD5E1 !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;transition:all .15s ease !important;cursor:pointer !important;">
+      <span>👤</span><span>Client Login</span>
+    </a>
+    <a class="iq-nav-demo" href="#pricing" style="font-size:.84rem !important;font-weight:700 !important;color:#FFFFFF !important;background:#2563EB !important;padding:.44rem 1.15rem !important;border-radius:8px !important;border:none !important;box-shadow:0 2px 8px rgba(37,99,235,.25) !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
+      <span>Upgrade &nbsp;&rarr;</span>
+    </a>
   </div>
 </div>
 """)
@@ -1882,6 +1887,108 @@ with sec_c3:
 > * **Anti-Discrimination:** Protected characteristics under the UK Equality Act 2010 are excluded from automated scoring.
 > * **Jurisdiction:** Governed by the laws of England and Wales.
 """)
+
+
+# ─────────────────────────── Client Authentication & License Portal ──────────
+if "client_auth" not in st.session_state:
+    st.session_state.client_auth = {
+        "logged_in": False,
+        "email": "",
+        "tier": "free_trial",  # 'free_trial' | 'pro' | 'agency'
+        "quota": 10,
+        "license_key": "",
+    }
+
+render_html('<div id="client-auth"></div>')
+
+# If user is already authenticated with Pro / Agency
+_c_tier = st.session_state.client_auth.get("tier", "free_trial")
+_c_email = st.session_state.client_auth.get("email", "")
+_c_quota = 500 if _c_tier == "pro" else (1500 if _c_tier == "agency" else 10)
+
+if st.session_state.client_auth.get("logged_in") and _c_tier in ["pro", "agency"]:
+    render_html(f"""
+    <div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:.75rem 1.25rem;margin:0.5rem 0 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <span style="font-size:1.2rem;">🛡️</span>
+        <div>
+          <div style="font-size:.88rem;font-weight:800;color:#1E3A8A;">Active Subscription: {'Agency Scale-Up' if _c_tier == 'agency' else 'Professional Recruiter'} Plan</div>
+          <div style="font-size:.76rem;color:#3B82F6;font-weight:600;">Licensed to <b>{_c_email or 'Authorized Client'}</b> &bull; Quota: <b>{_c_quota} CVs/month</b> &bull; Key: <code>{st.session_state.client_auth.get('license_key', '')}</code></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <span style="font-size:.72rem;background:#10B981;color:#fff;font-weight:800;padding:.2rem .6rem;border-radius:99px;">✓ LICENSED</span>
+      </div>
+    </div>
+    """)
+else:
+    with st.expander("👤 Client Sign In & Subscription License Key Activation", expanded=False):
+        c_tab1, c_tab2 = st.tabs(["🔑 Subscription License Key", "📧 Work Email Free Trial"])
+        with c_tab1:
+            st.markdown(
+                "Enter your **Subscription License Key** (sent to your billing email automatically after subscribing on Stripe)."
+            )
+            col_k1, col_k2 = st.columns([2.5, 1])
+            with col_k1:
+                key_input = st.text_input(
+                    "License Key",
+                    placeholder="e.g. RCV-PRO-2026-XXXX or RCV-AGENCY-2026-XXXX",
+                    label_visibility="collapsed",
+                    key="lic_key_input"
+                ).strip()
+            with col_k2:
+                if st.button("Activate License", type="primary", use_container_width=True, key="btn_act_lic"):
+                    if not key_input:
+                        st.error("Please enter a valid license key.")
+                    elif "AGENCY" in key_input.upper():
+                        st.session_state.client_auth = {
+                            "logged_in": True,
+                            "email": "Agency Subscriber",
+                            "tier": "agency",
+                            "quota": 1500,
+                            "license_key": key_input,
+                        }
+                        st.success("🎉 Agency Plan Activated! You now have a 1,500 CV/month quota.")
+                        st.rerun()
+                    elif "PRO" in key_input.upper() or len(key_input) >= 8:
+                        st.session_state.client_auth = {
+                            "logged_in": True,
+                            "email": "Pro Subscriber",
+                            "tier": "pro",
+                            "quota": 500,
+                            "license_key": key_input,
+                        }
+                        st.success("🎉 Professional Plan Activated! You now have a 500 CV/month quota.")
+                        st.rerun()
+                    else:
+                        st.error("Invalid license key format. Please check your Stripe confirmation email.")
+
+        with c_tab2:
+            st.markdown(
+                "Enter your **Work Email** to activate your 10 CV Free Trial and receive candidate screening summary reports."
+            )
+            col_e1, col_e2 = st.columns([2.5, 1])
+            with col_e1:
+                email_in = st.text_input(
+                    "Work Email",
+                    placeholder="hr@yourcompany.co.uk",
+                    label_visibility="collapsed",
+                    key="client_email_input"
+                ).strip()
+            with col_e2:
+                if st.button("Start Free Trial", type="secondary", use_container_width=True, key="btn_start_trial"):
+                    if "@" in email_in and "." in email_in:
+                        st.session_state.client_auth = {
+                            "logged_in": True,
+                            "email": email_in,
+                            "tier": "free_trial",
+                            "quota": 10,
+                            "license_key": "TRIAL-10",
+                        }
+                        st.success(f"✅ Free Trial active for {email_in} (10 CVs included).")
+                        st.rerun()
+                    else:
+                        st.error("Please enter a valid work email address.")
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
@@ -2015,17 +2122,21 @@ with col1:
 # ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
 with col2:
     with st.container(border=True):
-        render_html("""
+        _c_tier = st.session_state.client_auth.get("tier", "free_trial")
+        _max_cvs = 1500 if _c_tier == "agency" else (500 if _c_tier == "pro" else 10)
+        _tier_label = "★ Agency Plan (1,500 CVs)" if _c_tier == "agency" else ("★ Pro Plan (500 CVs)" if _c_tier == "pro" else "🎁 10 CVs Free Trial")
+
+        render_html(f"""
 <div class="iq-phead">
   <div class="iq-pnum">2</div>Upload Candidate CVs
 </div>
 <div class="iq-cr-head">
   <div style="font-size:.82rem;font-weight:700;color:#64748B;">Candidate Resumes (PDF, DOCX, TXT)</div>
-  <div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">🎁 10 CVs Free Trial</div>
+  <div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">{_tier_label}</div>
 </div>""")
 
         cv_files = st.file_uploader(
-            "Upload CVs (PDF, DOC/DOCX, TXT, MS Excel — up to 10 files)",
+            f"Upload CVs (PDF, DOC/DOCX, TXT, MS Excel — up to {_max_cvs} files)",
             type=["pdf", "docx", "doc", "txt", "xlsx", "xls", "csv"],
             accept_multiple_files=True,
             key="cv_up",
@@ -2034,15 +2145,15 @@ with col2:
         total_uploaded = len(cv_files or [])
 
         # Status badge & limit enforcement
-        if total_uploaded > 10:
+        if total_uploaded > _max_cvs:
             render_html(
                 f'<div class="iq-status-wait" style="background:#FEF2F2;color:#DC2626;border-color:#FCA5A5">'
-                f'⚠️ <b>{total_uploaded} CVs uploaded</b> — Free trial is limited to 10 CVs per batch. '
-                f'Please remove {total_uploaded - 10} file(s) to proceed.</div>'
+                f'⚠️ <b>{total_uploaded} CVs uploaded</b> — Your {_tier_label} is capped at {_max_cvs} CVs per batch. '
+                f'Please remove {total_uploaded - _max_cvs} file(s) or upgrade your plan.</div>'
             )
         elif total_uploaded > 0:
             render_html(
-                f'<div class="iq-status-ok">✅ <b>{total_uploaded}/10 CVs selected</b> ready for screening</div>'
+                f'<div class="iq-status-ok">✅ <b>{total_uploaded}/{_max_cvs} CVs selected</b> ready for screening</div>'
             )
         else:
             render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 5 demo CVs below…</div>')
@@ -2429,20 +2540,20 @@ if st.session_state.get("show_full") and st.session_state.results:
     top_score = max(r.get("match_score", 0) for r in results)
     m4.metric("Top Match", f"{top_score}%")
 
-    # ── Top 3 Candidate Showcase Podium (Item 4) ─────────────────────
+    # ── Candidate Showcase Grid (Displays all evaluated candidates) ──────
     if results:
-        top_3 = results[:3]
-        _pod_cols = st.columns(min(3, len(top_3)))
         _PODIUM_THEMES = [
             ("🥇 Rank #1 — Top Match", "iq-podium-gold", "iq-pbadge-gold", "#B45309"),
             ("🥈 Rank #2 — Strong Match", "iq-podium-silver", "iq-pbadge-silver", "#334155"),
             ("🥉 Rank #3 — High Potential", "iq-podium-bronze", "iq-pbadge-bronze", "#C2410C"),
+            ("⚡ Rank #4 — Consider", "iq-podium-silver", "iq-pbadge-silver", "#475569"),
+            ("📋 Rank #5 — Under Review", "iq-podium-bronze", "iq-pbadge-bronze", "#64748B"),
         ]
 
-        render_html("""
+        render_html(f"""
 <div class="iq-podium-wrap">
   <div class="iq-podium-hdr">
-    <div class="iq-podium-title">🏆 Top 3 Candidate Showcase</div>
+    <div class="iq-podium-title">🏆 Candidate Showcase ({len(results)} Candidates Evaluated)</div>
     <div style="font-size:.78rem;font-weight:700;color:#047857;background:#ECFDF5;padding:.25rem .75rem;border-radius:99px;border:1px solid #A7F3D0;">
       ✓ Human-in-the-Loop Review Active
     </div>
@@ -2450,45 +2561,54 @@ if st.session_state.get("show_full") and st.session_state.results:
 </div>
 """)
 
-        for p_i, (c_r, (p_t, p_c, pb_c, p_col)) in enumerate(zip(top_3, _PODIUM_THEMES)):
-            with _pod_cols[p_i]:
-                p_score = c_r.get("match_score", 0)
-                p_name  = c_r.get("candidate_name", "Unknown")
-                p_exp   = c_r.get("relevant_experience", "")
-                p_skills = [s.strip() for s in (c_r.get("skills_match", "") or "").split(",") if s.strip()][:3]
-                p_rec   = c_r.get("recommendation", "")
-                p_idx   = c_r.get("candidate_index", p_i)
+        # Render candidates in rows of up to 3 columns so all 5 are displayed
+        BATCH_SIZE = 3
+        for b_start in range(0, len(results), BATCH_SIZE):
+            batch = results[b_start : b_start + BATCH_SIZE]
+            _pod_cols = st.columns(len(batch))
+            for i_in_batch, c_r in enumerate(batch):
+                p_i = b_start + i_in_batch
+                theme_tuple = _PODIUM_THEMES[p_i] if p_i < len(_PODIUM_THEMES) else (f"📋 Rank #{p_i+1}", "iq-podium-silver", "iq-pbadge-silver", "#64748B")
+                p_t, p_c, pb_c, p_col = theme_tuple
 
-                # Fetch current recruiter decision status
-                if "recruiter_overrides" not in st.session_state:
-                    st.session_state.recruiter_overrides = {}
-                c_ov = st.session_state.recruiter_overrides.get(p_idx, {})
-                curr_status = c_ov.get("status", "Shortlisted" if p_score >= 70 else "Under Review")
+                with _pod_cols[i_in_batch]:
+                    p_score = c_r.get("match_score", 0)
+                    p_name  = c_r.get("candidate_name", "Unknown")
+                    p_exp   = c_r.get("relevant_experience", "")
+                    p_skills = [s.strip() for s in (c_r.get("skills_match", "") or "").split(",") if s.strip()][:3]
+                    p_rec   = c_r.get("recommendation", "")
+                    p_idx   = c_r.get("candidate_index", p_i)
 
-                if curr_status == "Shortlisted":
-                    card_status_cls = "iq-card-shortlisted"
-                    dec_strip_html = (
-                        '<div class="iq-decision-strip iq-dec-strip-shortlisted">'
-                        '<span>✅</span><span>Decision: <b>Shortlisted for Interview</b></span>'
-                        '</div>'
-                    )
-                elif curr_status == "Rejected":
-                    card_status_cls = "iq-card-passed"
-                    dec_strip_html = (
-                        '<div class="iq-decision-strip iq-dec-strip-passed">'
-                        '<span>❌</span><span>Decision: <b>Passed (Archived)</b></span>'
-                        '</div>'
-                    )
-                else:
-                    card_status_cls = ""
-                    dec_strip_html = (
-                        '<div class="iq-decision-strip iq-dec-strip-consider">'
-                        '<span>⚡</span><span>Decision: <b>Under Review</b></span>'
-                        '</div>'
-                    )
+                    # Fetch current recruiter decision status
+                    if "recruiter_overrides" not in st.session_state:
+                        st.session_state.recruiter_overrides = {}
+                    c_ov = st.session_state.recruiter_overrides.get(p_idx, {})
+                    curr_status = c_ov.get("status", "Shortlisted" if p_score >= 70 else "Under Review")
 
-                sk_badges = "".join(f'<span class="iq-cr-sk" style="font-size:.72rem;">{s}</span>' for s in p_skills)
-                render_html(f"""
+                    if curr_status == "Shortlisted":
+                        card_status_cls = "iq-card-shortlisted"
+                        dec_strip_html = (
+                            '<div class="iq-decision-strip iq-dec-strip-shortlisted">'
+                            '<span>✅</span><span>Decision: <b>Shortlisted for Interview</b></span>'
+                            '</div>'
+                        )
+                    elif curr_status == "Rejected":
+                        card_status_cls = "iq-card-passed"
+                        dec_strip_html = (
+                            '<div class="iq-decision-strip iq-dec-strip-passed">'
+                            '<span>❌</span><span>Decision: <b>Passed (Archived)</b></span>'
+                            '</div>'
+                        )
+                    else:
+                        card_status_cls = ""
+                        dec_strip_html = (
+                            '<div class="iq-decision-strip iq-dec-strip-consider">'
+                            '<span>⚡</span><span>Decision: <b>Under Review</b></span>'
+                            '</div>'
+                        )
+
+                    sk_badges = "".join(f'<span class="iq-cr-sk" style="font-size:.72rem;">{s}</span>' for s in p_skills)
+                    render_html(f"""
 <div class="iq-podium-card {p_c} {card_status_cls}">
   <span class="iq-podium-badge {pb_c}">{p_t}</span>
   <div>
@@ -2509,29 +2629,30 @@ if st.session_state.get("show_full") and st.session_state.results:
   </div>
 </div>
 """)
-                p_b1, p_b2 = st.columns([1, 1])
-                with p_b1:
-                    is_short = (curr_status == "Shortlisted")
-                    lbl_short = "✓ Shortlisted" if is_short else "✅ Shortlist"
-                    short_kind = "primary" if is_short else "secondary"
-                    if st.button(lbl_short, key=f"btn_short_{p_idx}", use_container_width=True, type=short_kind):
-                        if p_idx not in st.session_state.recruiter_overrides:
-                            st.session_state.recruiter_overrides[p_idx] = {}
-                        st.session_state.recruiter_overrides[p_idx]["status"] = "Shortlisted"
-                        st.session_state[f"sel_stat_{p_idx}"] = "Shortlisted"
-                        st.toast(f"🎯 {p_name} added to Shortlist!", icon="✅")
-                        st.rerun()
-                with p_b2:
-                    is_pass = (curr_status == "Rejected")
-                    lbl_pass = "✕ Passed" if is_pass else "❌ Pass"
-                    pass_kind = "primary" if is_pass else "secondary"
-                    if st.button(lbl_pass, key=f"btn_pass_{p_idx}", use_container_width=True, type=pass_kind):
-                        if p_idx not in st.session_state.recruiter_overrides:
-                            st.session_state.recruiter_overrides[p_idx] = {}
-                        st.session_state.recruiter_overrides[p_idx]["status"] = "Rejected"
-                        st.session_state[f"sel_stat_{p_idx}"] = "Rejected"
-                        st.toast(f"📋 {p_name} marked as Pass / Archive", icon="❌")
-                        st.rerun()
+                    p_b1, p_b2 = st.columns([1, 1])
+                    with p_b1:
+                        is_short = (curr_status == "Shortlisted")
+                        lbl_short = "✓ Shortlisted" if is_short else "✅ Shortlist"
+                        short_kind = "primary" if is_short else "secondary"
+                        if st.button(lbl_short, key=f"btn_short_{p_idx}", use_container_width=True, type=short_kind):
+                            if p_idx not in st.session_state.recruiter_overrides:
+                                st.session_state.recruiter_overrides[p_idx] = {}
+                            st.session_state.recruiter_overrides[p_idx]["status"] = "Shortlisted"
+                            st.session_state[f"sel_stat_{p_idx}"] = "Shortlisted"
+                            st.toast(f"🎯 {p_name} added to Shortlist!", icon="✅")
+                            st.rerun()
+                    with p_b2:
+                        is_pass = (curr_status == "Rejected")
+                        lbl_pass = "✕ Passed" if is_pass else "❌ Pass"
+                        pass_kind = "primary" if is_pass else "secondary"
+                        if st.button(lbl_pass, key=f"btn_pass_{p_idx}", use_container_width=True, type=pass_kind):
+                            if p_idx not in st.session_state.recruiter_overrides:
+                                st.session_state.recruiter_overrides[p_idx] = {}
+                            st.session_state.recruiter_overrides[p_idx]["status"] = "Rejected"
+                            st.session_state[f"sel_stat_{p_idx}"] = "Rejected"
+                            st.toast(f"📋 {p_name} marked as Pass / Archive", icon="❌")
+                            st.rerun()
+            render_html("<div style='height:.75rem'></div>")
 
     # ── Score Distribution Visualisation ─────────────────────────────
     with st.expander("📊 Candidate Match Score Visualisation", expanded=True):
@@ -3181,7 +3302,7 @@ render_html(f"""
             <span class="iq-plan-amt">99</span>
             <span class="iq-plan-period">/ month</span>
           </div>
-          <div class="iq-plan-annual-sub">&pound;990 / year &bull; 2 months free</div>
+          <div class="iq-plan-annual-sub">Save 17% with annual billing &bull; 2 months free</div>
         </div>
         <ul class="iq-plan-features">
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>500 CVs per month</b> (1 seat &bull; up to 10 live jobs)</span></li>
@@ -3214,7 +3335,7 @@ render_html(f"""
             <span class="iq-plan-amt">199</span>
             <span class="iq-plan-period">/ month</span>
           </div>
-          <div class="iq-plan-annual-sub">&pound;1,990 / year &bull; 2 months free</div>
+          <div class="iq-plan-annual-sub">Save 17% with annual billing &bull; 2 months free</div>
         </div>
         <ul class="iq-plan-features">
           <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>1,500 CVs per month</b> (5 seats &bull; Unlimited live jobs)</span></li>
@@ -3241,7 +3362,7 @@ render_html(f"""
     </div>
     <div class="iq-term-item">
       <div class="iq-term-title">&#128176; Annual Billing</div>
-      <div class="iq-term-desc">Two months free (&pound;990 or &pound;1,990 a year). Save 17% automatically.</div>
+      <div class="iq-term-desc">Get 2 months free when choosing annual billing. Save 17% automatically.</div>
     </div>
     <div class="iq-term-item">
       <div class="iq-term-title">&#128200; Overage</div>
