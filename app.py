@@ -21,6 +21,13 @@ from utils.pdf_parser import extract_pdf_text
 from utils.docx_parser import extract_docx_text
 from utils.ai_scoring import extract_resume_keywords, rank_candidates_batch, extract_job_context
 from utils.cleanup import delete_uploaded_files
+from utils.account_tracker import (
+    register_or_login_trial,
+    activate_license,
+    can_screen_cvs,
+    record_screening,
+    get_account,
+)
 import altair as alt
 
 
@@ -1740,8 +1747,42 @@ def _exp_subtitle(text: str) -> str:
     return text[:44].rstrip() + ("…" if len(text) > 44 else "")
 
 
+# ─────────────────────────── Session & Client Auth State ─────────────────────
+if "client_auth" not in st.session_state:
+    st.session_state.client_auth = {
+        "logged_in": False,
+        "email": "",
+        "name": "",
+        "company": "",
+        "tier": "guest",  # 'guest' | 'trial' | 'pro' | 'agency'
+        "resumes_used": 0,
+        "max_resumes": 10,
+        "remaining": 10,
+        "license_key": "",
+    }
+
+_is_auth = st.session_state.client_auth.get("logged_in", False)
+_auth_email = st.session_state.client_auth.get("email", "")
+_auth_tier = st.session_state.client_auth.get("tier", "guest")
+_auth_rem = st.session_state.client_auth.get("remaining", 10)
+
+if _is_auth:
+    _badge_text = "Agency (1,500)" if _auth_tier == "agency" else ("Pro (500)" if _auth_tier == "pro" else f"Trial: {_auth_rem}/10 left")
+    _email_display = _auth_email if len(_auth_email) <= 20 else _auth_email[:18] + "…"
+    nav_auth_btn = f'''
+    <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#1E3A8A !important;background:#EFF6FF !important;border:1.5px solid #BFDBFE !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;">
+      <span>🛡️</span><span>{_email_display} ({_badge_text})</span>
+    </a>
+    '''
+else:
+    nav_auth_btn = '''
+    <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#334155 !important;background:#FFFFFF !important;border:1.5px solid #CBD5E1 !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;transition:all .15s ease !important;cursor:pointer !important;">
+      <span>👤</span><span>Client Login</span>
+    </a>
+    '''
+
 # ─────────────────────────── Navbar ──────────────────────────────────────────
-render_html("""
+render_html(f"""
 <div class="iq-nav">
   <div class="iq-logo">Rank<b>CV</b></div>
   <div class="iq-nav-center">
@@ -1753,9 +1794,7 @@ render_html("""
     <a href="#faq" class="iq-nav-link">FAQ</a>
   </div>
   <div style="display:flex;align-items:center;gap:.65rem;flex-shrink:0;">
-    <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#334155 !important;background:#FFFFFF !important;border:1.5px solid #CBD5E1 !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;transition:all .15s ease !important;cursor:pointer !important;">
-      <span>👤</span><span>Client Login</span>
-    </a>
+    {nav_auth_btn}
     <a class="iq-nav-demo" href="#pricing" style="font-size:.84rem !important;font-weight:700 !important;color:#FFFFFF !important;background:#2563EB !important;padding:.44rem 1.15rem !important;border-radius:8px !important;border:none !important;box-shadow:0 2px 8px rgba(37,99,235,.25) !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
       <span>Upgrade &nbsp;&rarr;</span>
     </a>
@@ -1890,105 +1929,135 @@ with sec_c3:
 
 
 # ─────────────────────────── Client Authentication & License Portal ──────────
-if "client_auth" not in st.session_state:
-    st.session_state.client_auth = {
-        "logged_in": False,
-        "email": "",
-        "tier": "free_trial",  # 'free_trial' | 'pro' | 'agency'
-        "quota": 10,
-        "license_key": "",
-    }
-
 render_html('<div id="client-auth"></div>')
 
-# If user is already authenticated with Pro / Agency
-_c_tier = st.session_state.client_auth.get("tier", "free_trial")
+_c_logged_in = st.session_state.client_auth.get("logged_in", False)
+_c_tier = st.session_state.client_auth.get("tier", "guest")
 _c_email = st.session_state.client_auth.get("email", "")
-_c_quota = 500 if _c_tier == "pro" else (1500 if _c_tier == "agency" else 10)
+_c_used = st.session_state.client_auth.get("resumes_used", 0)
+_c_max = st.session_state.client_auth.get("max_resumes", 10)
+_c_rem = max(0, _c_max - _c_used)
 
-if st.session_state.client_auth.get("logged_in") and _c_tier in ["pro", "agency"]:
+if _c_logged_in:
+    # ── Authenticated State (Active Subscriber or Free Trial User) ───────────
+    _plan_name = "Agency Scale-Up Plan (1,500 CVs/mo)" if _c_tier == "agency" else ("Professional Recruiter Plan (500 CVs/mo)" if _c_tier == "pro" else "10 CV Free Trial")
+    _plan_icon = "★" if _c_tier in ["pro", "agency"] else "🎁"
     render_html(f"""
-    <div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:.75rem 1.25rem;margin:0.5rem 0 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
-      <div style="display:flex;align-items:center;gap:.6rem;">
-        <span style="font-size:1.2rem;">🛡️</span>
+    <div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:.85rem 1.25rem;margin:0.5rem 0 0.8rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <span style="font-size:1.4rem;">{_plan_icon}</span>
         <div>
-          <div style="font-size:.88rem;font-weight:800;color:#1E3A8A;">Active Subscription: {'Agency Scale-Up' if _c_tier == 'agency' else 'Professional Recruiter'} Plan</div>
-          <div style="font-size:.76rem;color:#3B82F6;font-weight:600;">Licensed to <b>{_c_email or 'Authorized Client'}</b> &bull; Quota: <b>{_c_quota} CVs/month</b> &bull; Key: <code>{st.session_state.client_auth.get('license_key', '')}</code></div>
+          <div style="font-size:.9rem;font-weight:800;color:#1E3A8A;">Active Plan: {_plan_name}</div>
+          <div style="font-size:.78rem;color:#3B82F6;font-weight:600;">
+            Logged in as <b>{_c_email}</b> &bull; Quota: <b>{_c_rem}/{_c_max} CVs remaining</b> ({_c_used} evaluated)
+          </div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <span style="font-size:.72rem;background:#10B981;color:#fff;font-weight:800;padding:.2rem .6rem;border-radius:99px;">✓ LICENSED</span>
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <span style="font-size:.72rem;background:#10B981;color:#fff;font-weight:800;padding:.22rem .65rem;border-radius:99px;">✓ AUTHENTICATED</span>
       </div>
     </div>
     """)
+    col_so1, col_so2 = st.columns([5, 1])
+    with col_so2:
+        if st.button("🚪 Sign Out", key="btn_signout", use_container_width=True):
+            st.session_state.client_auth = {
+                "logged_in": False,
+                "email": "",
+                "name": "",
+                "company": "",
+                "tier": "guest",
+                "resumes_used": 0,
+                "max_resumes": 10,
+                "remaining": 10,
+                "license_key": "",
+            }
+            st.rerun()
 else:
-    with st.expander("👤 Client Sign In & Subscription License Key Activation", expanded=False):
-        c_tab1, c_tab2 = st.tabs(["🔑 Subscription License Key", "📧 Work Email Free Trial"])
+    # ── Unauthenticated State (Login & Sign-Up Gate) ─────────────────────────
+    _show_exp = st.session_state.get("show_auth_portal", False)
+    with st.expander("👤 Client Sign In & 10 CV Free Trial Activation", expanded=_show_exp):
+        c_tab1, c_tab2 = st.tabs(["📧 Work Email Free Trial (10 CVs)", "🔑 Subscription License Key"])
+        
         with c_tab1:
             st.markdown(
-                "Enter your **Subscription License Key** (sent to your billing email automatically after subscribing on Stripe)."
+                "Enter your **Work Email** to unlock your **10 CV Free Trial** and receive candidate screening summary reports."
             )
-            col_k1, col_k2 = st.columns([2.5, 1])
-            with col_k1:
-                key_input = st.text_input(
-                    "License Key",
-                    placeholder="e.g. RCV-PRO-2026-XXXX or RCV-AGENCY-2026-XXXX",
-                    label_visibility="collapsed",
-                    key="lic_key_input"
-                ).strip()
-            with col_k2:
-                if st.button("Activate License", type="primary", use_container_width=True, key="btn_act_lic"):
-                    if not key_input:
-                        st.error("Please enter a valid license key.")
-                    elif "AGENCY" in key_input.upper():
-                        st.session_state.client_auth = {
-                            "logged_in": True,
-                            "email": "Agency Subscriber",
-                            "tier": "agency",
-                            "quota": 1500,
-                            "license_key": key_input,
-                        }
-                        st.success("🎉 Agency Plan Activated! You now have a 1,500 CV/month quota.")
-                        st.rerun()
-                    elif "PRO" in key_input.upper() or len(key_input) >= 8:
-                        st.session_state.client_auth = {
-                            "logged_in": True,
-                            "email": "Pro Subscriber",
-                            "tier": "pro",
-                            "quota": 500,
-                            "license_key": key_input,
-                        }
-                        st.success("🎉 Professional Plan Activated! You now have a 500 CV/month quota.")
-                        st.rerun()
-                    else:
-                        st.error("Invalid license key format. Please check your Stripe confirmation email.")
-
-        with c_tab2:
-            st.markdown(
-                "Enter your **Work Email** to activate your 10 CV Free Trial and receive candidate screening summary reports."
-            )
-            col_e1, col_e2 = st.columns([2.5, 1])
+            col_e1, col_e2, col_e3 = st.columns([2.2, 1.8, 1.2])
             with col_e1:
                 email_in = st.text_input(
                     "Work Email",
-                    placeholder="hr@yourcompany.co.uk",
-                    label_visibility="collapsed",
+                    placeholder="recruiter@yourcompany.co.uk",
                     key="client_email_input"
                 ).strip()
             with col_e2:
-                if st.button("Start Free Trial", type="secondary", use_container_width=True, key="btn_start_trial"):
-                    if "@" in email_in and "." in email_in:
+                company_in = st.text_input(
+                    "Company Name (Optional)",
+                    placeholder="e.g. Acme Recruitment",
+                    key="client_company_input"
+                ).strip()
+            with col_e3:
+                st.write("")
+                st.write("")
+                if st.button("Unlock 10 CVs →", type="primary", use_container_width=True, key="btn_start_trial"):
+                    ok, msg, user_data = register_or_login_trial(email_in, company=company_in)
+                    if ok:
                         st.session_state.client_auth = {
                             "logged_in": True,
-                            "email": email_in,
-                            "tier": "free_trial",
-                            "quota": 10,
-                            "license_key": "TRIAL-10",
+                            "email": user_data["email"],
+                            "name": user_data.get("name", ""),
+                            "company": user_data.get("company", ""),
+                            "tier": user_data.get("tier", "trial"),
+                            "resumes_used": user_data.get("resumes_used", 0),
+                            "max_resumes": user_data.get("max_resumes", 10),
+                            "remaining": user_data.get("remaining", 10),
+                            "license_key": user_data.get("license_key", ""),
                         }
-                        st.success(f"✅ Free Trial active for {email_in} (10 CVs included).")
+                        st.session_state["show_auth_portal"] = False
+                        st.success(msg)
                         st.rerun()
                     else:
-                        st.error("Please enter a valid work email address.")
+                        st.error(msg)
+
+        with c_tab2:
+            st.markdown(
+                "Enter your **Subscription License Key** (sent to your billing email automatically after subscribing on Stripe)."
+            )
+            col_k1, col_k2, col_k3 = st.columns([2.2, 1.8, 1.2])
+            with col_k1:
+                key_input = st.text_input(
+                    "License Key",
+                    placeholder="e.g. RCV-PRO-2026-UK or RCV-AGENCY-2026-UK",
+                    key="lic_key_input"
+                ).strip()
+            with col_k2:
+                sub_email = st.text_input(
+                    "Billing Email (Optional)",
+                    placeholder="billing@company.co.uk",
+                    key="lic_email_input"
+                ).strip()
+            with col_k3:
+                st.write("")
+                st.write("")
+                if st.button("Activate Plan →", type="primary", use_container_width=True, key="btn_act_lic"):
+                    ok, msg, user_data = activate_license(key_input, email=sub_email)
+                    if ok:
+                        st.session_state.client_auth = {
+                            "logged_in": True,
+                            "email": user_data["email"],
+                            "name": user_data.get("name", ""),
+                            "company": user_data.get("company", ""),
+                            "tier": user_data.get("tier", "pro"),
+                            "resumes_used": user_data.get("resumes_used", 0),
+                            "max_resumes": user_data.get("max_resumes", 500),
+                            "remaining": user_data.get("remaining", 500),
+                            "license_key": user_data.get("license_key", key_input),
+                        }
+                        st.session_state["show_auth_portal"] = False
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
@@ -2122,9 +2191,25 @@ with col1:
 # ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
 with col2:
     with st.container(border=True):
-        _c_tier = st.session_state.client_auth.get("tier", "free_trial")
-        _max_cvs = 1500 if _c_tier == "agency" else (500 if _c_tier == "pro" else 10)
-        _tier_label = "★ Agency Plan (1,500 CVs)" if _c_tier == "agency" else ("★ Pro Plan (500 CVs)" if _c_tier == "pro" else "🎁 10 CVs Free Trial")
+        _c_logged_in = st.session_state.client_auth.get("logged_in", False)
+        _c_tier = st.session_state.client_auth.get("tier", "guest")
+        _c_used = st.session_state.client_auth.get("resumes_used", 0)
+        _c_max = st.session_state.client_auth.get("max_resumes", 10)
+        _c_rem = max(0, _c_max - _c_used) if _c_logged_in else 10
+
+        if _c_logged_in:
+            if _c_tier == "agency":
+                _tier_label = f"★ Agency Plan ({_c_rem} CVs left)"
+                _max_cvs = min(1500, _c_rem)
+            elif _c_tier == "pro":
+                _tier_label = f"★ Pro Plan ({_c_rem} CVs left)"
+                _max_cvs = min(500, _c_rem)
+            else:
+                _tier_label = f"🎁 Free Trial ({_c_rem}/10 CVs left)"
+                _max_cvs = min(10, _c_rem)
+        else:
+            _tier_label = "🎁 10 CVs Free Trial"
+            _max_cvs = 10
 
         render_html(f"""
 <div class="iq-phead">
@@ -2252,6 +2337,12 @@ with col3:
 
         # ── Trigger manual screening ─────────────────────────────────────────
         if run_btn:
+            # 1. Require Login / Free Trial Activation before screening custom CVs
+            if not st.session_state.client_auth.get("logged_in"):
+                st.session_state["show_auth_portal"] = True
+                st.error("🔒 Authentication Required: Please enter your work email to activate your 10 CV Free Trial or enter your Subscriber License Key above before screening custom CVs.")
+                st.rerun()
+
             errors = []
             active_jd = jd_text.strip() if jd_text else ""
             if not active_jd:
@@ -2269,8 +2360,12 @@ with col3:
 
             if total_uploaded == 0:
                 errors.append("Please upload at least one candidate CV in Panel 2.")
-            if total_uploaded > 10:
-                errors.append(f"Free trial limit is 10 CVs per batch. You uploaded {total_uploaded}. Please select up to 10 files.")
+
+            # 2. Check quota against persistent SQLite database
+            client_email = st.session_state.client_auth.get("email", "")
+            can_screen, quota_reason, rem_quota = can_screen_cvs(client_email, total_uploaded)
+            if not can_screen:
+                errors.append(quota_reason)
 
             if errors:
                 for e in errors:
@@ -2338,6 +2433,13 @@ with col3:
                     results, audit_stats = [], {}
 
                 bar.progress(1.0, text="✅ Done!"); _info.empty()
+
+                # Record usage in persistent database
+                record = record_screening(client_email, len(candidates))
+                if record:
+                    st.session_state.client_auth["resumes_used"] = record.get("resumes_used", 0)
+                    st.session_state.client_auth["remaining"] = record.get("remaining", 0)
+
                 st.session_state.results   = results
                 st.session_state.audit_stats = audit_stats
                 # Initialize default human review overrides
@@ -2355,11 +2457,13 @@ with col3:
                         }
                 st.session_state.processed = True
                 st.session_state.show_full = True
-                st.success(f"🎯 Successfully evaluated {len(results)} candidate(s)!")
+                _rem_disp = st.session_state.client_auth.get("remaining", 0)
+                st.success(f"🎯 Successfully evaluated {len(results)} candidate(s)! ({_rem_disp} CV evaluations remaining in your plan)")
 
                 deleted, _ = delete_uploaded_files(saved_paths)
                 if deleted:
                     st.caption(f"🗑️ {len(deleted)} file(s) deleted from server.")
+                st.rerun()
 
         # ── Show results ─────────────────────────────────────────────────────
         if st.session_state.processed and st.session_state.results:
