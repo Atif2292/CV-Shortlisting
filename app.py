@@ -58,6 +58,20 @@ st.set_page_config(
 )
 
 
+# Send direct visits to the raw *.streamlit.app address on to the public domain. When the app is
+# embedded on rankcv.io, window.top is cross-origin, the check throws and nothing happens.
+if config.PUBLIC_URL.startswith("https://"):
+    try:
+        st.html(
+            "<script>(function(){try{var t=window.top;"
+            "if(/\\.streamlit\\.app$/.test(t.location.hostname)){t.location.replace("
+            + json.dumps(config.PUBLIC_URL) + ");}}catch(e){}})();</script>",
+            unsafe_allow_javascript=True,
+        )
+    except TypeError:
+        pass
+
+
 def render_html(html_str: str, container=None):
     """Renders trusted layout HTML. Every dynamic value inside it must go through _e()."""
     clean = "\n".join(ln.strip() for ln in html_str.splitlines() if ln.strip())

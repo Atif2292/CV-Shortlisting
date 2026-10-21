@@ -36,6 +36,9 @@ IS_PRODUCTION = APP_ENV == "production"
 # Also requires the browser to be on localhost (see app.py), so it can never work on a public URL.
 DEV_SHOW_LOGIN_CODE = (not IS_PRODUCTION) and get_setting("DEV_SHOW_LOGIN_CODE", "false").lower() == "true"
 APP_URL = get_setting("APP_URL", "http://localhost:8501")
+# Public address customers use. Direct visits to the *.streamlit.app host are sent here, so
+# Streamlit's own frame (badge, profile avatar) is never shown. Set to "" to turn this off.
+PUBLIC_URL = get_setting("PUBLIC_URL", "https://rankcv.io")
 
 # Used to hash login codes. MUST be set to a long random value in production.
 APP_SECRET = get_setting("APP_SECRET", "dev-only-insecure-secret")
