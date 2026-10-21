@@ -3715,10 +3715,13 @@ _cw = st.session_state.pop("cookie_write", None)
 if _cw is not None:
     _token, _max_age = _cw
     try:
+        # On https the app may run inside the rankcv.io frame (a different site), where browsers only
+        # keep cookies marked SameSite=None + Secure + Partitioned (CHIPS). Locally (http) use Lax.
         st.html(
             "<script>document.cookie = " + json.dumps(f"{_SESSION_COOKIE}=") + " + " + json.dumps(_token)
-            + f' + "; Max-Age={int(_max_age)}; Path=/; SameSite=Strict"'
-            + ' + (location.protocol === "https:" ? "; Secure" : "");</script>',
+            + f' + "; Max-Age={int(_max_age)}; Path=/"'
+            + ' + (location.protocol === "https:" ? "; SameSite=None; Secure; Partitioned" : "; SameSite=Lax");'
+            + "</script>",
             unsafe_allow_javascript=True,
         )
     except TypeError:
