@@ -33,6 +33,7 @@ from utils.account_tracker import (  # noqa: E402
     account_for_session,
     delete_session,
     normalize_email,
+    validate_email,
     refresh_entitlements,
     request_login_code,
     verify_login_code,
@@ -1627,6 +1628,13 @@ button[kind="primary"]:has(div:contains("Passed")) {
 </style>"""
 
 st.markdown(build_css(), unsafe_allow_html=True)
+st.markdown("""<style>
+@media (max-width: 768px) {
+  .iq-nav-email { display:none !important; }
+  .iq-nav > div:last-child { gap:.4rem !important; }
+  .iq-nav > div:last-child a { padding:.4rem .7rem !important; font-size:.78rem !important; white-space:nowrap; }
+}
+</style>""", unsafe_allow_html=True)
 
 
 # ─────────────────────────── Production guard & housekeeping ─────────────────
@@ -1695,6 +1703,7 @@ for _k, _v in [
     ("flash",                []),
     ("auth_pending_email",   ""),
     ("auth_pending_company", ""),
+    ("auth_pending_terms",   False),
     ("auth_codes_sent",      0),
     ("dev_login_code",       ""),
 ]:
@@ -1949,20 +1958,215 @@ _auth_tier = st.session_state.client_auth.get("tier", "guest")
 _auth_rem = st.session_state.client_auth.get("remaining", _TRIAL_Q)
 _auth_max = st.session_state.client_auth.get("max_resumes", _TRIAL_Q)
 
+
+# ─────────────────────────── Log in / Sign up page (?auth=login|signup) ──────
+_AUTH_CSS = """
+<style>
+.stApp { background: #F0F2F5 !important; }
+.rc-auth-top { display:flex; justify-content:space-between; align-items:center; padding:.4rem 0 0; }
+.rc-auth-top a { color:#2563EB !important; font-weight:700; text-decoration:none !important; font-size:.92rem; }
+.rc-auth-hero { padding: 5.5rem 1.5rem 0 0; }
+.rc-auth-logo { font-size:3.7rem; font-weight:900; color:#2563EB; letter-spacing:-2px; line-height:1; }
+.rc-auth-logo span { color:#0F172A; }
+.rc-auth-tag { font-size:1.65rem; line-height:1.32; color:#1C1E21; font-weight:500; margin:1.1rem 0 1.5rem; max-width:520px; }
+.rc-auth-points { list-style:none; padding:0; margin:0; }
+.rc-auth-points li { font-size:1rem; color:#334155; margin:.55rem 0; font-weight:500; }
+.st-key-auth_card { background:#FFFFFF; border-radius:12px; padding:1.5rem 1.3rem 1.4rem !important;
+  box-shadow:0 2px 4px rgba(0,0,0,.10), 0 8px 16px rgba(0,0,0,.10); margin-top:3.2rem; max-width:430px; }
+.st-key-auth_card input { height:52px !important; font-size:1.05rem !important; }
+.rc-auth-title { font-size:1.65rem; font-weight:800; color:#1C1E21; line-height:1.2; }
+.rc-auth-sub { color:#606770; font-size:.95rem; margin:.25rem 0 .9rem; }
+.rc-auth-divider { border-top:1px solid #DADDE1; margin:.9rem 0 1rem; }
+.rc-auth-note { font-size:.8rem; color:#606770; text-align:center; margin-top:.4rem; }
+.st-key-auth_card .st-key-btn_go_signup .stButton > button[kind],
+.st-key-auth_card .st-key-btn_signup .stButton > button[kind] {
+  background:#42B72A !important; color:#FFFFFF !important; border:none !important;
+  box-shadow:none !important; font-size:1.05rem !important; }
+.st-key-auth_card .st-key-btn_go_signup .stButton > button[kind]:hover,
+.st-key-auth_card .st-key-btn_signup .stButton > button[kind]:hover { background:#36A420 !important; }
+.st-key-auth_card .st-key-btn_login_send .stButton > button[kind],
+.st-key-auth_card .st-key-btn_code_continue .stButton > button[kind] { font-size:1.08rem !important; }
+.st-key-auth_card .st-key-btn_go_signup, .st-key-auth_card .st-key-btn_go_signup .stButton { display:flex; justify-content:center; width:100%; }
+.st-key-auth_card .st-key-btn_go_signup .stButton > button[kind] { width:auto !important; padding:.75rem 1.8rem !important; }
+.st-key-auth_card .st-key-auth_links .stButton > button[kind] {
+  background:transparent !important; color:#2563EB !important; box-shadow:none !important; border:none !important;
+  padding:.3rem .2rem !important; font-weight:600 !important; font-size:.9rem !important; }
+.st-key-auth_card .st-key-auth_links .stButton > button[kind]:hover { text-decoration:underline !important; transform:none !important; }
+@media (max-width: 768px) {
+  .rc-auth-hero { padding:1rem 0 0; text-align:center; }
+  .rc-auth-logo { font-size:2.8rem; }
+  .rc-auth-tag { font-size:1.1rem; margin:.6rem auto .4rem; }
+  .rc-auth-points { display:none; }
+  .st-key-auth_card { margin:.6rem auto 0; }
+}
+</style>
+"""
+
+
+def _go_auth(mode: str) -> None:
+    st.query_params["auth"] = mode
+    st.rerun()
+
+
+def _start_code(email: str, *, company: str = "", terms: bool = False, notice: str = "") -> None:
+    """Create a sign-in code, send it, and move the card to the 'enter code' step."""
+    if st.session_state.auth_codes_sent >= 8:
+        st.error("Too many attempts from this browser. Please try again later.")
+        return
+    ok, msg, code = request_login_code(email)
+    if not ok:
+        st.error(msg)
+        return
+    st.session_state.auth_codes_sent += 1
+    addr = normalize_email(email)
+    if email_configured():
+        sent = send_login_code(addr, code)
+    elif _dev_codes_allowed():
+        sent = True
+        st.session_state.dev_login_code = code
+    else:
+        sent = False
+    if not sent:
+        st.error("We couldn't send the email right now. Please try again in a moment.")
+        return
+    st.session_state.auth_pending_email = addr
+    st.session_state.auth_pending_company = company
+    st.session_state.auth_pending_terms = terms
+    if notice:
+        _flash("info", notice)
+    st.rerun()
+
+
+def _render_auth_page(mode: str) -> None:
+    st.markdown(_AUTH_CSS, unsafe_allow_html=True)
+    render_html('<div class="rc-auth-top"><span></span><a href="./" target="_self">&larr; Back to RankCV</a></div>')
+    hero, card = st.columns([1.15, 1], gap="large")
+    with hero:
+        render_html(f"""
+<div class="rc-auth-hero">
+  <div class="rc-auth-logo">Rank<span>CV</span></div>
+  <div class="rc-auth-tag">Screen, score and shortlist CVs in minutes &mdash; with a recruiter in control of every decision.</div>
+  <ul class="rc-auth-points">
+    <li>🎁 {_TRIAL_Q} free CV evaluations &mdash; no card needed</li>
+    <li>🔒 Contact details redacted before AI scoring</li>
+    <li>⚖️ UK GDPR audit report with every shortlist</li>
+  </ul>
+</div>""")
+
+    with card, st.container(key="auth_card"):
+        _show_flash()
+        pending = st.session_state.auth_pending_email
+
+        if pending:
+            # ── Step 2: enter the emailed code ───────────────────────────────
+            render_html(f'<div class="rc-auth-title">Check your email</div>'
+                        f'<div class="rc-auth-sub">Enter the 6-digit code we sent to <b>{_e(pending)}</b>.</div>')
+            if st.session_state.dev_login_code:
+                st.info(f"Development mode: your code is **{st.session_state.dev_login_code}**")
+            code_in = st.text_input("6-digit code", max_chars=6, placeholder="Enter code",
+                                    key="auth_code", label_visibility="collapsed")
+            if st.button("Continue", type="primary", use_container_width=True, key="btn_code_continue"):
+                ok, msg, acc = verify_login_code(pending, code_in,
+                                                 company=st.session_state.auth_pending_company,
+                                                 accept_terms=st.session_state.auth_pending_terms)
+                if ok:
+                    _sign_in(acc)
+                    st.session_state.auth_pending_email = ""
+                    st.session_state.dev_login_code = ""
+                    if "auth" in st.query_params:
+                        del st.query_params["auth"]
+                    _flash("success", f"Welcome! {msg}")
+                    st.rerun()
+                else:
+                    st.error(msg)
+            render_html('<div class="rc-auth-note">Didn\'t get it? Check spam, or resend after a minute.</div>')
+            with st.container(key="auth_links", horizontal=True, horizontal_alignment="center"):
+                if st.button("Resend code", key="btn_code_resend", type="tertiary"):
+                    _start_code(pending, company=st.session_state.auth_pending_company,
+                                terms=st.session_state.auth_pending_terms, notice="A new code is on its way.")
+                if st.button("Use a different email", key="btn_code_change", type="tertiary"):
+                    st.session_state.auth_pending_email = ""
+                    st.session_state.dev_login_code = ""
+                    st.rerun()
+
+        elif mode == "login":
+            # ── Log in ──────────────────────────────────────────────────────
+            render_html('<div class="rc-auth-title">Log in to RankCV</div>'
+                        '<div class="rc-auth-sub">No password needed &mdash; we\'ll email you a 6-digit code.</div>')
+            email_in = st.text_input("Email address", placeholder="Work email address",
+                                     key="auth_email_login", label_visibility="collapsed").strip()
+            if st.button("Send login code", type="primary", use_container_width=True, key="btn_login_send"):
+                ok, msg = validate_email(email_in)
+                if not ok:
+                    st.error(msg)
+                elif not get_account(email_in):
+                    st.session_state["auth_email_signup"] = email_in
+                    _flash("info", "There's no RankCV account for that email yet. Create one below — it's free.")
+                    _go_auth("signup")
+                else:
+                    _start_code(email_in)
+            render_html('<div class="rc-auth-divider"></div>')
+            if st.button("Create new account", key="btn_go_signup"):
+                st.session_state["auth_email_signup"] = email_in
+                _go_auth("signup")
+
+        else:
+            # ── Sign up ─────────────────────────────────────────────────────
+            render_html(f'<div class="rc-auth-title">Create a new account</div>'
+                        f'<div class="rc-auth-sub">It\'s quick and easy &mdash; {_TRIAL_Q} free CV evaluations, '
+                        f'no card needed.</div>')
+            email_in = st.text_input("Work email", placeholder="Work email address",
+                                     key="auth_email_signup", label_visibility="collapsed").strip()
+            company_in = st.text_input("Company", placeholder="Company name (optional)",
+                                       key="auth_company_signup", label_visibility="collapsed").strip()
+            terms_ok = st.checkbox(
+                "I agree to the [Terms](?page=terms) and [Data Processing Agreement](?page=dpa), "
+                "and I've read the [Privacy Notice](?page=privacy).", key="auth_terms_signup")
+            if st.button("Sign Up", type="primary", use_container_width=True, key="btn_signup"):
+                ok, msg = validate_email(email_in)
+                if not ok:
+                    st.error(msg)
+                elif get_account(email_in):
+                    _start_code(email_in, notice="You already have an account — enter the code to log in.")
+                elif not terms_ok:
+                    st.error("Please tick the box to accept the Terms and Data Processing Agreement.")
+                else:
+                    _start_code(email_in, company=company_in, terms=True)
+            render_html('<div class="rc-auth-note">Subscribed through Stripe? Use the email you paid with '
+                        'and your plan is applied automatically.</div>')
+            with st.container(key="auth_links", horizontal=True, horizontal_alignment="center"):
+                if st.button("Already have an account? Log in", key="btn_go_login", type="tertiary"):
+                    st.session_state["auth_email_login"] = email_in
+                    _go_auth("login")
+
+    _render_footer()
+    st.stop()
+
+
+_auth_mode = st.query_params.get("auth", "")
+if _auth_mode in ("login", "signup"):
+    if _is_auth:
+        del st.query_params["auth"]          # already signed in → straight to the app
+    else:
+        _render_auth_page(_auth_mode)
+
 if _is_auth:
     _badge_text = f"{config.PLAN_LABELS.get(_auth_tier, 'Plan')}: {_auth_rem}/{_auth_max} left"
     _email_display = _auth_email if len(_auth_email) <= 20 else _auth_email[:18] + "…"
     nav_auth_btn = f'''
     <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#1E3A8A !important;background:#EFF6FF !important;border:1.5px solid #BFDBFE !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;">
-      <span>🛡️</span><span>{_e(_email_display)} ({_e(_badge_text)})</span>
+      <span>🛡️</span><span class="iq-nav-email">{_e(_email_display)}&nbsp;</span><span>({_e(_badge_text)})</span>
     </a>
     '''
 else:
     nav_auth_btn = '''
-    <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#334155 !important;background:#FFFFFF !important;border:1.5px solid #CBD5E1 !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;transition:all .15s ease !important;cursor:pointer !important;">
-      <span>👤</span><span>Client Login</span>
+    <a href="?auth=login" target="_self" style="font-size:.84rem !important;font-weight:700 !important;color:#2563EB !important;background:#FFFFFF !important;border:1.5px solid #BFDBFE !important;padding:.42rem 1rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
+      Log in
     </a>
     '''
+_nav_cta = (
+    ("#pricing", "Upgrade &nbsp;&rarr;", "") if _is_auth else ("?auth=signup", "Sign up free", ' target="_self"')
+)
 
 # ─────────────────────────── Navbar ──────────────────────────────────────────
 render_html(f"""
@@ -1978,8 +2182,8 @@ render_html(f"""
   </div>
   <div style="display:flex;align-items:center;gap:.65rem;flex-shrink:0;">
     {nav_auth_btn}
-    <a class="iq-nav-demo" href="#pricing" style="font-size:.84rem !important;font-weight:700 !important;color:#FFFFFF !important;background:#2563EB !important;padding:.44rem 1.15rem !important;border-radius:8px !important;border:none !important;box-shadow:0 2px 8px rgba(37,99,235,.25) !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
-      <span>Upgrade &nbsp;&rarr;</span>
+    <a class="iq-nav-demo" href="{_nav_cta[0]}"{_nav_cta[2]} style="font-size:.84rem !important;font-weight:700 !important;color:#FFFFFF !important;background:#2563EB !important;padding:.44rem 1.15rem !important;border-radius:8px !important;border:none !important;box-shadow:0 2px 8px rgba(37,99,235,.25) !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
+      <span>{_nav_cta[1]}</span>
     </a>
   </div>
 </div>
@@ -2146,102 +2350,19 @@ if _c_logged_in:
             _sign_out()
             st.rerun()
 else:
-    _show_exp = st.session_state.get("show_auth_portal", False) or bool(st.session_state.auth_pending_email)
-    with st.expander(f"👤 Sign In / Start Your {_TRIAL_Q} CV Free Trial", expanded=_show_exp):
-        _pending = st.session_state.auth_pending_email
-        if not _pending:
-            st.markdown(
-                f"Enter your **work email** and we'll send you a 6-digit sign-in code. New accounts get "
-                f"**{_TRIAL_Q} free CV evaluations**. "
-                + ("Subscribed through Stripe? Use your billing email and your plan is applied automatically."
-                   if config.AUTO_ACTIVATION else "Already subscribed? Sign in with the email you paid with.")
-            )
-            col_e1, col_e2, col_e3 = st.columns([2.2, 1.8, 1.2])
-            with col_e1:
-                email_in = st.text_input("Work Email", placeholder="recruiter@yourcompany.co.uk",
-                                         key="client_email_input").strip()
-            with col_e2:
-                company_in = st.text_input("Company Name (Optional)", placeholder="e.g. Acme Recruitment",
-                                           key="client_company_input").strip()
-            with col_e3:
-                st.write("")
-                st.write("")
-                send_code = st.button("Email me a code →", type="primary", use_container_width=True,
-                                      key="btn_send_code")
-            if send_code:
-                if st.session_state.auth_codes_sent >= 8:
-                    st.error("Too many sign-in attempts from this browser session. Please try again later.")
-                else:
-                    ok, msg, code = request_login_code(email_in)
-                    if not ok:
-                        st.error(msg)
-                    else:
-                        st.session_state.auth_codes_sent += 1
-                        if email_configured():
-                            sent = send_login_code(normalize_email(email_in), code)
-                        elif _dev_codes_allowed():
-                            sent = True
-                            st.session_state.dev_login_code = code
-                        else:
-                            sent = False
-                        if sent:
-                            st.session_state.auth_pending_email = normalize_email(email_in)
-                            st.session_state.auth_pending_company = company_in
-                            st.session_state.show_auth_portal = True
-                            _flash("success", msg)
-                            st.rerun()
-                        else:
-                            st.error("We couldn't send the sign-in email. Please try again shortly or contact support.")
-        else:
-            _is_new = not get_account(_pending)
-            st.markdown(f"Enter the 6-digit code we sent to **{_pending}**.")
-            if st.session_state.dev_login_code:
-                st.info(f"Development mode (email delivery not configured): your code is "
-                        f"**{st.session_state.dev_login_code}**")
-            col_v1, col_v2 = st.columns([2.2, 3])
-            with col_v1:
-                code_in = st.text_input("Sign-in code", max_chars=6, placeholder="123456", key="auth_code_input")
-            terms_ok = True
-            if _is_new:
-                terms_ok = st.checkbox(
-                    "I agree to the [Terms of Service](?page=terms) and the [Data Processing Agreement](?page=dpa), "
-                    "and I have read the [Privacy Notice](?page=privacy).",
-                    key="auth_terms",
-                )
-            col_b1, col_b2, col_b3, _ = st.columns([1.3, 1.1, 1.3, 2])
-            with col_b1:
-                if st.button("Verify & sign in", type="primary", use_container_width=True, key="btn_verify"):
-                    ok, msg, acc = verify_login_code(_pending, code_in,
-                                                     company=st.session_state.auth_pending_company,
-                                                     accept_terms=terms_ok)
-                    if ok:
-                        _sign_in(acc)
-                        st.session_state.auth_pending_email = ""
-                        st.session_state.dev_login_code = ""
-                        st.session_state.show_auth_portal = False
-                        _flash("success", msg)
-                        st.rerun()
-                    else:
-                        st.error(msg)
-            with col_b2:
-                if st.button("Resend code", use_container_width=True, key="btn_resend"):
-                    ok, msg, code = request_login_code(_pending)
-                    if ok:
-                        if email_configured():
-                            ok = send_login_code(_pending, code)
-                        elif _dev_codes_allowed():
-                            st.session_state.dev_login_code = code
-                        else:
-                            ok = False
-                    if ok:
-                        st.success("A new code is on its way.")
-                    else:
-                        st.error(msg if "wait" in msg or "Too many" in msg else "We couldn't send the email. Please try again shortly.")
-            with col_b3:
-                if st.button("Use a different email", use_container_width=True, key="btn_change_email"):
-                    st.session_state.auth_pending_email = ""
-                    st.session_state.dev_login_code = ""
-                    st.rerun()
+    _cta_txt, _cta_b1, _cta_b2 = st.columns([3.2, 1, 1.1], vertical_alignment="center")
+    with _cta_txt:
+        render_html(f"""
+<div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:.8rem 1.1rem;margin:.4rem 0 .6rem;">
+  <div style="font-size:.95rem;font-weight:800;color:#1E3A8A;">Screen your own CVs</div>
+  <div style="font-size:.82rem;color:#3B82F6;font-weight:600;">Create a free account to get {_TRIAL_Q} CV evaluations &mdash; no card needed.</div>
+</div>""")
+    with _cta_b1:
+        if st.button("Log in", key="cta_login", use_container_width=True):
+            _go_auth("login")
+    with _cta_b2:
+        if st.button("Sign up free", key="cta_signup", type="primary", use_container_width=True):
+            _go_auth("signup")
 
 _show_flash()
 
@@ -2567,9 +2688,9 @@ with col3:
         if run_btn:
             _ca = st.session_state.client_auth
             if not _ca.get("logged_in"):
-                st.session_state["show_auth_portal"] = True
-                _flash("error", f"🔒 Please sign in (or start your {_TRIAL_Q} CV free trial) above before screening your own CVs.")
-                st.rerun()
+                _flash("info", f"Create a free account (or log in) to screen your own CVs — "
+                               f"{_TRIAL_Q} free CV evaluations, no card needed.")
+                _go_auth("signup")
 
             active_jd = (jd_text or "").strip() or st.session_state.get("jd_paste", "").strip()
             if not active_jd:

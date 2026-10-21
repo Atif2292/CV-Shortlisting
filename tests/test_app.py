@@ -64,8 +64,17 @@ def test_home_page_has_no_false_claims():
 def test_screening_requires_sign_in():
     at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
     _button(at, "Screen Candidates").click().run()
-    assert any("Please sign in" in e.value for e in at.error)
+    assert at.query_params.get("auth") == ["signup"] or at.query_params.get("auth") == "signup"
+    assert any(t.label == "Work email" for t in at.text_input)          # sign-up page is showing
     assert not at.session_state.results
+
+
+def test_navbar_and_cta_offer_log_in_and_sign_up():
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
+    nav = next(m.value for m in at.markdown if 'class="iq-nav"' in m.value)
+    assert 'href="?auth=login"' in nav and 'href="?auth=signup"' in nav
+    labels = [b.label for b in at.button]
+    assert "Log in" in labels and "Sign up free" in labels
 
 
 def test_demo_runs_offline_and_defaults_everyone_to_under_review():
@@ -126,10 +135,14 @@ def test_excel_export_neutralises_formulas_and_reports_real_review_state():
     assert "VERIFIED" not in " ".join(audit.astype(str))
 
 
-def _request_code(at, email):
-    next(t for t in at.text_input if t.label == "Work Email").set_value(email)
-    _button(at, "Email me a code").click().run()
-    return at
+def _auth_page(mode):
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT)
+    at.query_params["auth"] = mode
+    return at.run()
+
+
+def _text(at, label):
+    return next(t for t in at.text_input if t.label == label)
 
 
 @pytest.mark.parametrize("dev_flag", [False, True])
@@ -138,43 +151,73 @@ def test_sign_in_code_never_shown_on_screen_outside_localhost(monkeypatch, dev_f
     for name in ("BREVO_API_KEY", "SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD"):
         monkeypatch.setattr(config, name, "")
     monkeypatch.setattr(config, "DEV_SHOW_LOGIN_CODE", dev_flag)
-    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
-    _request_code(at, "lead@acme-recruit.co.uk")
+    at = _auth_page("signup")
+    _text(at, "Work email").set_value("lead@acme-recruit.co.uk")
+    next(c for c in at.checkbox if "Terms" in c.label).check()
+    _button(at, "Sign Up").click().run()
     assert not at.exception, at.exception
-    shown = " ".join(i.value for i in at.info)
-    assert "your code is" not in shown
-    assert any("couldn't send the sign-in email" in e.value for e in at.error)
-    assert not at.session_state.client_auth["logged_in"]
+    assert "Development mode" not in " ".join(i.value for i in at.info)
+    assert any("couldn't send the email" in e.value for e in at.error)
+    assert not at.session_state.auth_pending_email
 
 
-def test_sign_in_flow_with_emailed_code(monkeypatch):
+def test_log_in_with_unknown_email_moves_to_sign_up():
+    at = _auth_page("login")
+    _text(at, "Email address").set_value("nobody@acme-recruit.co.uk")
+    _button(at, "Send login code").click().run()
+    assert any(t.label == "Work email" and t.value == "nobody@acme-recruit.co.uk" for t in at.text_input)
+
+
+def test_sign_up_requires_terms(monkeypatch):
+    import utils.mailer as mailer
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(mailer, "send_login_code", lambda to, code: True)
+    at = _auth_page("signup")
+    _text(at, "Work email").set_value("lead@acme-recruit.co.uk")
+    _button(at, "Sign Up").click().run()
+    assert any("accept the Terms" in e.value for e in at.error)
+    assert not at.session_state.auth_pending_email
+
+
+def test_sign_up_then_log_in_flow(monkeypatch):
     sent = {}
     import utils.mailer as mailer
     monkeypatch.setattr(mailer, "email_configured", lambda: True)
     monkeypatch.setattr(mailer, "send_login_code", lambda to, code: sent.update(to=to, code=code) or True)
-    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
-    _request_code(at, "Lead@Acme-Recruit.co.uk")
+
+    # Sign up
+    at = _auth_page("signup")
+    _text(at, "Work email").set_value("Lead@Acme-Recruit.co.uk")
+    next(c for c in at.checkbox if "Terms" in c.label).check()
+    _button(at, "Sign Up").click().run()
     assert sent["to"] == "lead@acme-recruit.co.uk"
     assert at.session_state.auth_pending_email == "lead@acme-recruit.co.uk"
 
-    # Wrong code first
-    next(t for t in at.text_input if t.label == "Sign-in code").set_value("000000" if sent["code"] != "000000" else "111111")
-    next(c for c in at.checkbox if "Terms of Service" in c.label).check()
-    _button(at, "Verify & sign in").click().run()
+    wrong = "000000" if sent["code"] != "000000" else "111111"
+    _text(at, "6-digit code").set_value(wrong)
+    _button(at, "Continue").click().run()
     assert any("Incorrect code" in e.value for e in at.error)
-    assert not at.session_state.client_auth["logged_in"]
 
-    # Correct code
-    next(t for t in at.text_input if t.label == "Sign-in code").set_value(sent["code"])
-    _button(at, "Verify & sign in").click().run()
+    _text(at, "6-digit code").set_value(sent["code"])
+    _button(at, "Continue").click().run()
     assert not at.exception, at.exception
     auth = at.session_state.client_auth
     assert auth["logged_in"] and auth["email"] == "lead@acme-recruit.co.uk" and auth["remaining"] == 10
-    assert at.session_state.session_token
-    assert at_mod.account_for_session(at.session_state.session_token)["email"] == "lead@acme-recruit.co.uk"
-
-    # Sign out removes the server-side session
+    assert "auth" not in at.query_params
     token = at.session_state.session_token
+    assert at_mod.account_for_session(token)["email"] == "lead@acme-recruit.co.uk"
+
+    # Sign out kills the server-side session
     _button(at, "Sign Out").click().run()
     assert not at.session_state.client_auth["logged_in"]
     assert at_mod.account_for_session(token) == {}
+
+    # Log back in (existing account: no terms box)
+    at2 = _auth_page("login")
+    _text(at2, "Email address").set_value("lead@acme-recruit.co.uk")
+    real_time = at_mod._now
+    monkeypatch.setattr(at_mod, "_now", lambda: real_time() + __import__("datetime").timedelta(seconds=61))
+    _button(at2, "Send login code").click().run()
+    _text(at2, "6-digit code").set_value(sent["code"])
+    _button(at2, "Continue").click().run()
+    assert at2.session_state.client_auth["logged_in"]

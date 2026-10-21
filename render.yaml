@@ -1,0 +1,23 @@
+# One-click deploy on Render (free plan, EU region, no Streamlit/GitHub branding).
+# Render dashboard → New → Blueprint → pick this repo → fill in the secret values.
+services:
+  - type: web
+    name: rankcv
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /_stcore/health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_SECRET
+        generateValue: true
+      - key: HOSTING_PROVIDER
+        value: Render Services, Inc. (Frankfurt, EU)
+      - key: BREVO_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
