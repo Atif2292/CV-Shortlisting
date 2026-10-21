@@ -149,21 +149,54 @@ def test_stripe_outage_keeps_existing_plan(monkeypatch):
 
 def test_production_config_rejects_unsafe_defaults(monkeypatch):
     monkeypatch.setattr(config, "IS_PRODUCTION", True)
+    for name in ("BREVO_API_KEY", "SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "EMAIL_FROM"):
+        monkeypatch.setattr(config, name, "")
     errs = " ".join(config.production_config_errors())
-    for needle in ("APP_SECRET", "BREVO_API_KEY", "STRIPE_SECRET_KEY", "COMPANY_NAME", "SUPPORT_EMAIL"):
-        assert needle in errs
-    # The free-tier SQLite database is allowed in production, but flagged
-    assert "DATABASE_URL" not in errs
-    assert any("SQLite" in w for w in config.production_config_warnings())
+    assert "APP_SECRET" in errs and "BREVO_API_KEY" in errs
 
 
-def test_production_config_passes_when_essentials_set(monkeypatch):
+def test_production_needs_only_secret_and_email(monkeypatch):
     monkeypatch.setattr(config, "IS_PRODUCTION", True)
-    for name, val in [("APP_SECRET", "x" * 40), ("EMAIL_FROM", ""),
-                      ("BREVO_API_KEY", "xkeysib-test"), ("STRIPE_SECRET_KEY", "rk_live_x"),
-                      ("COMPANY_NAME", "Acme Ltd"), ("SUPPORT_EMAIL", "help@acme.co.uk")]:
-        monkeypatch.setattr(config, name, val)
+    monkeypatch.setattr(config, "APP_SECRET", "x" * 40)
+    monkeypatch.setattr(config, "BREVO_API_KEY", "xkeysib-test")
+    for name in ("STRIPE_SECRET_KEY", "EMAIL_FROM", "SUPPORT_EMAIL", "COMPANY_NUMBER"):
+        monkeypatch.setattr(config, name, "")
     assert config.production_config_errors() == []
+    warns = " ".join(config.production_config_warnings())
+    assert "PAID_CUSTOMERS" in warns and "SQLite" in warns
+
+
+def test_paid_customers_setting_is_parsed():
+    parsed = config._parse_paid_customers(" Jane@Agency.co.uk = agency ; bob@firm.co.uk=pro, bad, x@y.z=gold")
+    assert parsed == {"jane@agency.co.uk": "agency", "bob@firm.co.uk": "pro"}
+
+
+def test_listed_customer_gets_plan_and_loses_it_when_removed(monkeypatch):
+    _sign_in("buyer@acme.co.uk")
+    assert at.reserve_quota("buyer@acme.co.uk", 4)[0]
+    monkeypatch.setattr(config, "PAID_CUSTOMERS", {"buyer+billing@acme.co.uk": "pro"})
+    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
+    assert acc["tier"] == "pro" and acc["remaining"] == config.PLAN_QUOTAS["pro"]
+    assert at.reserve_quota("buyer@acme.co.uk", 100)[0]
+    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
+    assert acc["resumes_used"] == 100                       # not reset on every refresh
+
+    real_now = at._now
+    monkeypatch.setattr(at, "_now", lambda: real_now() + timedelta(days=31))
+    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
+    assert acc["resumes_used"] == 0                         # new 30-day period
+
+    monkeypatch.setattr(config, "PAID_CUSTOMERS", {})
+    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
+    assert acc["tier"] == "trial" and acc["remaining"] == 0
+
+
+def test_listed_customer_with_free_webmail_can_sign_in(monkeypatch):
+    monkeypatch.setattr(config, "PAID_CUSTOMERS", {"owner@gmail.com": "agency"})
+    ok, _, code = at.request_login_code("owner@gmail.com")
+    assert ok
+    ok, _, acc = at.verify_login_code("owner@gmail.com", code, accept_terms=True)
+    assert ok and acc["tier"] == "agency"
 
 
 def test_sessions_survive_lookup_and_sign_out():

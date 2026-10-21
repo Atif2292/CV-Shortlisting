@@ -306,6 +306,31 @@ def _roll_manual_period(conn, row: Dict[str, Any], now: datetime) -> None:
             resumes_used=0, period_start=now, period_end=now + MANUAL_PERIOD))
 
 
+def listed_tier(email: str) -> Optional[str]:
+    """Plan for an email in the PAID_CUSTOMERS setting (manual activation), else None."""
+    key = canonical_email(email)
+    for addr, tier in config.PAID_CUSTOMERS.items():
+        if canonical_email(addr) == key:
+            return tier
+    return None
+
+
+def _apply_listed(conn, row: Dict[str, Any], tier: Optional[str], now: datetime) -> None:
+    key = row["email"]
+    if tier:
+        vals: Dict[str, Any] = {"tier": tier, "plan_source": "listed", "max_resumes": config.PLAN_QUOTAS[tier]}
+        end = _aware(row.get("period_end"))
+        if row.get("plan_source") != "listed" or row.get("tier") != tier or not end or now >= end:
+            # New activation, plan change or a new 30-day period → fresh allowance
+            vals.update(resumes_used=0, period_start=now, period_end=now + MANUAL_PERIOD)
+        conn.execute(update(accounts).where(accounts.c.email == key).values(**vals))
+    elif row.get("plan_source") == "listed":
+        # Removed from PAID_CUSTOMERS → back to the (already used) trial allowance
+        conn.execute(update(accounts).where(accounts.c.email == key).values(
+            tier="trial", plan_source="trial", max_resumes=config.PLAN_QUOTAS["trial"],
+            resumes_used=config.PLAN_QUOTAS["trial"], period_start=None, period_end=None))
+
+
 def refresh_entitlements(email: str, force: bool = False) -> Tuple[Dict[str, Any], str]:
     """Re-check the plan (Stripe at most every 15 min unless forced). Returns (account, warning)."""
     key = canonical_email(email)
@@ -316,7 +341,13 @@ def refresh_entitlements(email: str, force: bool = False) -> Tuple[Dict[str, Any
         if not row:
             return {}, ""
         row = dict(row)
-        if row.get("plan_source") == "manual":
+        tier = listed_tier(key)
+        if tier or row.get("plan_source") == "listed":
+            _apply_listed(conn, row, tier, now)
+            row = dict(conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first())
+        if row.get("plan_source") == "listed":
+            pass
+        elif row.get("plan_source") == "manual":
             _roll_manual_period(conn, row, now)
         else:
             last = _aware(row.get("last_stripe_sync"))
@@ -347,7 +378,7 @@ def request_login_code(email: str) -> Tuple[bool, str, Optional[str]]:
 
     if config.TRIAL_REQUIRE_WORK_EMAIL and domain in FREE_EMAIL_DOMAINS and not get_account(key):
         try:
-            paying = lookup_stripe_plan(addr) is not None
+            paying = listed_tier(addr) is not None or lookup_stripe_plan(addr) is not None
         except RuntimeError:
             paying = False
         if not paying:

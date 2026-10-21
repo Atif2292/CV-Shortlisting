@@ -74,6 +74,25 @@ STRIPE_AGENCY_URL = get_setting("STRIPE_AGENCY_URL", "https://buy.stripe.com/4gM
 # Stripe no-code customer portal login link (Billing → Customer portal)
 STRIPE_PORTAL_URL = get_setting("STRIPE_PORTAL_URL")
 
+
+def _parse_paid_customers(raw: str) -> dict:
+    """'jane@agency.co.uk=agency, bob@firm.co.uk=pro' → {'jane@agency.co.uk': 'agency', ...}"""
+    out = {}
+    for item in raw.replace("\n", ",").replace(";", ",").split(","):
+        if "=" not in item:
+            continue
+        email, tier = (x.strip().lower() for x in item.split("=", 1))
+        if email and tier in ("pro", "agency"):
+            out[email] = tier
+    return out
+
+
+# Manually activated paid customers (used when there's no Stripe key, or for invoiced clients).
+# Set in Streamlit Secrets, e.g.  PAID_CUSTOMERS = "jane@agency.co.uk=agency, bob@firm.co.uk=pro"
+PAID_CUSTOMERS = _parse_paid_customers(get_setting("PAID_CUSTOMERS"))
+# Plans switch on automatically after payment only when the app can read Stripe
+AUTO_ACTIVATION = bool(STRIPE_SECRET_KEY)
+
 # ── Email (login codes) ──────────────────────────────────────────────────────
 SMTP_HOST = get_setting("SMTP_HOST")
 SMTP_PORT = _int_setting("SMTP_PORT", 587)
@@ -83,12 +102,13 @@ EMAIL_FROM = get_setting("EMAIL_FROM", SMTP_USER)
 BREVO_API_KEY = get_setting("BREVO_API_KEY")
 
 # ── Business details (shown in footer and legal pages) ───────────────────────
-COMPANY_NAME = get_setting("COMPANY_NAME", "[Company or trading name]")
+COMPANY_NAME = get_setting("COMPANY_NAME", "RankCV")
 COMPANY_NUMBER = get_setting("COMPANY_NUMBER")        # optional (sole traders have none)
 COMPANY_ADDRESS = get_setting("COMPANY_ADDRESS")      # optional but recommended
 ICO_REG_NUMBER = get_setting("ICO_REG_NUMBER")        # optional until registered with the ICO
-SUPPORT_EMAIL = get_setting("SUPPORT_EMAIL", "[support email]")
+SUPPORT_EMAIL = get_setting("SUPPORT_EMAIL")          # optional; WhatsApp is shown if unset
 WHATSAPP_URL = get_setting("WHATSAPP_URL", "https://wa.me/447379975532")
+CONTACT = SUPPORT_EMAIL or f"WhatsApp {WHATSAPP_URL}"
 HOSTING_PROVIDER = get_setting("HOSTING_PROVIDER", "Streamlit Community Cloud (Snowflake Inc.), United States")
 DATABASE_PROVIDER = get_setting("DATABASE_PROVIDER", "Stored on our application host (see hosting provider)")
 EMAIL_PROVIDER = get_setting(
@@ -111,11 +131,6 @@ def production_config_errors() -> list:
     if not (BREVO_API_KEY or (SMTP_HOST and SMTP_USER and SMTP_PASSWORD and EMAIL_FROM)):
         errors.append("Sign-in emails can't be sent: set BREVO_API_KEY "
                       "(or SMTP_HOST/SMTP_USER/SMTP_PASSWORD).")
-    if not STRIPE_SECRET_KEY:
-        errors.append("STRIPE_SECRET_KEY is required so paid subscriptions can be verified.")
-    for name, val in [("COMPANY_NAME", COMPANY_NAME), ("SUPPORT_EMAIL", SUPPORT_EMAIL)]:
-        if val.startswith("["):
-            errors.append(f"{name} must be set (shown in the footer and legal pages).")
     return errors
 
 
@@ -124,14 +139,13 @@ def production_config_warnings() -> list:
     warnings = []
     if not IS_PRODUCTION:
         return warnings
+    if not get_setting("OPENAI_API_KEY"):
+        warnings.append("OPENAI_API_KEY not set: Cloud AI runs fall back to the Private Engine.")
+    if not STRIPE_SECRET_KEY:
+        warnings.append("STRIPE_SECRET_KEY not set: activate paying customers by adding them to PAID_CUSTOMERS.")
     if DATABASE_URL.startswith("sqlite"):
         warnings.append("Using SQLite on the app server: usage counts and sign-in sessions reset when the "
-                        "host restarts. Paid plans are re-read from Stripe, but manual grants are lost.")
-    if not (STRIPE_PRICES_PRO and STRIPE_PRICES_AGENCY):
-        warnings.append("STRIPE_PRICE_IDS_* not set: plans are detected from the monthly price amount.")
-    for name, val in [("COMPANY_ADDRESS", COMPANY_ADDRESS), ("ICO_REG_NUMBER", ICO_REG_NUMBER)]:
-        if not val:
-            warnings.append(f"{name} is not set.")
-    if not STRIPE_PORTAL_URL:
-        warnings.append("STRIPE_PORTAL_URL not set: customers can't manage or cancel billing themselves.")
+                        "host restarts. Paid plans come back from Stripe / PAID_CUSTOMERS.")
+    if not SUPPORT_EMAIL:
+        warnings.append("SUPPORT_EMAIL not set: legal pages show the WhatsApp link as the contact.")
     return warnings

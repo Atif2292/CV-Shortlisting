@@ -27,7 +27,7 @@ def _company_block() -> str:
     text += "."
     if c.ICO_REG_NUMBER:
         text += f" ICO registration number: {c.ICO_REG_NUMBER}."
-    return text + f" Contact: {c.SUPPORT_EMAIL}."
+    return text + f" Contact: {c.CONTACT}."
 
 
 def _privacy() -> str:
@@ -97,7 +97,7 @@ codes; access to production systems limited to authorised staff.
 ## 5. Your rights
 
 You can ask to access, correct, delete or export your account data, or object to processing,
-by emailing {c.SUPPORT_EMAIL}. Candidates should contact the hiring organisation (the
+by contacting us ({c.CONTACT}). Candidates should contact the hiring organisation (the
 controller) first; we will help that organisation respond. You can also complain to the
 Information Commissioner's Office (ico.org.uk).
 """
@@ -127,7 +127,7 @@ These terms are between you (the business using RankCV) and {_company_block()}
    the number of CV evaluations shown on the pricing page per billing period. Unused
    evaluations do not roll over. Screening pauses when you reach your limit; you can upgrade
    at any time.
-5. **Cancellation.** You can cancel at any time from the billing portal. Your plan stays active
+5. **Cancellation.** You can cancel at any time from the billing portal or by contacting us. Your plan stays active
    until the end of the paid period. Fees already paid are non-refundable except where the law
    requires otherwise.
 6. **Acceptable use.** Do not upload content you have no right to process, attempt to bypass
@@ -184,7 +184,7 @@ The Processor will:
 International transfers to sub-processors outside the UK are made under the UK
 International Data Transfer Addendum or the UK Extension to the EU–US Data Privacy Framework.
 
-Contact for data-protection matters: {c.SUPPORT_EMAIL}.
+Contact for data-protection matters: {c.CONTACT}.
 """
 
 
@@ -229,7 +229,7 @@ RankCV does not use advertising or analytics cookies, so we don't ask for cookie
 - **Google Fonts:** your browser downloads the Inter font from Google, which receives your IP
   address. Google Fonts does not set cookies.
 
-Questions: {c.SUPPORT_EMAIL}.
+Questions: {c.CONTACT}.
 """
 
 

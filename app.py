@@ -1660,7 +1660,7 @@ def _render_footer() -> None:
         parts.append(config.COMPANY_ADDRESS)
     if config.ICO_REG_NUMBER:
         parts.append(f"ICO registration {config.ICO_REG_NUMBER}")
-    parts.append(config.SUPPORT_EMAIL)
+    parts.append(config.CONTACT)
     details = " &middot; ".join(_e(x) for x in parts)
     render_html(f"""
 <div class="iq-foot">
@@ -2152,8 +2152,9 @@ else:
         if not _pending:
             st.markdown(
                 f"Enter your **work email** and we'll send you a 6-digit sign-in code. New accounts get "
-                f"**{_TRIAL_Q} free CV evaluations**. Subscribed through Stripe? Use your billing email "
-                f"and your plan is applied automatically."
+                f"**{_TRIAL_Q} free CV evaluations**. "
+                + ("Subscribed through Stripe? Use your billing email and your plan is applied automatically."
+                   if config.AUTO_ACTIVATION else "Already subscribed? Sign in with the email you paid with.")
             )
             col_e1, col_e2, col_e3 = st.columns([2.2, 1.8, 1.2])
             with col_e1:
@@ -3392,13 +3393,31 @@ _stripe_pro_url = _checkout_url(config.STRIPE_PRO_URL)
 _stripe_agency_url = _checkout_url(config.STRIPE_AGENCY_URL)
 _PRO_Q, _AG_Q = config.PLAN_QUOTAS["pro"], config.PLAN_QUOTAS["agency"]
 _PRO_P, _AG_P = config.PLAN_PRICES_GBP["pro"], config.PLAN_PRICES_GBP["agency"]
+_ACTIVATION = "Instant activation" if config.AUTO_ACTIVATION else "Fast activation"
+_ACTIVATION_DESC = (
+    "Subscribe with your work email, then sign in with the same email &mdash; your plan applies automatically."
+    if config.AUTO_ACTIVATION else
+    "Subscribe with your work email. We switch your plan on as soon as your payment comes through &mdash; "
+    "sign in with the same email."
+)
+_SUBSCRIBE_FAQ = (
+    "Choose a plan above and pay through Stripe using your work email. "
+    + ("Then sign in to RankCV with that same email and your plan is applied automatically. "
+       if config.AUTO_ACTIVATION else
+       "We switch your plan on as soon as your payment comes through; then sign in to RankCV with that same email. ")
+    + ("You can update your card, switch plans or cancel at any time from the billing portal "
+       "(<i>Manage billing</i> once you're signed in)"
+       if config.STRIPE_PORTAL_URL else
+       f"To change plan or cancel, contact us ({_e(config.CONTACT)})")
+    + "; cancellations take effect at the end of the paid month."
+)
 
 render_html(f"""
 <div id="pricing" class="iq-price-sec">
   <div class="iq-price-hdr">
     <div class="iq-price-eye">Transparent Pricing</div>
     <div class="iq-price-h2">Simple Plans for Fast-Moving Hiring Teams</div>
-    <div class="iq-price-sub">Instant activation. Cancel anytime. Human-review workflow and UK GDPR audit sheet included in every plan.</div>
+    <div class="iq-price-sub">{_ACTIVATION}. Cancel anytime. Human-review workflow and UK GDPR audit sheet included in every plan.</div>
   </div>
 
   <div class="iq-price-grid">
@@ -3421,7 +3440,7 @@ render_html(f"""
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Cloud AI or Private Engine</b> &mdash; optional own OpenAI key</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top candidate podium</b> &amp; Excel shortlist report</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR Article 22</b> review workflow &amp; audit sheet</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard email support</b> &amp; instant activation</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard support</b> &amp; {_ACTIVATION.lower()}</span></li>
         </ul>
       </div>
       <div>
@@ -3454,7 +3473,7 @@ render_html(f"""
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Everything in Professional</b> included</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Excel export</b> ready to import into any ATS</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Use your own OpenAI account</b> (optional)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority email support</b> &amp; 1 guided setup session</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority support</b> &amp; 1 guided setup session</span></li>
         </ul>
       </div>
       <div>
@@ -3473,8 +3492,8 @@ render_html(f"""
       <div class="iq-term-desc">{_TRIAL_Q} CV evaluations, no card needed. Full scoring &amp; audit reports.</div>
     </div>
     <div class="iq-term-item">
-      <div class="iq-term-title">&#128273; Instant Activation</div>
-      <div class="iq-term-desc">Subscribe with your work email, then sign in with the same email &mdash; your plan applies automatically.</div>
+      <div class="iq-term-title">&#128273; {_ACTIVATION.title()}</div>
+      <div class="iq-term-desc">{_ACTIVATION_DESC}</div>
     </div>
     <div class="iq-term-item">
       <div class="iq-term-title">&#128200; Monthly Quota</div>
@@ -3519,10 +3538,7 @@ _faq_items = [
      f"screened in batches of up to {config.MAX_BATCH_CVS}. Your allowance resets at the start of each billing period. "
      "When you reach it, screening pauses until the next period or until you upgrade. Only CVs that are actually "
      "scored count towards your allowance."),
-    ("How do I subscribe, cancel or change plan?",
-     "Choose a plan above and pay through Stripe using your work email. Then sign in to RankCV with that same email "
-     "and your plan is applied automatically. You can update your card, switch plans or cancel at any time from the "
-     "billing portal (<i>Manage billing</i> once you're signed in); cancellations take effect at the end of the paid month."),
+    ("How do I subscribe, cancel or change plan?", _SUBSCRIBE_FAQ),
     ("What is the Founding Customer price guarantee?",
      "The <b>first 20 customers</b> who subscribe to either Professional or Agency keep their introductory "
      "subscription price for a full <b>12 months</b>."),
