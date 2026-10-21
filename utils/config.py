@@ -75,21 +75,6 @@ STRIPE_AGENCY_URL = get_setting("STRIPE_AGENCY_URL", "https://buy.stripe.com/4gM
 STRIPE_PORTAL_URL = get_setting("STRIPE_PORTAL_URL")
 
 
-def _parse_paid_customers(raw: str) -> dict:
-    """'jane@agency.co.uk=agency, bob@firm.co.uk=pro' → {'jane@agency.co.uk': 'agency', ...}"""
-    out = {}
-    for item in raw.replace("\n", ",").replace(";", ",").split(","):
-        if "=" not in item:
-            continue
-        email, tier = (x.strip().lower() for x in item.split("=", 1))
-        if email and tier in ("pro", "agency"):
-            out[email] = tier
-    return out
-
-
-# Manually activated paid customers (used when there's no Stripe key, or for invoiced clients).
-# Set in Streamlit Secrets, e.g.  PAID_CUSTOMERS = "jane@agency.co.uk=agency, bob@firm.co.uk=pro"
-PAID_CUSTOMERS = _parse_paid_customers(get_setting("PAID_CUSTOMERS"))
 # Plans switch on automatically after payment only when the app can read Stripe
 AUTO_ACTIVATION = bool(STRIPE_SECRET_KEY)
 
@@ -131,6 +116,8 @@ def production_config_errors() -> list:
     if not (BREVO_API_KEY or (SMTP_HOST and SMTP_USER and SMTP_PASSWORD and EMAIL_FROM)):
         errors.append("Sign-in emails can't be sent: set BREVO_API_KEY "
                       "(or SMTP_HOST/SMTP_USER/SMTP_PASSWORD).")
+    if not STRIPE_SECRET_KEY:
+        errors.append("STRIPE_SECRET_KEY is required so paid plans activate automatically after payment.")
     return errors
 
 
@@ -141,11 +128,9 @@ def production_config_warnings() -> list:
         return warnings
     if not get_setting("OPENAI_API_KEY"):
         warnings.append("OPENAI_API_KEY not set: Cloud AI runs fall back to the Private Engine.")
-    if not STRIPE_SECRET_KEY:
-        warnings.append("STRIPE_SECRET_KEY not set: activate paying customers by adding them to PAID_CUSTOMERS.")
     if DATABASE_URL.startswith("sqlite"):
         warnings.append("Using SQLite on the app server: usage counts and sign-in sessions reset when the "
-                        "host restarts. Paid plans come back from Stripe / PAID_CUSTOMERS.")
+                        "host restarts. Paid plans are re-read from Stripe.")
     if not SUPPORT_EMAIL:
         warnings.append("SUPPORT_EMAIL not set: legal pages show the WhatsApp link as the contact.")
     return warnings

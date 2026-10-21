@@ -60,8 +60,8 @@ python -m pytest -q
 1. In the Streamlit Cloud dashboard, the app must run **Python 3.11 or newer** (3.12 recommended).
    The Python version can't be changed on an existing app: if it's older, delete the app and
    redeploy it from this repo, choosing 3.12 under *Advanced settings*.
-2. Open *Settings → Secrets* and paste `.streamlit/secrets.toml.example`, filled in. Only four
-   values are required: `APP_SECRET`, `BREVO_API_KEY`, `OPENAI_API_KEY` and `APP_ENV = "production"`.
+2. Open *Settings → Secrets* and paste `.streamlit/secrets.toml.example`, filled in. Required:
+   `APP_SECRET`, `BREVO_API_KEY`, `STRIPE_SECRET_KEY`, `OPENAI_API_KEY` and `APP_ENV = "production"`.
    If one is missing the app shows exactly which instead of starting.
 3. `packages.txt` installs `antiword` so legacy `.doc` CVs can be read.
 4. Database: by default accounts live in a SQLite file on the app server. On the free tier that
@@ -71,16 +71,15 @@ python -m pytest -q
 5. The *Keep-alive & uptime check* workflow pings the app every 10 minutes and fails (GitHub
    emails you) if it's down.
 
-### Paying customers
+### Paying customers (automatic via Stripe)
 
-- **Without a Stripe key (default):** when Stripe emails you about a new subscription, add the
-  customer to Secrets, e.g. `PAID_CUSTOMERS = "jane@agency.co.uk=agency, bob@firm.co.uk=pro"`,
-  and save. Their plan applies the next time they sign in (allowance resets every 30 days).
-  Remove them when they cancel.
-- **With `STRIPE_SECRET_KEY`** (restricted key, read access to Customers and Subscriptions):
-  plans switch on automatically after payment and are re-checked every 15 minutes. Plans are
-  matched by GBP monthly amount (≥ £50 → Pro, ≥ £149 → Agency) unless `STRIPE_PRICE_IDS_PRO` /
-  `STRIPE_PRICE_IDS_AGENCY` are set.
+- Create a Stripe **restricted key** with **Read** access to **Customers**, **Subscriptions** and
+  **Payment Links** → `STRIPE_SECRET_KEY` (live key for real customers).
+- The app reads the prices sold by the two Payment Links (`STRIPE_PRO_URL`, `STRIPE_AGENCY_URL`),
+  so a subscription to the Pro link gives Pro and the Agency link gives Agency, in any currency.
+  Nothing else on your Stripe account grants a plan.
+- Customers subscribe, then sign in with the same email; the plan applies immediately and is
+  re-checked every 15 minutes (renewals reset the monthly allowance; cancellations end it).
 - Set `STRIPE_PORTAL_URL` (Customer Portal login link) so customers can cancel or update cards
   themselves.
 

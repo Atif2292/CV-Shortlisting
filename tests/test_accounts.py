@@ -152,51 +152,69 @@ def test_production_config_rejects_unsafe_defaults(monkeypatch):
     for name in ("BREVO_API_KEY", "SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "EMAIL_FROM"):
         monkeypatch.setattr(config, name, "")
     errs = " ".join(config.production_config_errors())
-    assert "APP_SECRET" in errs and "BREVO_API_KEY" in errs
+    assert "APP_SECRET" in errs and "BREVO_API_KEY" in errs and "STRIPE_SECRET_KEY" in errs
 
 
-def test_production_needs_only_secret_and_email(monkeypatch):
+def test_production_needs_secret_email_and_stripe(monkeypatch):
     monkeypatch.setattr(config, "IS_PRODUCTION", True)
     monkeypatch.setattr(config, "APP_SECRET", "x" * 40)
     monkeypatch.setattr(config, "BREVO_API_KEY", "xkeysib-test")
-    for name in ("STRIPE_SECRET_KEY", "EMAIL_FROM", "SUPPORT_EMAIL", "COMPANY_NUMBER"):
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "rk_live_x")
+    for name in ("EMAIL_FROM", "SUPPORT_EMAIL", "COMPANY_NUMBER"):
         monkeypatch.setattr(config, name, "")
     assert config.production_config_errors() == []
-    warns = " ".join(config.production_config_warnings())
-    assert "PAID_CUSTOMERS" in warns and "SQLite" in warns
+    assert any("SQLite" in w for w in config.production_config_warnings())
 
 
-def test_paid_customers_setting_is_parsed():
-    parsed = config._parse_paid_customers(" Jane@Agency.co.uk = agency ; bob@firm.co.uk=pro, bad, x@y.z=gold")
-    assert parsed == {"jane@agency.co.uk": "agency", "bob@firm.co.uk": "pro"}
+def test_plan_comes_from_payment_link_prices(monkeypatch):
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "rk_test_dummy")
+    monkeypatch.setattr(config, "STRIPE_PRICES_PRO", [])
+    monkeypatch.setattr(config, "STRIPE_PRICES_AGENCY", [])
+    monkeypatch.setattr(at, "_payment_link_prices", lambda: {"price_inr_pro": "pro", "price_inr_ag": "agency"})
+    assert at._tier_for_price({"id": "price_inr_pro", "unit_amount": 999900, "currency": "inr"}) == "pro"
+    assert at._tier_for_price({"id": "price_inr_ag", "unit_amount": 1, "currency": "inr"}) == "agency"
+    # Anything else sold on the same Stripe account never grants a plan
+    other = {"id": "price_other", "unit_amount": 19900, "currency": "gbp", "recurring": {"interval": "month"}}
+    assert at._tier_for_price(other) is None
 
 
-def test_listed_customer_gets_plan_and_loses_it_when_removed(monkeypatch):
-    _sign_in("buyer@acme.co.uk")
-    assert at.reserve_quota("buyer@acme.co.uk", 4)[0]
-    monkeypatch.setattr(config, "PAID_CUSTOMERS", {"buyer+billing@acme.co.uk": "pro"})
-    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
-    assert acc["tier"] == "pro" and acc["remaining"] == config.PLAN_QUOTAS["pro"]
-    assert at.reserve_quota("buyer@acme.co.uk", 100)[0]
-    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
-    assert acc["resumes_used"] == 100                       # not reset on every refresh
+def test_payment_link_mapping_reads_links_and_caches(monkeypatch):
+    import types
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "rk_test_dummy")
+    monkeypatch.setattr(config, "STRIPE_PRO_URL", "https://buy.stripe.com/pro")
+    monkeypatch.setattr(config, "STRIPE_AGENCY_URL", "https://buy.stripe.com/agency")
+    at._link_price_cache.update(at=None, map={})
+    calls = {"list": 0}
 
-    real_now = at._now
-    monkeypatch.setattr(at, "_now", lambda: real_now() + timedelta(days=31))
-    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
-    assert acc["resumes_used"] == 0                         # new 30-day period
+    class Item:
+        def __init__(self, pid):
+            self.pid = pid
 
-    monkeypatch.setattr(config, "PAID_CUSTOMERS", {})
-    acc, _ = at.refresh_entitlements("buyer@acme.co.uk")
-    assert acc["tier"] == "trial" and acc["remaining"] == 0
+        def to_dict(self):
+            return {"price": {"id": self.pid}}
 
+    class LineItems:
+        def list(self, link_id, params=None):
+            return types.SimpleNamespace(data=[Item({"plink_p": "price_p", "plink_a": "price_a"}[link_id])])
 
-def test_listed_customer_with_free_webmail_can_sign_in(monkeypatch):
-    monkeypatch.setattr(config, "PAID_CUSTOMERS", {"owner@gmail.com": "agency"})
-    ok, _, code = at.request_login_code("owner@gmail.com")
-    assert ok
-    ok, _, acc = at.verify_login_code("owner@gmail.com", code, accept_terms=True)
-    assert ok and acc["tier"] == "agency"
+    class Links:
+        line_items = LineItems()
+
+        def list(self, params=None):
+            calls["list"] += 1
+            return types.SimpleNamespace(data=[
+                types.SimpleNamespace(id="plink_p", url="https://buy.stripe.com/pro"),
+                types.SimpleNamespace(id="plink_a", url="https://buy.stripe.com/agency/"),
+                types.SimpleNamespace(id="plink_x", url="https://buy.stripe.com/other"),
+            ])
+
+    fake_client = types.SimpleNamespace(v1=types.SimpleNamespace(payment_links=Links()))
+    import stripe
+    monkeypatch.setattr(stripe, "StripeClient", lambda key: fake_client)
+    assert at._payment_link_prices() == {"price_p": "pro", "price_a": "agency"}
+    assert at._payment_link_prices() == {"price_p": "pro", "price_a": "agency"}
+    assert calls["list"] == 1
+    at._link_price_cache.update(at=None, map={})
 
 
 def test_sessions_survive_lookup_and_sign_out():

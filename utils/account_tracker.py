@@ -199,8 +199,47 @@ def list_accounts() -> List[Dict[str, Any]]:
 _MONTHS_PER_INTERVAL = {"day": 1 / 30, "week": 12 / 52, "month": 1, "year": 12}
 
 
+LINK_MAP_TTL = timedelta(hours=1)
+_link_price_cache: Dict[str, Any] = {"at": None, "map": {}}
+
+
+def _payment_link_prices() -> Dict[str, str]:
+    """
+    {price_id: tier} read from the Pro and Agency Payment Links themselves (STRIPE_PRO_URL /
+    STRIPE_AGENCY_URL), so whatever those links sell maps to the right plan. Cached for an hour.
+    """
+    now = _now()
+    cached_at = _link_price_cache["at"]
+    if cached_at and now - cached_at < LINK_MAP_TTL:
+        return _link_price_cache["map"]
+    wanted = {config.STRIPE_PRO_URL.rstrip("/"): "pro", config.STRIPE_AGENCY_URL.rstrip("/"): "agency"}
+    mapping: Dict[str, str] = {}
+    try:
+        import stripe
+        client = stripe.StripeClient(config.STRIPE_SECRET_KEY)
+        for link in client.v1.payment_links.list(params={"limit": 100}).data:
+            tier = wanted.get(str(link.url or "").rstrip("/"))
+            if not tier:
+                continue
+            for item in client.v1.payment_links.line_items.list(link.id, params={"limit": 20}).data:
+                price_id = (item.to_dict().get("price") or {}).get("id")
+                if price_id:
+                    mapping[price_id] = tier
+    except Exception:
+        log.warning("Could not read Stripe Payment Links; falling back to price amounts", exc_info=True)
+        _link_price_cache.update(at=now - LINK_MAP_TTL + timedelta(minutes=5), map={})  # retry in 5 min
+        return {}
+    if not mapping:
+        log.warning("Neither Payment Link URL was found in Stripe; falling back to price amounts")
+    _link_price_cache.update(at=now, map=mapping)
+    return mapping
+
+
 def _tier_for_price(price: Dict[str, Any]) -> Optional[str]:
-    """Map a Stripe Price to a plan: by configured Price ID, else by GBP monthly amount."""
+    """
+    Map a Stripe Price to a plan, in order: configured Price IDs, the prices sold by the Pro /
+    Agency Payment Links, then (only if neither is available) the GBP monthly amount.
+    """
     price_id = price.get("id", "")
     if price_id in config.STRIPE_PRICES_AGENCY:
         return "agency"
@@ -208,6 +247,9 @@ def _tier_for_price(price: Dict[str, Any]) -> Optional[str]:
         return "pro"
     if config.STRIPE_PRICES_PRO or config.STRIPE_PRICES_AGENCY:
         return None                      # explicit configuration wins
+    link_prices = _payment_link_prices() if config.STRIPE_SECRET_KEY else {}
+    if link_prices:
+        return link_prices.get(price_id)  # only what the two Payment Links sell grants a plan
     amount = price.get("unit_amount")
     recurring = price.get("recurring") or {}
     if not amount or str(price.get("currency", "")).lower() != "gbp" or not recurring:
@@ -306,31 +348,6 @@ def _roll_manual_period(conn, row: Dict[str, Any], now: datetime) -> None:
             resumes_used=0, period_start=now, period_end=now + MANUAL_PERIOD))
 
 
-def listed_tier(email: str) -> Optional[str]:
-    """Plan for an email in the PAID_CUSTOMERS setting (manual activation), else None."""
-    key = canonical_email(email)
-    for addr, tier in config.PAID_CUSTOMERS.items():
-        if canonical_email(addr) == key:
-            return tier
-    return None
-
-
-def _apply_listed(conn, row: Dict[str, Any], tier: Optional[str], now: datetime) -> None:
-    key = row["email"]
-    if tier:
-        vals: Dict[str, Any] = {"tier": tier, "plan_source": "listed", "max_resumes": config.PLAN_QUOTAS[tier]}
-        end = _aware(row.get("period_end"))
-        if row.get("plan_source") != "listed" or row.get("tier") != tier or not end or now >= end:
-            # New activation, plan change or a new 30-day period → fresh allowance
-            vals.update(resumes_used=0, period_start=now, period_end=now + MANUAL_PERIOD)
-        conn.execute(update(accounts).where(accounts.c.email == key).values(**vals))
-    elif row.get("plan_source") == "listed":
-        # Removed from PAID_CUSTOMERS → back to the (already used) trial allowance
-        conn.execute(update(accounts).where(accounts.c.email == key).values(
-            tier="trial", plan_source="trial", max_resumes=config.PLAN_QUOTAS["trial"],
-            resumes_used=config.PLAN_QUOTAS["trial"], period_start=None, period_end=None))
-
-
 def refresh_entitlements(email: str, force: bool = False) -> Tuple[Dict[str, Any], str]:
     """Re-check the plan (Stripe at most every 15 min unless forced). Returns (account, warning)."""
     key = canonical_email(email)
@@ -341,13 +358,7 @@ def refresh_entitlements(email: str, force: bool = False) -> Tuple[Dict[str, Any
         if not row:
             return {}, ""
         row = dict(row)
-        tier = listed_tier(key)
-        if tier or row.get("plan_source") == "listed":
-            _apply_listed(conn, row, tier, now)
-            row = dict(conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first())
-        if row.get("plan_source") == "listed":
-            pass
-        elif row.get("plan_source") == "manual":
+        if row.get("plan_source") == "manual":
             _roll_manual_period(conn, row, now)
         else:
             last = _aware(row.get("last_stripe_sync"))
@@ -378,7 +389,7 @@ def request_login_code(email: str) -> Tuple[bool, str, Optional[str]]:
 
     if config.TRIAL_REQUIRE_WORK_EMAIL and domain in FREE_EMAIL_DOMAINS and not get_account(key):
         try:
-            paying = listed_tier(addr) is not None or lookup_stripe_plan(addr) is not None
+            paying = lookup_stripe_plan(addr) is not None
         except RuntimeError:
             paying = False
         if not paying:
