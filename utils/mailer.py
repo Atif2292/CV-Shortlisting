@@ -17,6 +17,10 @@ from utils import config
 log = logging.getLogger(__name__)
 
 
+_BREVO_API = "https://api.brevo.com/v3"
+_brevo_sender_cache: dict = {}
+
+
 def email_configured() -> bool:
     return bool(config.BREVO_API_KEY or (config.SMTP_HOST and config.SMTP_USER
                                          and config.SMTP_PASSWORD and config.EMAIL_FROM))
@@ -26,23 +30,54 @@ def _clean_header(value: str) -> str:
     return " ".join(str(value).replace("\r", " ").replace("\n", " ").split())
 
 
+def _brevo_request(method: str, path: str, payload=None):
+    req = urllib.request.Request(
+        f"{_BREVO_API}{path}",
+        data=json.dumps(payload).encode("utf-8") if payload is not None else None,
+        headers={"api-key": config.BREVO_API_KEY, "Content-Type": "application/json",
+                 "Accept": "application/json"},
+        method=method,
+    )
+    return urllib.request.urlopen(req, timeout=15)
+
+
+def brevo_sender() -> str:
+    """
+    The 'From' address for Brevo: EMAIL_FROM if set, otherwise the first active
+    verified sender on the Brevo account (looked up once, then cached).
+    """
+    if config.EMAIL_FROM:
+        return config.EMAIL_FROM
+    if _brevo_sender_cache.get("email"):
+        return _brevo_sender_cache["email"]
+    try:
+        with _brevo_request("GET", "/senders") as resp:
+            senders = json.loads(resp.read() or b"{}").get("senders", [])
+    except (urllib.error.URLError, OSError, ValueError):
+        log.exception("Could not list Brevo senders")
+        return ""
+    active = [s for s in senders if s.get("active") and s.get("email")]
+    if not active:
+        log.error("Brevo account has no active verified sender; add one in Brevo → Senders")
+        return ""
+    _brevo_sender_cache["email"] = active[0]["email"]
+    log.info("Using Brevo verified sender automatically")
+    return _brevo_sender_cache["email"]
+
+
 def _send_brevo(to_addr: str, subject: str, text: str, html: str) -> bool:
+    sender = brevo_sender()
+    if not sender:
+        return False
     payload = {
-        "sender": {"email": config.EMAIL_FROM, "name": "RankCV"},
+        "sender": {"email": sender, "name": "RankCV"},
         "to": [{"email": to_addr}],
         "subject": subject,
         "textContent": text,
         "htmlContent": html,
     }
-    req = urllib.request.Request(
-        "https://api.brevo.com/v3/smtp/email",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"api-key": config.BREVO_API_KEY, "Content-Type": "application/json",
-                 "Accept": "application/json"},
-        method="POST",
-    )
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with _brevo_request("POST", "/smtp/email", payload) as resp:
             return 200 <= resp.status < 300
     except (urllib.error.URLError, OSError):
         log.exception("Brevo send failed")

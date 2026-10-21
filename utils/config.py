@@ -108,8 +108,8 @@ def production_config_errors() -> list:
         return errors
     if APP_SECRET == "dev-only-insecure-secret" or len(APP_SECRET) < 32:
         errors.append("APP_SECRET must be a random string of at least 32 characters.")
-    if not EMAIL_FROM or not (BREVO_API_KEY or (SMTP_HOST and SMTP_USER and SMTP_PASSWORD)):
-        errors.append("Sign-in emails can't be sent: set EMAIL_FROM plus BREVO_API_KEY "
+    if not (BREVO_API_KEY or (SMTP_HOST and SMTP_USER and SMTP_PASSWORD and EMAIL_FROM)):
+        errors.append("Sign-in emails can't be sent: set BREVO_API_KEY "
                       "(or SMTP_HOST/SMTP_USER/SMTP_PASSWORD).")
     if not STRIPE_SECRET_KEY:
         errors.append("STRIPE_SECRET_KEY is required so paid subscriptions can be verified.")

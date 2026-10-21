@@ -150,7 +150,7 @@ def test_stripe_outage_keeps_existing_plan(monkeypatch):
 def test_production_config_rejects_unsafe_defaults(monkeypatch):
     monkeypatch.setattr(config, "IS_PRODUCTION", True)
     errs = " ".join(config.production_config_errors())
-    for needle in ("APP_SECRET", "EMAIL_FROM", "STRIPE_SECRET_KEY", "COMPANY_NAME", "SUPPORT_EMAIL"):
+    for needle in ("APP_SECRET", "BREVO_API_KEY", "STRIPE_SECRET_KEY", "COMPANY_NAME", "SUPPORT_EMAIL"):
         assert needle in errs
     # The free-tier SQLite database is allowed in production, but flagged
     assert "DATABASE_URL" not in errs
@@ -159,7 +159,7 @@ def test_production_config_rejects_unsafe_defaults(monkeypatch):
 
 def test_production_config_passes_when_essentials_set(monkeypatch):
     monkeypatch.setattr(config, "IS_PRODUCTION", True)
-    for name, val in [("APP_SECRET", "x" * 40), ("EMAIL_FROM", "no-reply@acme.co.uk"),
+    for name, val in [("APP_SECRET", "x" * 40), ("EMAIL_FROM", ""),
                       ("BREVO_API_KEY", "xkeysib-test"), ("STRIPE_SECRET_KEY", "rk_live_x"),
                       ("COMPANY_NAME", "Acme Ltd"), ("SUPPORT_EMAIL", "help@acme.co.uk")]:
         monkeypatch.setattr(config, name, val)

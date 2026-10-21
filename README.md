@@ -61,7 +61,7 @@ python -m pytest -q
    The Python version can't be changed on an existing app: if it's older, delete the app and
    redeploy it from this repo, choosing 3.12 under *Advanced settings*.
 2. Open *Settings → Secrets* and paste `.streamlit/secrets.toml.example`, filled in. Required:
-   `APP_ENV`, `APP_SECRET`, `BREVO_API_KEY` (or SMTP settings) + `EMAIL_FROM`, `STRIPE_SECRET_KEY`,
+   `APP_ENV`, `APP_SECRET`, `BREVO_API_KEY` (or SMTP settings), `STRIPE_SECRET_KEY`,
    `COMPANY_NAME`, `SUPPORT_EMAIL`. With `APP_ENV = "production"` the app refuses to start and
    lists anything missing.
 3. `packages.txt` installs `antiword` so legacy `.doc` CVs can be read.
