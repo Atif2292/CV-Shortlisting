@@ -1,327 +1,120 @@
-# 🎯 RankCV — AI Recruitment Screening Application
+# 🎯 RankCV — AI CV Screening for UK Hiring Teams
 
-An end-to-end AI-powered recruitment tool built with **Python + Streamlit + OpenAI GPT-4o**.
+Streamlit app that scores and ranks candidate CVs against a job description, with a
+recruiter-in-the-loop review workflow and a UK GDPR audit export.
 
-- Upload up to 100 CVs (PDF & DOCX)
-- AI scores each candidate against your job requirements (0–100)
-- Auto-ranks candidates and generates a Top 10 shortlist
-- Sends personalised shortlist emails via SMTP
-- Deletes uploaded files after processing
+- Paste or upload a job description, upload CVs (PDF, DOCX, DOC, TXT).
+- **Cloud AI** (OpenAI, CVs scored in parallel batches of ~10) or **Private Engine** (keyword
+  scoring on the server, no external AI calls).
+- Names, contact details, postcodes, personal links, dates of birth and common
+  protected-characteristic fields are redacted before Cloud AI scoring (best-effort).
+- Every candidate starts as *Under Review*; recruiters record decisions, score adjustments
+  and notes. The Excel report records what was actually decided and which engine scored each CV.
+- Email-code sign-in, 10-CV free trial, paid plans read live from Stripe, atomic CV quotas.
+- Uploaded files live in a per-run private temp folder and are deleted as soon as text is
+  extracted. Results are kept in session memory only.
 
----
-
-## Project Structure
+## Project structure
 
 ```
-talentsift/
-│
-├── app.py                  ← Streamlit UI & orchestration logic
-├── requirements.txt        ← Python dependencies
-├── .env.example            ← Environment variable template
-├── .gitignore
-│
-├── utils/
-│   ├── __init__.py
-│   ├── pdf_parser.py       ← PDF text extraction (PyMuPDF)
-│   ├── docx_parser.py      ← DOCX text extraction (python-docx)
-│   ├── ai_scoring.py       ← OpenAI GPT-4o CV screening
-│   ├── email_sender.py     ← SMTP email automation
-│   └── cleanup.py          ← Post-processing file deletion
-│
-├── uploads/                ← Temporary CV storage (auto-purged)
-├── data/                   ← Optional: saved results / CSVs
-└── .streamlit/
-    └── config.toml         ← Streamlit server settings
+app.py                    Streamlit UI and screening flow
+utils/
+  config.py               All settings, plan limits and business details (env vars / st.secrets)
+  account_tracker.py      Accounts, sign-in codes, Stripe entitlements, quotas (SQLAlchemy)
+  admin.py                Operator CLI: list accounts, grant/revoke plans, force Stripe sync
+  mailer.py               Sign-in code emails (Brevo API or SMTP with verified TLS)
+  ai_scoring.py           JD parsing, CV feature extraction, Cloud AI + Private Engine scoring
+  anonymizer.py           PII redaction before Cloud AI
+  pdf_parser.py           PDF text extraction (PyMuPDF), drops hidden text
+  docx_parser.py          DOCX text extraction (python-docx), drops hidden text
+  cleanup.py              Per-run temp folders, random file names, stale-file sweep
+  legal.py                Privacy notice, terms, DPA, sub-processors, cookie notice (?page=…)
+tests/                    pytest suite (accounts, scoring, anonymiser, parsers)
+dummy_cvs_pdf/            Sample CVs used by the "Try 5 Demo CVs" button
+Dockerfile                Production image (includes antiword for .doc files)
 ```
 
----
-
-## Quick Start (Local)
-
-### 1. Clone / download the project
+## Run locally
 
 ```bash
-git clone https://github.com/your-org/talentsift.git
-cd talentsift
-```
-
-### 2. Create & activate a virtual environment
-
-**macOS / Linux**
-```bash
-python3 -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate
-```
-
-**Windows (PowerShell)**
-```powershell
-python -m venv venv
-venv\Scripts\Activate.ps1
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure environment variables
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` in your editor and fill in:
-
-| Variable | Description |
-|---|---|
-| `OPENAI_API_KEY` | Your OpenAI API key (from platform.openai.com) |
-| `SMTP_HOST` | SMTP server hostname (e.g. `smtp.gmail.com`) |
-| `SMTP_PORT` | SMTP port (usually `587` for TLS) |
-| `SMTP_USER` | Your email address or SMTP username |
-| `SMTP_PASSWORD` | Your email password or App Password |
-| `EMAIL_FROM` | The "From" address in outgoing emails |
-
-#### Gmail Setup (recommended for testing)
-1. Enable 2-Factor Authentication on your Google account.
-2. Go to **Google Account → Security → App Passwords**.
-3. Generate an App Password for "Mail" → "Other".
-4. Use that 16-character password as `SMTP_PASSWORD`.
-
-### 5. Create required directories
-
-```bash
-mkdir -p uploads data
-```
-
-### 6. Run locally
-
-```bash
+pip install -r requirements-dev.txt
+cp .env.example .env        # optional: add OPENAI_API_KEY for Cloud AI
 streamlit run app.py
 ```
 
-The app opens at **http://localhost:8501**
+Without email settings, local development shows the sign-in code on screen.
+Without `OPENAI_API_KEY`, Cloud AI runs fall back to the Private Engine and the app says so.
 
----
-
-## VS Code Setup
-
-1. Install the **Python** and **Pylance** extensions.
-2. Open the project folder: `File → Open Folder`.
-3. Select your venv interpreter: `Ctrl+Shift+P` → *Python: Select Interpreter* → choose `./venv`.
-4. Install the **Streamlit** VS Code extension (optional, adds syntax helpers).
-5. Open the terminal inside VS Code and run `streamlit run app.py`.
-
----
-
-## Ubuntu VPS Deployment
-
-Tested on Ubuntu 22.04 / 24.04.
-
-### A. Server preparation
+Run the tests:
 
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-pip python3-venv nginx git ufw
+python -m pytest -q
 ```
 
-### B. Create a system user (optional, for security)
+## Deploy to production
+
+### Option A — Streamlit Community Cloud (free tier, current setup)
+
+1. In the Streamlit Cloud dashboard, the app must run **Python 3.11 or newer** (3.12 recommended).
+   The Python version can't be changed on an existing app: if it's older, delete the app and
+   redeploy it from this repo, choosing 3.12 under *Advanced settings*.
+2. Open *Settings → Secrets* and paste `.streamlit/secrets.toml.example`, filled in. Required:
+   `APP_ENV`, `APP_SECRET`, `BREVO_API_KEY` (or SMTP settings) + `EMAIL_FROM`, `STRIPE_SECRET_KEY`,
+   `COMPANY_NAME`, `SUPPORT_EMAIL`. With `APP_ENV = "production"` the app refuses to start and
+   lists anything missing.
+3. `packages.txt` installs `antiword` so legacy `.doc` CVs can be read.
+4. Database: by default accounts live in a SQLite file on the app server. On the free tier that
+   file is reset when the app restarts or redeploys. Paid plans are re-read from Stripe on the
+   next sign-in, so customers keep their plan; usage counts and sign-in sessions start fresh.
+   Set `DATABASE_URL` to a Postgres database (e.g. Supabase or Neon free tier) to keep them.
+5. The *Keep-alive & uptime check* workflow pings the app every 10 minutes and fails (GitHub
+   emails you) if it's down.
+
+### Stripe setup
+
+- Payment Links for Professional (£99/month) and Agency (£199/month). The app pre-fills the
+  signed-in user's email.
+- Plans are matched by GBP monthly amount (≥ £50 → Pro, ≥ £149 → Agency). To match exact prices
+  instead, set `STRIPE_PRICE_IDS_PRO` / `STRIPE_PRICE_IDS_AGENCY`.
+- Enable the Customer Portal and set `STRIPE_PORTAL_URL` to its login link so customers can
+  cancel or update cards themselves.
+- Create a restricted key with read access to Customers and Subscriptions → `STRIPE_SECRET_KEY`.
+- Customers subscribe, then sign in with the same email; the plan is applied automatically and
+  re-checked every 15 minutes (renewals reset the monthly allowance; cancellations end it).
+
+### Option B — Docker on a UK/EU host
+
+`Dockerfile` runs on Render, Fly.io, Railway, Cloud Run or a VPS (listens on `$PORT`, health
+check at `/_stcore/health`). Use the same environment variables as above, plus a Postgres
+`DATABASE_URL`.
+
+### Operator commands
 
 ```bash
-sudo adduser --disabled-password --gecos "" talentsift
-sudo su - talentsift
+python -m utils.admin list
+python -m utils.admin grant client@agency.co.uk agency --months 12   # invoiced customer
+python -m utils.admin grant client@agency.co.uk trial                # revoke a manual plan
+python -m utils.admin sync client@agency.co.uk                       # re-check Stripe now
 ```
 
-### C. Clone and set up the project
+## Before you take the first payment
 
-```bash
-git clone https://github.com/your-org/talentsift.git /home/talentsift/app
-cd /home/talentsift/app
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-nano .env          # fill in your real values
-mkdir -p uploads data
-```
+- Have the Privacy Notice, Terms, DPA and sub-processor list (`utils/legal.py`) reviewed by a
+  UK solicitor, and register with the ICO.
+- Complete a DPIA for automated CV screening (ICO guidance on AI in recruitment).
+- Check the testimonials on the page reflect real, attributable customer feedback (UK DMCC Act 2024).
+- Send yourself a sign-in code in production to confirm email delivery (check spam too).
+- Do a test purchase in Stripe test mode end-to-end, including cancellation.
 
-### D. Create a systemd service
+## Limits and notes
 
-Exit to root / sudo user, then:
-
-```bash
-sudo nano /etc/systemd/system/talentsift.service
-```
-
-Paste:
-
-```ini
-[Unit]
-Description=TalentSift Streamlit App
-After=network.target
-
-[Service]
-User=talentsift
-WorkingDirectory=/home/talentsift/app
-Environment="PATH=/home/talentsift/app/venv/bin"
-ExecStart=/home/talentsift/app/venv/bin/streamlit run app.py \
-          --server.port=8501 \
-          --server.headless=true
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable talentsift
-sudo systemctl start talentsift
-sudo systemctl status talentsift   # should show "active (running)"
-```
-
-### E. Nginx reverse proxy
-
-```bash
-sudo nano /etc/nginx/sites-available/talentsift
-```
-
-Paste (replace `yourdomain.com`):
-
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com www.yourdomain.com;
-
-    # Max upload size — increase if you're uploading many large CVs
-    client_max_body_size 200M;
-
-    location / {
-        proxy_pass         http://127.0.0.1:8501;
-        proxy_http_version 1.1;
-
-        # Required for Streamlit WebSocket (hot-reload & progress bars)
-        proxy_set_header Upgrade    $http_upgrade;
-        proxy_set_header Connection "upgrade";
-
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        proxy_read_timeout 300s;
-        proxy_send_timeout 300s;
-    }
-}
-```
-
-Enable the site:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/talentsift /etc/nginx/sites-enabled/
-sudo nginx -t        # check config
-sudo systemctl reload nginx
-```
-
-### F. Domain & SSL (Let's Encrypt)
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-sudo systemctl reload nginx
-```
-
-Certbot auto-renews certificates via a cron job.
-
-### G. Firewall
-
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 'Nginx Full'
-sudo ufw enable
-```
-
-### H. Useful commands
-
-```bash
-# View logs
-sudo journalctl -u talentsift -f
-
-# Restart after code updates
-sudo systemctl restart talentsift
-
-# Check Nginx logs
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
-```
-
----
-
-## How It Works
-
-```
-Recruiter fills form
-        │
-        ▼
-CVs uploaded → saved to uploads/
-        │
-        ▼
-Each CV parsed (PDF → PyMuPDF, DOCX → python-docx)
-        │
-        ▼
-OpenAI GPT-4o screens each CV vs job description
- └─ Returns JSON: name, email, score, strengths, concerns, recommendation
-        │
-        ▼
-Results sorted by match_score descending
-        │
-        ├─ Ranked table displayed in Streamlit UI
-        │
-        ├─ Top 10 → SMTP emails sent automatically
-        │
-        ├─ Full results exportable as CSV
-        │
-        └─ All uploaded CVs deleted from server
-```
-
----
-
-## Environment Variables Reference
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `OPENAI_API_KEY` | ✅ | — | OpenAI API key |
-| `SMTP_HOST` | ✅ for email | `smtp.gmail.com` | SMTP server |
-| `SMTP_PORT` | ✅ for email | `587` | SMTP port |
-| `SMTP_USER` | ✅ for email | — | SMTP username / email |
-| `SMTP_PASSWORD` | ✅ for email | — | SMTP password / App Password |
-| `EMAIL_FROM` | — | `SMTP_USER` | From address on outgoing emails |
-
----
-
-## Supported SMTP Providers
-
-| Provider | SMTP Host | Port |
-|---|---|---|
-| Gmail | `smtp.gmail.com` | 587 |
-| SendGrid | `smtp.sendgrid.net` | 587 |
-| Mailgun | `smtp.mailgun.org` | 587 |
-| AWS SES | `email-smtp.us-east-1.amazonaws.com` | 587 |
-| Outlook | `smtp-mail.outlook.com` | 587 |
-
----
-
-## Limitations & Notes
-
-- **OpenAI costs**: GPT-4o charges per token. Screening 100 CVs costs approximately $0.30–$1.00 depending on CV length.
-- **CV quality**: Text-based PDFs extract cleanly. Image/scanned PDFs will return empty text — OCR is not included.
-- **Email deliverability**: Use a verified sender domain for production to avoid spam folders.
-- **Data privacy**: Uploaded CVs are deleted from the server after processing. Results are held in Streamlit session state only (not persisted to disk unless you export the CSV).
-
----
+- Scanned/image-only PDFs have no text layer and are skipped with a message (no OCR).
+- Redaction is automated and best-effort; recruiters remain responsible for decisions.
+- Cloud AI cost is roughly $0.50 per 100 CVs with `gpt-4o` (varies with CV length).
+- Sign-in lasts 30 days (cookie). Screening results are kept only for the browser session —
+  download the Excel report before closing or refreshing the page.
 
 ## License
 

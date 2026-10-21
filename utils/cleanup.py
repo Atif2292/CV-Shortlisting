@@ -1,86 +1,69 @@
 """
 utils/cleanup.py
-Delete uploaded CV files from disk after processing.
-This keeps the server clean and protects candidate data.
+Short-lived, per-run storage for uploaded CVs.
+
+Each screening run gets its own private temporary directory. Files are saved
+under random names (never the client-supplied filename), and the directory is
+removed when the run ends — including on errors, reruns and disconnects,
+because removal happens in a `finally` block. A startup sweep removes anything
+left behind by a crashed process.
 """
 
+import logging
 import os
+import shutil
+import tempfile
+import time
+import uuid
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
+
+log = logging.getLogger(__name__)
+
+_PREFIX = "rankcv-run-"
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".xlsx", ".xls", ".csv"}
 
 
-def delete_uploaded_files(file_paths: list[str]) -> tuple[list[str], list[str]]:
-    """
-    Delete a list of files from disk.
+@contextmanager
+def screening_workspace() -> Iterator[Path]:
+    """Yield a private directory that is always deleted afterwards."""
+    path = Path(tempfile.mkdtemp(prefix=_PREFIX))
+    os.chmod(path, 0o700)
+    try:
+        yield path
+    finally:
+        shutil.rmtree(path, ignore_errors=True)
 
-    Args:
-        file_paths: List of absolute or relative file path strings.
 
-    Returns:
-        Tuple of (deleted_paths, failed_paths) where:
-          deleted_paths — files that were successfully removed.
-          failed_paths  — files that could not be removed (logged with reason).
-    """
-    deleted = []
-    failed  = []
+def safe_upload_path(workdir: Path, original_name: str) -> Path:
+    """Random file name inside `workdir`, keeping only an allowed extension."""
+    ext = Path(original_name or "").suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise ValueError(f"Unsupported file type: {ext or 'none'}")
+    return workdir / f"{uuid.uuid4().hex}{ext}"
 
-    for path_str in file_paths:
-        path = Path(path_str)
 
-        # Only delete files; never remove directories
-        if not path.is_file():
-            print(f"[cleanup] Not a file (skipping): {path_str}")
-            failed.append(path_str)
-            continue
-
-        # Safety check: only delete from the uploads/ directory
-        # Adjust the allowed prefix if your upload dir differs.
+def purge_stale_workspaces(max_age_seconds: int = 3600) -> int:
+    """Remove run directories older than `max_age_seconds` and the legacy uploads/ folder."""
+    removed = 0
+    now = time.time()
+    for item in Path(tempfile.gettempdir()).glob(f"{_PREFIX}*"):
         try:
-            resolved = path.resolve()
-            uploads_dir = Path("uploads").resolve()
-            resolved.relative_to(uploads_dir)   # raises ValueError if not inside uploads/
-        except ValueError:
-            print(f"[cleanup] Refusing to delete file outside uploads/: {path_str}")
-            failed.append(path_str)
+            if item.is_dir() and now - item.stat().st_mtime > max_age_seconds:
+                shutil.rmtree(item, ignore_errors=True)
+                removed += 1
+        except OSError:
             continue
-
-        try:
-            os.remove(path)
-            deleted.append(path_str)
-            print(f"[cleanup] 🗑️  Deleted: {path_str}")
-        except PermissionError as exc:
-            print(f"[cleanup] Permission denied for {path_str}: {exc}")
-            failed.append(path_str)
-        except FileNotFoundError:
-            # Already gone — treat as success
-            deleted.append(path_str)
-        except Exception as exc:
-            print(f"[cleanup] Unexpected error deleting {path_str}: {exc}")
-            failed.append(path_str)
-
-    return deleted, failed
-
-
-def purge_uploads_dir(uploads_dir: str = "uploads") -> int:
-    """
-    Delete ALL files inside the uploads directory.
-    Useful as a housekeeping routine on startup or as a scheduled job.
-
-    Returns:
-        Number of files deleted.
-    """
-    count = 0
-    base = Path(uploads_dir)
-
-    if not base.is_dir():
-        return 0
-
-    for item in base.iterdir():
-        if item.is_file():
+    legacy = Path("uploads")
+    if legacy.is_dir():
+        for f in legacy.iterdir():
             try:
-                item.unlink()
-                count += 1
-            except Exception as exc:
-                print(f"[cleanup] Could not delete {item}: {exc}")
-
-    print(f"[cleanup] Purged {count} file(s) from {uploads_dir}/")
-    return count
+                if f.is_file():
+                    f.unlink()
+                    removed += 1
+            except OSError:
+                continue
+    if removed:
+        log.info("Removed %d stale upload item(s)", removed)
+    return removed

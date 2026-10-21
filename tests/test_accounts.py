@@ -1,0 +1,206 @@
+import threading
+from datetime import datetime, timedelta, timezone
+
+import pytest
+
+from utils import account_tracker as at
+from utils import config
+
+
+@pytest.fixture(autouse=True)
+def fresh_db(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATABASE_URL", f"sqlite:///{tmp_path}/t.db")
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "")
+    monkeypatch.setattr(config, "TRIAL_REQUIRE_WORK_EMAIL", True)
+    monkeypatch.setattr(at, "_engine", None)
+    yield
+    at._engine = None
+
+
+def _sign_in(email, company="Acme"):
+    ok, _, code = at.request_login_code(email)
+    assert ok
+    return at.verify_login_code(email, code, company=company, accept_terms=True)
+
+
+def test_sign_in_creates_trial_account():
+    ok, msg, acc = _sign_in("Jane@Acme.co.uk")
+    assert ok and acc["tier"] == "trial" and acc["remaining"] == config.PLAN_QUOTAS["trial"]
+    assert acc["email"] == "jane@acme.co.uk"
+
+
+def test_wrong_code_is_rejected_and_attempts_are_limited():
+    ok, _, code = at.request_login_code("a@acme.co.uk")
+    wrong = "000000" if code != "000000" else "111111"
+    for _ in range(at.CODE_MAX_ATTEMPTS):
+        ok, msg, _ = at.verify_login_code("a@acme.co.uk", wrong, accept_terms=True)
+        assert not ok
+    ok, msg, _ = at.verify_login_code("a@acme.co.uk", code, accept_terms=True)
+    assert not ok and "Too many" in msg
+
+
+def test_code_is_single_use_and_expires(monkeypatch):
+    ok, _, code = at.request_login_code("b@acme.co.uk")
+    assert at.verify_login_code("b@acme.co.uk", code, accept_terms=True)[0]
+    assert not at.verify_login_code("b@acme.co.uk", code, accept_terms=True)[0]
+
+    at._engine = None
+    monkeypatch.setattr(config, "DATABASE_URL", "sqlite://")
+    ok, _, code = at.request_login_code("c@acme.co.uk")
+    real_now = at._now
+    monkeypatch.setattr(at, "_now", lambda: real_now() + timedelta(minutes=11))
+    ok, msg, _ = at.verify_login_code("c@acme.co.uk", code, accept_terms=True)
+    assert not ok and "expired" in msg
+
+
+def test_new_account_requires_terms():
+    ok, _, code = at.request_login_code("d@acme.co.uk")
+    ok, msg, _ = at.verify_login_code("d@acme.co.uk", code, accept_terms=False)
+    assert not ok and "Terms" in msg
+
+
+def test_resend_is_rate_limited():
+    assert at.request_login_code("e@acme.co.uk")[0]
+    ok, msg, _ = at.request_login_code("e@acme.co.uk")
+    assert not ok and "wait" in msg
+
+
+def test_free_webmail_cannot_start_trial():
+    ok, msg, _ = at.request_login_code("someone@gmail.com")
+    assert not ok and "work email" in msg
+
+
+def test_plus_addresses_share_one_trial():
+    _sign_in("f+1@acme.co.uk")
+    assert at.reserve_quota("f+1@acme.co.uk", 10)[0]
+    ok, _, code = at.request_login_code("f+2@acme.co.uk")
+    _, _, acc = at.verify_login_code("f+2@acme.co.uk", code, accept_terms=True)
+    assert acc["email"] == "f@acme.co.uk" and acc["remaining"] == 0
+
+
+def test_no_licence_key_backdoor():
+    assert not hasattr(at, "activate_license")
+
+
+def test_quota_reservation_is_atomic_under_concurrency():
+    _sign_in("g@acme.co.uk")
+    results = []
+
+    def worker():
+        results.append(at.reserve_quota("g@acme.co.uk", 3)[0])
+
+    threads = [threading.Thread(target=worker) for _ in range(10)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sum(results) == 3                     # 3 × 3 = 9 ≤ 10, a 4th would exceed
+    assert at.get_account("g@acme.co.uk")["resumes_used"] == 9
+
+
+def test_release_returns_unscored_cvs():
+    _sign_in("h@acme.co.uk")
+    at.reserve_quota("h@acme.co.uk", 8)
+    assert at.release_quota("h@acme.co.uk", 5) == 7
+
+
+def test_manual_grant_resets_each_period_and_expires(monkeypatch):
+    at.grant_plan("i@acme.co.uk", "pro", months=2)
+    assert at.reserve_quota("i@acme.co.uk", 400)[0]
+    real_now = at._now
+    monkeypatch.setattr(at, "_now", lambda: real_now() + timedelta(days=31))
+    acc, _ = at.refresh_entitlements("i@acme.co.uk")
+    assert acc["tier"] == "pro" and acc["resumes_used"] == 0
+    monkeypatch.setattr(at, "_now", lambda: real_now() + timedelta(days=61))
+    acc, _ = at.refresh_entitlements("i@acme.co.uk")
+    assert acc["tier"] == "trial" and acc["remaining"] == 0
+
+
+def test_stripe_subscription_grants_plan_and_cancellation_revokes(monkeypatch):
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "sk_test_dummy")
+    start = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    plan = {"tier": "agency", "period_start": start, "period_end": start + timedelta(days=30),
+            "customer_id": "cus_1"}
+    monkeypatch.setattr(at, "lookup_stripe_plan", lambda email: plan)
+    ok, _, acc = _sign_in("j@acme.co.uk")
+    assert acc["tier"] == "agency" and acc["max_resumes"] == config.PLAN_QUOTAS["agency"]
+
+    at.reserve_quota("j@acme.co.uk", 100)
+    plan2 = dict(plan, period_start=start + timedelta(days=30), period_end=start + timedelta(days=60))
+    monkeypatch.setattr(at, "lookup_stripe_plan", lambda email: plan2)
+    acc, _ = at.refresh_entitlements("j@acme.co.uk", force=True)
+    assert acc["resumes_used"] == 0                # new billing period → quota reset
+
+    monkeypatch.setattr(at, "lookup_stripe_plan", lambda email: None)
+    acc, _ = at.refresh_entitlements("j@acme.co.uk", force=True)
+    assert acc["tier"] == "trial" and acc["remaining"] == 0
+
+
+def test_stripe_outage_keeps_existing_plan(monkeypatch):
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "sk_test_dummy")
+    at.grant_plan("k@acme.co.uk", "trial")
+
+    def boom(email):
+        raise RuntimeError("Stripe down")
+    monkeypatch.setattr(at, "lookup_stripe_plan", boom)
+    acc, warn = at.refresh_entitlements("k@acme.co.uk", force=True)
+    assert acc["tier"] == "trial" and "Stripe down" in warn
+
+
+def test_production_config_rejects_unsafe_defaults(monkeypatch):
+    monkeypatch.setattr(config, "IS_PRODUCTION", True)
+    errs = " ".join(config.production_config_errors())
+    for needle in ("APP_SECRET", "EMAIL_FROM", "STRIPE_SECRET_KEY", "COMPANY_NAME", "SUPPORT_EMAIL"):
+        assert needle in errs
+    # The free-tier SQLite database is allowed in production, but flagged
+    assert "DATABASE_URL" not in errs
+    assert any("SQLite" in w for w in config.production_config_warnings())
+
+
+def test_production_config_passes_when_essentials_set(monkeypatch):
+    monkeypatch.setattr(config, "IS_PRODUCTION", True)
+    for name, val in [("APP_SECRET", "x" * 40), ("EMAIL_FROM", "no-reply@acme.co.uk"),
+                      ("BREVO_API_KEY", "xkeysib-test"), ("STRIPE_SECRET_KEY", "rk_live_x"),
+                      ("COMPANY_NAME", "Acme Ltd"), ("SUPPORT_EMAIL", "help@acme.co.uk")]:
+        monkeypatch.setattr(config, name, val)
+    assert config.production_config_errors() == []
+
+
+def test_sessions_survive_lookup_and_sign_out():
+    _sign_in("s@acme.co.uk")
+    token = at.create_session("s@acme.co.uk")
+    assert at.account_for_session(token)["email"] == "s@acme.co.uk"
+    assert at.account_for_session("not-a-real-token") == {}
+    at.delete_session(token)
+    assert at.account_for_session(token) == {}
+
+
+def test_expired_session_is_rejected(monkeypatch):
+    _sign_in("t@acme.co.uk")
+    token = at.create_session("t@acme.co.uk")
+    real_now = at._now
+    monkeypatch.setattr(at, "_now", lambda: real_now() + timedelta(days=config.SESSION_DAYS + 1))
+    assert at.account_for_session(token) == {}
+
+
+@pytest.mark.parametrize("price,tier", [
+    ({"id": "p1", "unit_amount": 9900, "currency": "gbp", "recurring": {"interval": "month"}}, "pro"),
+    ({"id": "p2", "unit_amount": 19900, "currency": "gbp", "recurring": {"interval": "month"}}, "agency"),
+    ({"id": "p3", "unit_amount": 99000, "currency": "gbp", "recurring": {"interval": "year"}}, "pro"),
+    ({"id": "p4", "unit_amount": 199000, "currency": "gbp", "recurring": {"interval": "year"}}, "agency"),
+    ({"id": "p5", "unit_amount": 900, "currency": "gbp", "recurring": {"interval": "month"}}, None),
+    ({"id": "p6", "unit_amount": 9900, "currency": "usd", "recurring": {"interval": "month"}}, None),
+    ({"id": "p7", "unit_amount": 9900, "currency": "gbp"}, None),
+])
+def test_plan_detected_from_price_amount_when_ids_not_configured(monkeypatch, price, tier):
+    monkeypatch.setattr(config, "STRIPE_PRICES_PRO", [])
+    monkeypatch.setattr(config, "STRIPE_PRICES_AGENCY", [])
+    assert at._tier_for_price(price) == tier
+
+
+def test_configured_price_ids_take_precedence(monkeypatch):
+    monkeypatch.setattr(config, "STRIPE_PRICES_PRO", ["price_pro"])
+    monkeypatch.setattr(config, "STRIPE_PRICES_AGENCY", ["price_agency"])
+    assert at._tier_for_price({"id": "price_agency", "unit_amount": 100}) == "agency"
+    big = {"id": "other", "unit_amount": 19900, "currency": "gbp", "recurring": {"interval": "month"}}
+    assert at._tier_for_price(big) is None

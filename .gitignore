@@ -33,3 +33,6 @@ Thumbs.db
 .vscode/
 *.swp
 *~
+
+# Streamlit secrets (set them in the Streamlit Cloud dashboard instead)
+.streamlit/secrets.toml

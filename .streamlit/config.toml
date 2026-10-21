@@ -1,8 +1,8 @@
 [server]
 headless = true
-enableCORS = false
-enableXsrfProtection = false
-maxUploadSize = 50
+# CORS and XSRF protection stay ON (Streamlit defaults) so other sites can't drive user sessions.
+# Hard upload cap per file in MB; the app enforces a lower per-file limit (MAX_FILE_MB).
+maxUploadSize = 10
 
 [browser]
 gatherUsageStats = false

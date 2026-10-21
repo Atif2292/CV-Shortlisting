@@ -1,0 +1,13 @@
+.git
+.github
+venv
+.venv
+.env
+.env.*
+data
+uploads
+tests
+__pycache__
+*.pyc
+.DS_Store
+dummy_cvs

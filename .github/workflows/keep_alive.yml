@@ -1,31 +1,31 @@
-name: RankCV Keep-Alive Heartbeat
+name: Keep-alive & uptime check
 
+# Free-tier Streamlit apps sleep when idle; this pings the app every 10 minutes and
+# FAILS (so GitHub emails you) when the app doesn't respond.
+# Optional: set the repository variable APP_URL if the app URL changes.
 on:
   schedule:
-    # Run every 10 minutes, 24/7/365 to keep the server warm and prevent inactivity sleep
     - cron: '*/10 * * * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
-  heartbeat:
+  ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - name: Send Keep-Alive Ping to RankCV Engine & Backend Worker
+      - name: Ping app and health endpoint
+        env:
+          APP_URL: ${{ vars.APP_URL || 'https://cv-shortlisting-heyjnwnkxygbb9saat9jjs.streamlit.app' }}
         run: |
-          # 1. Ping main app endpoint
-          STATUS1=$(curl -s -o /dev/null -w "%{http_code}" -L \
-            -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-            "https://cv-shortlisting-heyjnwnkxygbb9saat9jjs.streamlit.app/")
-          echo "Main app endpoint returned: $STATUS1 at $(date -u)"
-
-          # 2. Ping core health endpoint (keeps worker container active)
-          STATUS2=$(curl -s -o /dev/null -w "%{http_code}" -L \
-            -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-            "https://cv-shortlisting-heyjnwnkxygbb9saat9jjs.streamlit.app/~/+/_stcore/health")
-          echo "Core health endpoint returned: $STATUS2 at $(date -u)"
-
-          if [ "$STATUS2" -eq 200 ] || [ "$STATUS1" -eq 200 ] || [ "$STATUS1" -eq 303 ]; then
-            echo "✅ Engine is warm and active."
+          URL="${APP_URL%/}"
+          APP=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 30 "$URL/")
+          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 30 "$URL/~/+/_stcore/health")
+          echo "app=$APP health=$HEALTH at $(date -u)"
+          if [ "$HEALTH" = "200" ] || [ "$APP" = "200" ] || [ "$APP" = "303" ]; then
+            echo "App is up."
           else
-            echo "⚠️ Unexpected status: app=$STATUS1 health=$STATUS2"
+            echo "::error::App did not respond (app=$APP health=$HEALTH)"
+            exit 1
           fi

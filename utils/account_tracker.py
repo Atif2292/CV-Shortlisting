@@ -1,238 +1,538 @@
 """
 utils/account_tracker.py
-Persistent SQLite Account, Lead Capture, Free Trial & Subscription License Management.
+Accounts, email-code sign-in, plan entitlements and CV quotas.
 
-1. Free Trial: Enforces a strict 10 CV lifetime quota per verified work email.
-2. Subscription Licensing: Validates and unlocks Pro (500 CVs) and Agency (1,500 CVs) plans.
-3. Lead Capture: Stores recruiter work emails, company names, and usage timestamps for lead export.
+- Sign-in: a 6-digit code is emailed to the address; only someone with access
+  to that inbox can sign in. Codes are stored as HMAC hashes, expire after
+  10 minutes and allow 5 attempts.
+- Plans: paid plans come from the customer's live Stripe subscription (looked up
+  by billing email), or from a manual grant made with `python -m utils.admin`.
+  There are no shared licence keys.
+- Quotas: reserved atomically before a run and released for CVs that were not
+  scored, so parallel sessions cannot overspend. Paid quotas reset each billing
+  period; the free trial is a one-off allowance.
+- Storage: any SQLAlchemy database via DATABASE_URL (managed Postgres in
+  production; SQLite only for local development).
 """
 
-import sqlite3
+import hashlib
+import hmac
+import logging
+import re
+import secrets
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from datetime import datetime
-from typing import Dict, Any, Tuple, List
+from typing import Any, Dict, List, Optional, Tuple
 
-DB_PATH = Path("data/trial_accounts.db")
-DEFAULT_TRIAL_RESUMES = 10
-PRO_RESUMES = 500
-AGENCY_RESUMES = 1500
+from sqlalchemy import (
+    Column, DateTime, Integer, MetaData, String, Table, create_engine, insert,
+    select, update,
+)
+from sqlalchemy.engine import Engine
+
+from utils import config
+
+log = logging.getLogger(__name__)
+
+CODE_TTL = timedelta(minutes=10)
+CODE_MAX_ATTEMPTS = 5
+CODE_RESEND_SECONDS = 60
+CODE_MAX_PER_HOUR = 5
+STRIPE_SYNC_INTERVAL = timedelta(minutes=15)
+MANUAL_PERIOD = timedelta(days=30)
+
+FREE_EMAIL_DOMAINS = {
+    "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "hotmail.co.uk",
+    "live.com", "live.co.uk", "msn.com", "yahoo.com", "yahoo.co.uk", "ymail.com",
+    "icloud.com", "me.com", "mac.com", "aol.com", "proton.me", "protonmail.com",
+    "gmx.com", "gmx.co.uk", "mail.com", "zoho.com", "yandex.com", "tutanota.com",
+    "mailinator.com", "guerrillamail.com", "10minutemail.com", "tempmail.com",
+    "temp-mail.org", "sharklasers.com", "yopmail.com", "trashmail.com",
+}
+
+_EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$")
+
+metadata = MetaData()
+
+accounts = Table(
+    "accounts", metadata,
+    Column("email", String(320), primary_key=True),       # canonical address
+    Column("contact_email", String(320)),                  # address the user typed
+    Column("company", String(200), default=""),
+    Column("tier", String(20), nullable=False, default="trial"),
+    Column("plan_source", String(20), nullable=False, default="trial"),  # trial | stripe | manual
+    Column("resumes_used", Integer, nullable=False, default=0),
+    Column("max_resumes", Integer, nullable=False, default=10),
+    Column("period_start", DateTime(timezone=True)),
+    Column("period_end", DateTime(timezone=True)),
+    Column("plan_expires_at", DateTime(timezone=True)),    # manual grants only
+    Column("stripe_customer_id", String(64)),
+    Column("last_stripe_sync", DateTime(timezone=True)),
+    Column("terms_accepted_at", DateTime(timezone=True)),
+    Column("created_at", DateTime(timezone=True)),
+    Column("last_login_at", DateTime(timezone=True)),
+    Column("last_used_at", DateTime(timezone=True)),
+)
+
+login_codes = Table(
+    "login_codes", metadata,
+    Column("email", String(320), primary_key=True),
+    Column("code_hash", String(64), nullable=False),
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+    Column("attempts", Integer, nullable=False, default=0),
+    Column("last_sent_at", DateTime(timezone=True)),
+    Column("window_start", DateTime(timezone=True)),
+    Column("sent_in_window", Integer, nullable=False, default=0),
+)
+
+usage_events = Table(
+    "usage_events", metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("email", String(320), nullable=False, index=True),
+    Column("cvs", Integer, nullable=False),
+    Column("kind", String(20), nullable=False),            # reserve | release
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+
+sessions = Table(
+    "sessions", metadata,
+    Column("token_hash", String(64), primary_key=True),
+    Column("email", String(320), nullable=False, index=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+)
+
+_engine: Optional[Engine] = None
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _aware(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def get_engine() -> Engine:
+    global _engine
+    if _engine is None:
+        url = config.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = "postgresql+psycopg://" + url[len("postgres://"):]
+        elif url.startswith("postgresql://"):
+            url = "postgresql+psycopg://" + url[len("postgresql://"):]
+        kwargs: Dict[str, Any] = {"pool_pre_ping": True}
+        if url.startswith("sqlite"):
+            db_file = url.split("///", 1)[-1]
+            if db_file and db_file != ":memory:":
+                Path(db_file).parent.mkdir(parents=True, exist_ok=True)
+            kwargs["connect_args"] = {"check_same_thread": False, "timeout": 30}
+        _engine = create_engine(url, **kwargs)
+        metadata.create_all(_engine)
+    return _engine
 
 
 def init_db() -> None:
-    """Ensure SQLite database and tables exist."""
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS accounts (
-                email TEXT PRIMARY KEY,
-                name TEXT,
-                company TEXT,
-                tier TEXT DEFAULT 'trial',
-                resumes_used INTEGER DEFAULT 0,
-                max_resumes INTEGER DEFAULT 10,
-                license_key TEXT,
-                created_at TEXT,
-                last_used_at TEXT
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS license_keys (
-                key_code TEXT PRIMARY KEY,
-                tier TEXT NOT NULL,
-                max_resumes INTEGER NOT NULL,
-                is_active INTEGER DEFAULT 1,
-                assigned_email TEXT,
-                created_at TEXT
-            )
-        """)
-        # Seed default starter keys if empty
-        cur = conn.execute("SELECT COUNT(*) FROM license_keys")
-        if cur.fetchone()[0] == 0:
-            now = datetime.utcnow().isoformat()
-            conn.execute("INSERT OR IGNORE INTO license_keys VALUES (?, ?, ?, ?, ?, ?)",
-                         ("RCV-PRO-2026-UK", "pro", PRO_RESUMES, 1, "", now))
-            conn.execute("INSERT OR IGNORE INTO license_keys VALUES (?, ?, ?, ?, ?, ?)",
-                         ("RCV-AGENCY-2026-UK", "agency", AGENCY_RESUMES, 1, "", now))
-        conn.commit()
+    get_engine()
+
+
+# ─────────────────────────── Email helpers ───────────────────────────────────
+def normalize_email(email: str) -> str:
+    return (email or "").strip().lower()
+
+
+def canonical_email(email: str) -> str:
+    """Account key: strips +tags (and dots for Gmail) so one inbox = one account."""
+    e = normalize_email(email)
+    if "@" not in e:
+        return e
+    local, domain = e.rsplit("@", 1)
+    local = local.split("+", 1)[0]
+    if domain in ("gmail.com", "googlemail.com"):
+        local = local.replace(".", "")
+        domain = "gmail.com"
+    return f"{local}@{domain}"
+
+
+def validate_email(email: str) -> Tuple[bool, str]:
+    e = normalize_email(email)
+    if not e or len(e) > 254 or not _EMAIL_RE.match(e):
+        return False, "Please enter a valid email address."
+    return True, ""
+
+
+def _code_hash(email: str, code: str) -> str:
+    return hmac.new(config.APP_SECRET.encode(), f"{email}:{code}".encode(), hashlib.sha256).hexdigest()
+
+
+# ─────────────────────────── Account views ───────────────────────────────────
+def _view(row: Dict[str, Any]) -> Dict[str, Any]:
+    data = dict(row)
+    used = int(data.get("resumes_used") or 0)
+    limit = int(data.get("max_resumes") or 0)
+    data["remaining"] = max(0, limit - used)
+    data["is_exhausted"] = used >= limit
+    for k in ("period_start", "period_end", "plan_expires_at", "last_stripe_sync",
+              "terms_accepted_at", "created_at", "last_login_at", "last_used_at"):
+        data[k] = _aware(data.get(k))
+    return data
 
 
 def get_account(email: str) -> Dict[str, Any]:
-    """Look up an account by email and return its profile and quota stats."""
-    clean_email = (email or "").strip().lower()
-    if not clean_email:
+    key = canonical_email(email)
+    if not key:
         return {}
+    with get_engine().connect() as conn:
+        row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
+    return _view(row) if row else {}
 
-    init_db()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.execute("SELECT * FROM accounts WHERE email = ?", (clean_email,))
-        row = cur.fetchone()
+
+def list_accounts() -> List[Dict[str, Any]]:
+    with get_engine().connect() as conn:
+        rows = conn.execute(select(accounts).order_by(accounts.c.created_at.desc())).mappings().all()
+    return [_view(r) for r in rows]
+
+
+# ─────────────────────────── Stripe entitlements ─────────────────────────────
+_MONTHS_PER_INTERVAL = {"day": 1 / 30, "week": 12 / 52, "month": 1, "year": 12}
+
+
+def _tier_for_price(price: Dict[str, Any]) -> Optional[str]:
+    """Map a Stripe Price to a plan: by configured Price ID, else by GBP monthly amount."""
+    price_id = price.get("id", "")
+    if price_id in config.STRIPE_PRICES_AGENCY:
+        return "agency"
+    if price_id in config.STRIPE_PRICES_PRO:
+        return "pro"
+    if config.STRIPE_PRICES_PRO or config.STRIPE_PRICES_AGENCY:
+        return None                      # explicit configuration wins
+    amount = price.get("unit_amount")
+    recurring = price.get("recurring") or {}
+    if not amount or str(price.get("currency", "")).lower() != "gbp" or not recurring:
+        return None
+    months = _MONTHS_PER_INTERVAL.get(recurring.get("interval"), 1) * (recurring.get("interval_count") or 1)
+    monthly = amount / 100 / max(months, 1e-9)
+    pro, agency = config.PLAN_PRICES_GBP["pro"], config.PLAN_PRICES_GBP["agency"]
+    if monthly >= (pro + agency) / 2:
+        return "agency"
+    if monthly >= pro / 2:
+        return "pro"
+    return None
+
+
+def _ts(value: Any) -> Optional[datetime]:
+    try:
+        return datetime.fromtimestamp(int(value), tz=timezone.utc) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
+def lookup_stripe_plan(email: str) -> Optional[Dict[str, Any]]:
+    """
+    Returns {"tier", "period_start", "period_end", "customer_id"} for the best
+    active Stripe subscription billed to this email, None if there is none,
+    or raises RuntimeError if Stripe could not be reached.
+    """
+    if not config.STRIPE_SECRET_KEY:
+        return None
+    try:
+        import stripe
+        client = stripe.StripeClient(config.STRIPE_SECRET_KEY)
+        best = None
+        addr = normalize_email(email)
+        customers = list(client.v1.customers.list(params={"email": addr, "limit": 10}).data)
+        if not customers:
+            # The list filter is case-sensitive; search catches "Jane@Acme.com" entered at checkout
+            try:
+                found = client.v1.customers.search(params={"query": f"email:'{addr}'", "limit": 10})
+                customers = list(found.data)
+            except Exception:
+                log.warning("Stripe customer search unavailable", exc_info=True)
+        for cust in customers:
+            subs = client.v1.subscriptions.list(params={"customer": cust.id, "status": "all", "limit": 20})
+            for sub_obj in subs.data:
+                sub = sub_obj.to_dict()
+                if sub.get("status") not in ("active", "trialing", "past_due"):
+                    continue
+                for item in (sub.get("items") or {}).get("data", []):
+                    tier = _tier_for_price(item.get("price") or {})
+                    if not tier:
+                        continue
+                    cand = {
+                        "tier": tier,
+                        "period_start": _ts(item.get("current_period_start") or sub.get("current_period_start")),
+                        "period_end": _ts(item.get("current_period_end") or sub.get("current_period_end")),
+                        "customer_id": cust.id,
+                    }
+                    if best is None or (best["tier"] == "pro" and tier == "agency"):
+                        best = cand
+        return best
+    except Exception as exc:
+        log.exception("Stripe lookup failed")
+        raise RuntimeError("Could not verify your subscription with Stripe right now.") from exc
+
+
+def _apply_plan(conn, row: Dict[str, Any], plan: Optional[Dict[str, Any]], now: datetime) -> None:
+    """Bring the stored plan in line with Stripe."""
+    key = row["email"]
+    vals: Dict[str, Any] = {"last_stripe_sync": now}
+    if plan:
+        vals.update(tier=plan["tier"], plan_source="stripe",
+                    max_resumes=config.PLAN_QUOTAS[plan["tier"]],
+                    stripe_customer_id=plan["customer_id"],
+                    period_end=plan["period_end"])
+        if _aware(row.get("period_start")) != plan["period_start"] or row.get("plan_source") != "stripe":
+            vals.update(period_start=plan["period_start"], resumes_used=0)
+    elif row.get("plan_source") == "stripe":
+        # Subscription ended or was cancelled → back to the (already used) trial allowance
+        vals.update(tier="trial", plan_source="trial", max_resumes=config.PLAN_QUOTAS["trial"],
+                    resumes_used=config.PLAN_QUOTAS["trial"], period_start=None, period_end=None)
+    conn.execute(update(accounts).where(accounts.c.email == key).values(**vals))
+
+
+def _roll_manual_period(conn, row: Dict[str, Any], now: datetime) -> None:
+    expires = _aware(row.get("plan_expires_at"))
+    if expires and now >= expires:
+        conn.execute(update(accounts).where(accounts.c.email == row["email"]).values(
+            tier="trial", plan_source="trial", max_resumes=config.PLAN_QUOTAS["trial"],
+            resumes_used=config.PLAN_QUOTAS["trial"], period_start=None, period_end=None,
+            plan_expires_at=None))
+        return
+    end = _aware(row.get("period_end"))
+    if end and now >= end:
+        conn.execute(update(accounts).where(accounts.c.email == row["email"]).values(
+            resumes_used=0, period_start=now, period_end=now + MANUAL_PERIOD))
+
+
+def refresh_entitlements(email: str, force: bool = False) -> Tuple[Dict[str, Any], str]:
+    """Re-check the plan (Stripe at most every 15 min unless forced). Returns (account, warning)."""
+    key = canonical_email(email)
+    now = _now()
+    warning = ""
+    with get_engine().begin() as conn:
+        row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
         if not row:
-            return {}
-        data = dict(row)
-        used = data.get("resumes_used", 0)
-        max_quota = data.get("max_resumes", DEFAULT_TRIAL_RESUMES)
-        data["remaining"] = max(0, max_quota - used)
-        data["is_exhausted"] = (used >= max_quota)
-        return data
-
-
-def register_or_login_trial(email: str, name: str = "", company: str = "") -> Tuple[bool, str, Dict[str, Any]]:
-    """
-    Registers a new recruiter email for a 10 CV Free Trial or logs in an existing user.
-    """
-    clean_email = (email or "").strip().lower()
-    if not clean_email or "@" not in clean_email or "." not in clean_email or len(clean_email) < 5:
-        return False, "Please enter a valid business/work email address.", {}
-
-    init_db()
-    now = datetime.utcnow().isoformat()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.execute("SELECT * FROM accounts WHERE email = ?", (clean_email,))
-        row = cur.fetchone()
-        if row:
-            data = dict(row)
-            rem = max(0, data["max_resumes"] - data["resumes_used"])
-            data["remaining"] = rem
-            data["is_exhausted"] = (data["resumes_used"] >= data["max_resumes"])
-            tier_label = data["tier"].title()
-            msg = f"Welcome back! Logged in as {clean_email} ({rem}/{data['max_resumes']} CVs remaining on {tier_label})."
-            return True, msg, data
+            return {}, ""
+        row = dict(row)
+        if row.get("plan_source") == "manual":
+            _roll_manual_period(conn, row, now)
         else:
-            conn.execute(
-                "INSERT INTO accounts (email, name, company, tier, resumes_used, max_resumes, created_at, last_used_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (clean_email, name.strip(), company.strip(), "trial", 0, DEFAULT_TRIAL_RESUMES, now, now)
-            )
-            conn.commit()
-            cur = conn.execute("SELECT * FROM accounts WHERE email = ?", (clean_email,))
-            data = dict(cur.fetchone())
-            data["remaining"] = DEFAULT_TRIAL_RESUMES
-            data["is_exhausted"] = False
-            return True, f"🎉 10 CV Free Trial activated for {clean_email}!", data
+            last = _aware(row.get("last_stripe_sync"))
+            if config.STRIPE_SECRET_KEY and (force or not last or now - last >= STRIPE_SYNC_INTERVAL):
+                try:
+                    plan = lookup_stripe_plan(row.get("contact_email") or key)
+                    if plan is None and row.get("contact_email") and row["contact_email"] != key:
+                        plan = lookup_stripe_plan(key)
+                    _apply_plan(conn, row, plan, now)
+                except RuntimeError as exc:
+                    warning = str(exc)
+        row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
+    return _view(row), warning
 
 
-def activate_license(key_code: str, email: str = "") -> Tuple[bool, str, Dict[str, Any]]:
+# ─────────────────────────── Sign-in codes ───────────────────────────────────
+def request_login_code(email: str) -> Tuple[bool, str, Optional[str]]:
     """
-    Validates a subscription license key and activates Pro or Agency plan.
+    Creates and stores a sign-in code. Returns (ok, message, code).
+    The caller emails `code`; only its hash is stored.
     """
-    clean_key = (key_code or "").strip().upper()
-    clean_email = (email or "").strip().lower()
-    if not clean_key or len(clean_key) < 5:
-        return False, "Please enter a valid license key.", {}
+    ok, msg = validate_email(email)
+    if not ok:
+        return False, msg, None
+    addr = normalize_email(email)
+    key = canonical_email(addr)
+    domain = addr.rsplit("@", 1)[1]
 
-    init_db()
-    now = datetime.utcnow().isoformat()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.execute("SELECT * FROM license_keys WHERE key_code = ?", (clean_key,))
-        row = cur.fetchone()
+    if config.TRIAL_REQUIRE_WORK_EMAIL and domain in FREE_EMAIL_DOMAINS and not get_account(key):
+        try:
+            paying = lookup_stripe_plan(addr) is not None
+        except RuntimeError:
+            paying = False
+        if not paying:
+            return False, ("Please use your work email address. Free webmail and disposable "
+                           "addresses can't start a free trial."), None
 
+    now = _now()
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    with get_engine().begin() as conn:
+        row = conn.execute(select(login_codes).where(login_codes.c.email == addr)).mappings().first()
         if row:
-            tier = row["tier"]
-            max_resumes = row["max_resumes"]
-        elif "AGENCY" in clean_key:
-            tier = "agency"
-            max_resumes = AGENCY_RESUMES
-        elif "PRO" in clean_key or len(clean_key) >= 8:
-            tier = "pro"
-            max_resumes = PRO_RESUMES
+            last = _aware(row["last_sent_at"])
+            if last and (now - last).total_seconds() < CODE_RESEND_SECONDS:
+                wait = CODE_RESEND_SECONDS - int((now - last).total_seconds())
+                return False, f"Please wait {wait}s before requesting another code.", None
+            win = _aware(row["window_start"])
+            sent = row["sent_in_window"] or 0
+            if win and now - win < timedelta(hours=1):
+                if sent >= CODE_MAX_PER_HOUR:
+                    return False, "Too many codes requested. Please try again in an hour.", None
+            else:
+                win, sent = now, 0
+            conn.execute(update(login_codes).where(login_codes.c.email == addr).values(
+                code_hash=_code_hash(addr, code), expires_at=now + CODE_TTL, attempts=0,
+                last_sent_at=now, window_start=win, sent_in_window=sent + 1))
         else:
-            return False, "Unrecognized license key format. Please check your Stripe confirmation email.", {}
+            conn.execute(insert(login_codes).values(
+                email=addr, code_hash=_code_hash(addr, code), expires_at=now + CODE_TTL,
+                attempts=0, last_sent_at=now, window_start=now, sent_in_window=1))
+    return True, f"We've sent a 6-digit code to {addr}. It expires in 10 minutes.", code
 
-        target_email = clean_email or f"{tier}_subscriber@rankcv.io"
-        cur = conn.execute("SELECT * FROM accounts WHERE email = ?", (target_email,))
-        existing = cur.fetchone()
 
+def verify_login_code(email: str, code: str, company: str = "",
+                      accept_terms: bool = False) -> Tuple[bool, str, Dict[str, Any]]:
+    """Checks the code; on success creates the account if needed and syncs the plan."""
+    addr = normalize_email(email)
+    key = canonical_email(addr)
+    code = re.sub(r"\D", "", code or "")
+    if len(code) != 6:
+        return False, "Enter the 6-digit code from your email.", {}
+
+    now = _now()
+    with get_engine().begin() as conn:
+        row = conn.execute(select(login_codes).where(login_codes.c.email == addr)).mappings().first()
+        if not row:
+            return False, "Request a new code first.", {}
+        if now > _aware(row["expires_at"]):
+            return False, "That code has expired. Request a new one.", {}
+        if row["attempts"] >= CODE_MAX_ATTEMPTS:
+            return False, "Too many incorrect attempts. Request a new code.", {}
+        if not hmac.compare_digest(row["code_hash"], _code_hash(addr, code)):
+            conn.execute(update(login_codes).where(login_codes.c.email == addr)
+                         .values(attempts=login_codes.c.attempts + 1))
+            left = CODE_MAX_ATTEMPTS - row["attempts"] - 1
+            return False, f"Incorrect code. {left} attempt(s) left.", {}
+
+        existing = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
+        if not existing and not accept_terms:
+            return False, "Please accept the Terms of Service and Privacy Notice to continue.", {}
+
+        # Single use
+        conn.execute(update(login_codes).where(login_codes.c.email == addr)
+                     .values(expires_at=now, attempts=CODE_MAX_ATTEMPTS))
         if existing:
-            conn.execute(
-                "UPDATE accounts SET tier = ?, max_resumes = ?, license_key = ?, last_used_at = ? WHERE email = ?",
-                (tier, max_resumes, clean_key, now, target_email)
-            )
+            conn.execute(update(accounts).where(accounts.c.email == key).values(
+                last_login_at=now, contact_email=addr,
+                company=(company.strip()[:200] or existing["company"] or "")))
         else:
-            conn.execute(
-                "INSERT INTO accounts (email, name, company, tier, resumes_used, max_resumes, license_key, created_at, last_used_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (target_email, "Subscribed Recruiter", "Licensed Client", tier, 0, max_resumes, clean_key, now, now)
-            )
-        conn.commit()
+            conn.execute(insert(accounts).values(
+                email=key, contact_email=addr, company=company.strip()[:200], tier="trial",
+                plan_source="trial", resumes_used=0, max_resumes=config.PLAN_QUOTAS["trial"],
+                terms_accepted_at=now, created_at=now, last_login_at=now))
 
-        cur = conn.execute("SELECT * FROM accounts WHERE email = ?", (target_email,))
-        data = dict(cur.fetchone())
-        rem = max(0, data["max_resumes"] - data["resumes_used"])
-        data["remaining"] = rem
-        data["is_exhausted"] = (data["resumes_used"] >= data["max_resumes"])
-
-        tier_title = tier.title()
-        return True, f"🎉 {tier_title} Plan activated! ({max_resumes} CVs/month unlocked)", data
+    account, warning = refresh_entitlements(key, force=True)
+    label = config.PLAN_LABELS.get(account.get("tier"), "Free Trial")
+    msg = f"Signed in as {addr} · {label} · {account['remaining']}/{account['max_resumes']} CVs left."
+    if warning:
+        msg += f" ({warning} Your previous plan is shown.)"
+    return True, msg, account
 
 
-def can_screen_cvs(email: str, count: int) -> Tuple[bool, str, int]:
-    """
-    Checks if an account has sufficient quota to evaluate `count` resumes.
-    Returns: (is_allowed, reason_message, remaining_quota)
-    """
-    clean_email = (email or "").strip().lower()
-    if not clean_email:
-        return False, "Authentication required. Please enter your work email to start your free trial.", 0
+# ─────────────────────────── Quota ───────────────────────────────────────────
+def reserve_quota(email: str, count: int) -> Tuple[bool, str, int]:
+    """Atomically reserve `count` CVs. Returns (ok, message, remaining_after)."""
+    key = canonical_email(email)
+    if not key:
+        return False, "Please sign in to screen your own CVs.", 0
+    account, _ = refresh_entitlements(key)
+    if not account:
+        return False, "Account not found. Please sign in again.", 0
+    if count <= 0:
+        return True, "OK", account["remaining"]
 
-    init_db()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.execute("SELECT * FROM accounts WHERE email = ?", (clean_email,))
-        row = cur.fetchone()
-        if not row:
-            return False, "Account not found. Please start your free trial or sign in with your license key.", 0
-
-        data = dict(row)
-        used = data.get("resumes_used", 0)
-        limit = data.get("max_resumes", DEFAULT_TRIAL_RESUMES)
-        remaining = max(0, limit - used)
-        tier_str = data.get("tier", "trial").title()
-
-        if remaining < count:
-            msg = (
-                f"⚠️ Quota exceeded: You uploaded {count} CV(s), but only have {remaining} CV(s) remaining "
-                f"in your {tier_str} plan. Please upgrade to Pro (£99/mo) or Agency (£199/mo) to continue."
-            )
-            return False, msg, remaining
-
-        return True, "OK", remaining
+    now = _now()
+    with get_engine().begin() as conn:
+        res = conn.execute(
+            update(accounts)
+            .where(accounts.c.email == key)
+            .where(accounts.c.resumes_used + count <= accounts.c.max_resumes)
+            .values(resumes_used=accounts.c.resumes_used + count, last_used_at=now)
+        )
+        if res.rowcount != 1:
+            row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
+            rem = max(0, row["max_resumes"] - row["resumes_used"]) if row else 0
+            label = config.PLAN_LABELS.get(row["tier"] if row else "trial", "plan")
+            return False, (f"Not enough CVs left: this batch has {count}, your {label} plan has "
+                           f"{rem} remaining. Remove some files or upgrade your plan."), rem
+        conn.execute(insert(usage_events).values(email=key, cvs=count, kind="reserve", created_at=now))
+        row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
+    return True, "OK", max(0, row["max_resumes"] - row["resumes_used"])
 
 
-def record_screening(email: str, count: int) -> Dict[str, Any]:
-    """
-    Records usage of `count` CV evaluations against the user's account.
-    """
-    clean_email = (email or "").strip().lower()
-    if not clean_email:
+def release_quota(email: str, count: int) -> int:
+    """Give back CVs that were reserved but not scored. Returns remaining."""
+    key = canonical_email(email)
+    if not key:
+        return 0
+    if count <= 0:
+        return get_account(key).get("remaining", 0)
+    now = _now()
+    with get_engine().begin() as conn:
+        conn.execute(
+            update(accounts).where(accounts.c.email == key)
+            .where(accounts.c.resumes_used >= count)
+            .values(resumes_used=accounts.c.resumes_used - count)
+        )
+        conn.execute(insert(usage_events).values(email=key, cvs=count, kind="release", created_at=now))
+        row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
+    return max(0, row["max_resumes"] - row["resumes_used"]) if row else 0
+
+
+# ─────────────────────────── Persistent sessions ─────────────────────────────
+def _token_hash(token: str) -> str:
+    return hmac.new(config.APP_SECRET.encode(), f"session:{token}".encode(), hashlib.sha256).hexdigest()
+
+
+def create_session(email: str) -> str:
+    """Create a sign-in session; returns the raw token for the browser cookie (only its hash is stored)."""
+    token = secrets.token_urlsafe(32)
+    now = _now()
+    with get_engine().begin() as conn:
+        conn.execute(insert(sessions).values(
+            token_hash=_token_hash(token), email=canonical_email(email), created_at=now,
+            expires_at=now + timedelta(days=config.SESSION_DAYS)))
+        conn.execute(sessions.delete().where(sessions.c.expires_at < now))
+    return token
+
+
+def account_for_session(token: str) -> Dict[str, Any]:
+    """Account for a valid, unexpired session token, else {}."""
+    if not token or len(token) > 100:
         return {}
-
-    init_db()
-    now = datetime.utcnow().isoformat()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.execute("SELECT resumes_used FROM accounts WHERE email = ?", (clean_email,))
-        row = cur.fetchone()
-        if row:
-            new_used = row["resumes_used"] + count
-            conn.execute(
-                "UPDATE accounts SET resumes_used = ?, last_used_at = ? WHERE email = ?",
-                (new_used, now, clean_email)
-            )
-            conn.commit()
-            cur = conn.execute("SELECT * FROM accounts WHERE email = ?", (clean_email,))
-            data = dict(cur.fetchone())
-            data["remaining"] = max(0, data["max_resumes"] - data["resumes_used"])
-            return data
+    with get_engine().connect() as conn:
+        row = conn.execute(select(sessions).where(sessions.c.token_hash == _token_hash(token))).mappings().first()
+    if not row or _now() >= _aware(row["expires_at"]):
         return {}
+    return get_account(row["email"])
 
 
-def get_all_leads() -> List[Dict[str, Any]]:
-    """Returns all registered accounts for administrative inspection and lead export."""
-    init_db()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cur = conn.execute("SELECT * FROM accounts ORDER BY created_at DESC")
-        return [dict(r) for r in cur.fetchall()]
+def delete_session(token: str) -> None:
+    if not token:
+        return
+    with get_engine().begin() as conn:
+        conn.execute(sessions.delete().where(sessions.c.token_hash == _token_hash(token)))
+
+
+# ─────────────────────────── Admin ───────────────────────────────────────────
+def grant_plan(email: str, tier: str, months: int = 1, company: str = "") -> Dict[str, Any]:
+    """Manually grant a plan (e.g. invoiced customers). Usage resets every 30 days."""
+    if tier not in ("trial", "pro", "agency"):
+        raise ValueError("tier must be trial, pro or agency")
+    addr = normalize_email(email)
+    key = canonical_email(addr)
+    now = _now()
+    paid = tier != "trial"
+    vals = dict(tier=tier, plan_source="manual" if paid else "trial",
+                max_resumes=config.PLAN_QUOTAS[tier], resumes_used=0,
+                period_start=now if paid else None,
+                period_end=now + MANUAL_PERIOD if paid else None,
+                plan_expires_at=now + timedelta(days=30 * months) if paid else None)
+    with get_engine().begin() as conn:
+        exists = conn.execute(select(accounts.c.email).where(accounts.c.email == key)).first()
+        if exists:
+            conn.execute(update(accounts).where(accounts.c.email == key).values(**vals))
+        else:
+            conn.execute(insert(accounts).values(email=key, contact_email=addr, company=company,
+                                                 created_at=now, **vals))
+    return get_account(key)

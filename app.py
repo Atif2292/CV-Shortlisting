@@ -2,37 +2,55 @@
 RankCV — AI-Powered CV Screening
 """
 
-import os
-import io
-import base64
-import tempfile
-import streamlit as st
-import pandas as pd
+import datetime
+import html
+import json
+import logging
+import re
+import shutil
+import subprocess
+import sys
+import uuid
 from pathlib import Path
+
+import altair as alt
+import pandas as pd
+import streamlit as st
 from dotenv import load_dotenv
-from openpyxl.styles import (
-    PatternFill as _PFill, Font as _Font,
-    Alignment as _Align, Border as _Border, Side as _Side,
-)
 
 load_dotenv()
 
-from utils.pdf_parser import extract_pdf_text
-from utils.docx_parser import extract_docx_text
-from utils.ai_scoring import extract_resume_keywords, rank_candidates_batch, extract_job_context
-from utils.cleanup import delete_uploaded_files
-from utils.account_tracker import (
-    register_or_login_trial,
-    activate_license,
-    can_screen_cvs,
-    record_screening,
+# Imported after load_dotenv() so .env values are visible to utils.config
+from utils import config  # noqa: E402
+from utils.pdf_parser import extract_pdf_text_with_flags  # noqa: E402
+from utils.docx_parser import extract_docx_text_with_flags  # noqa: E402
+from utils.ai_scoring import extract_resume_keywords, rank_candidates_batch, extract_job_context  # noqa: E402
+from utils.cleanup import screening_workspace, safe_upload_path, purge_stale_workspaces  # noqa: E402
+from utils.account_tracker import (  # noqa: E402
+    init_db,
     get_account,
+    create_session,
+    account_for_session,
+    delete_session,
+    normalize_email,
+    refresh_entitlements,
+    request_login_code,
+    verify_login_code,
+    reserve_quota,
+    release_quota,
 )
-import altair as alt
+from utils.mailer import send_login_code, email_configured  # noqa: E402
+from utils.legal import PAGES as LEGAL_PAGES, render_page as render_legal_page  # noqa: E402
+from utils.report import (  # noqa: E402
+    BAND_LABELS, MODE_LABELS as _MODE_LABELS, build_excel_report, fit_band as _fit_band, score as _score,
+)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("rankcv")
 
 
 st.set_page_config(
-    page_title="RankCV — Screen CVs in Seconds",
+    page_title="RankCV — Screen CVs in Minutes",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -40,10 +58,15 @@ st.set_page_config(
 
 
 def render_html(html_str: str, container=None):
-    """Safely renders HTML in Streamlit using st.markdown with stripped lines to prevent CommonMark code blocks."""
+    """Renders trusted layout HTML. Every dynamic value inside it must go through _e()."""
     clean = "\n".join(ln.strip() for ln in html_str.splitlines() if ln.strip())
     target = container if container is not None else st
     target.markdown(clean, unsafe_allow_html=True)
+
+
+def _e(value) -> str:
+    """HTML-escape any value before it goes into unsafe_allow_html markup."""
+    return html.escape("" if value is None else str(value), quote=True)
 
 
 # ─────────────────────────── CSS (light mode only) ────────────────────────────
@@ -1605,25 +1628,92 @@ button[kind="primary"]:has(div:contains("Passed")) {
 
 st.markdown(build_css(), unsafe_allow_html=True)
 
+
+# ─────────────────────────── Production guard & housekeeping ─────────────────
+_cfg_errors = config.production_config_errors()
+if _cfg_errors:
+    st.error("RankCV is not configured for production yet:\n\n" + "\n".join(f"- {e}" for e in _cfg_errors))
+    st.stop()
+
+
+@st.cache_resource
+def _startup_housekeeping() -> bool:
+    init_db()
+    purge_stale_workspaces()
+    for warning in config.production_config_warnings():
+        log.warning("Config: %s", warning)
+    return True
+
+
+_startup_housekeeping()
+
+
+def _render_footer() -> None:
+    links = " &middot; ".join(
+        f'<a href="?page={slug}" target="_self" style="color:#475569;">{_e(title)}</a>'
+        for slug, title in LEGAL_PAGES.items()
+    )
+    parts = [config.COMPANY_NAME]
+    if config.COMPANY_NUMBER:
+        parts.append(f"Registered in England and Wales No. {config.COMPANY_NUMBER}")
+    if config.COMPANY_ADDRESS:
+        parts.append(config.COMPANY_ADDRESS)
+    if config.ICO_REG_NUMBER:
+        parts.append(f"ICO registration {config.ICO_REG_NUMBER}")
+    parts.append(config.SUPPORT_EMAIL)
+    details = " &middot; ".join(_e(x) for x in parts)
+    render_html(f"""
+<div class="iq-foot">
+<div class="iq-foot-txt">RankCV &middot; AI CV Screening &amp; Candidate Ranking Platform</div>
+<div class="iq-foot-txt" style="margin-top:.4rem;">{links}</div>
+<div class="iq-foot-txt" style="margin-top:.4rem;font-size:.75rem;">{details}</div>
+</div>
+""")
+
+
+# ─────────────────────────── Legal pages (?page=…) ───────────────────────────
+_page = st.query_params.get("page", "")
+if _page in LEGAL_PAGES:
+    render_html('<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>'
+                '<div><a href="./" target="_self" class="iq-nav-link">&larr; Back to RankCV</a></div></div>')
+    st.markdown(render_legal_page(_page))
+    _render_footer()
+    st.stop()
+
+
 # ─────────────────────────── Session state ───────────────────────────────────
 for _k, _v in [
     ("results",              []),
     ("processed",            False),
-    ("uploaded_paths",       []),
     ("show_full",            False),
     ("engine_mode",          "cloud"),
     ("custom_api_key",       ""),
     ("custom_base_url",      ""),
-    ("target_region",        "Default (OpenAI Direct)"),
     ("recruiter_overrides",  {}),
     ("audit_stats",          {}),
-    ("show_legal_modal",     False),
+    ("run_meta",             {}),
+    ("flash",                []),
+    ("auth_pending_email",   ""),
+    ("auth_pending_company", ""),
+    ("auth_codes_sent",      0),
+    ("dev_login_code",       ""),
 ]:
     if _k not in st.session_state:
         st.session_state[_k] = _v
 
 
 # ─────────────────────────── Helpers ─────────────────────────────────────────
+def _flash(kind: str, msg: str) -> None:
+    """Queue a message that survives the next st.rerun()."""
+    st.session_state.flash.append((kind, msg))
+
+
+def _show_flash() -> None:
+    for kind, msg in st.session_state.flash:
+        getattr(st, kind, st.info)(msg)
+    st.session_state.flash = []
+
+
 def _fmt_score(score: int):
     s10  = round(score / 10, 1)
     lbl  = f"{s10:.1f}" if s10 % 1 else f"{int(s10)}.0"
@@ -1631,20 +1721,25 @@ def _fmt_score(score: int):
     return lbl, "★" * full + "☆" * (5 - full)
 
 
-def _rec_badge(text: str) -> str:
-    t = text.lower()
-    if   "highly" in t:                                  css = "rec-highly"
-    elif "not" in t and ("suit" in t or "recommend" in t): css = "rec-unsuitable"
-    elif "review" in t or "manual" in t:                 css = "rec-review"
-    elif "recommend" in t:                               css = "rec-recommended"
-    else:
-        return f'<span style="font-size:.9rem;color:#64748B">{text}</span>'
-    return f'<span class="{css}">{text}</span>'
+_BAND_BADGE = {
+    "strong":   ("iq-cr-rb-strong", BAND_LABELS["strong"]),
+    "good":     ("iq-cr-rb-good",   BAND_LABELS["good"]),
+    "moderate": ("iq-cr-rb-ok",     BAND_LABELS["moderate"]),
+    "weak":     ("iq-cr-rb-no",     BAND_LABELS["weak"]),
+    "invalid":  ("iq-cr-rb-no",     BAND_LABELS["invalid"]),
+}
+_BAND_REC_CSS = {
+    "strong": "rec-highly", "good": "rec-recommended", "moderate": "rec-review",
+    "weak": "rec-unsuitable", "invalid": "rec-unsuitable",
+}
+
+
+def _rec_badge(r: dict) -> str:
+    return f'<span class="{_BAND_REC_CSS[_fit_band(r)]}">{_e(r.get("recommendation", "—"))}</span>'
 
 
 def _extract_doc_file(path: str) -> str:
-    """Extract text from Word 97-2003 .doc files using textutil, docx, or binary stream fallback."""
-    # 1. Many modern .doc files are actually docx files renamed as .doc
+    """Extract text from Word 97-2003 .doc files (docx-in-disguise, textutil on macOS, antiword on Linux)."""
     try:
         from docx import Document
         doc = Document(path)
@@ -1654,124 +1749,201 @@ def _extract_doc_file(path: str) -> str:
     except Exception:
         pass
 
-    # 2. On macOS, textutil converts .doc to plain text natively
-    import subprocess, sys
-    if sys.platform == "darwin":
-        try:
-            res = subprocess.run(["textutil", "-convert", "txt", "-stdout", path], capture_output=True, text=True)
-            if res.returncode == 0 and res.stdout.strip():
-                return res.stdout.strip()
-        except Exception:
-            pass
-
-    # 3. Robust binary string extraction fallback (works for OLE Word documents on Linux/Cloud)
+    if sys.platform == "darwin" and shutil.which("textutil"):
+        cmd = ["textutil", "-convert", "txt", "-stdout", path]
+    elif shutil.which("antiword"):
+        cmd = ["antiword", path]
+    else:
+        raise ValueError("old .doc files aren't supported on this server — please save it as .docx or PDF")
     try:
-        with open(path, "rb") as f:
-            raw = f.read()
-        import re
-        words = re.findall(rb'[\x20-\x7E\t\r\n]{4,}', raw)
-        clean = " ".join(w.decode('latin1', errors='ignore') for w in words)
-        return clean.strip()
-    except Exception:
-        return ""
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        raise ValueError("took too long to read — please save it as .docx or PDF")
+    if res.returncode == 0 and res.stdout.strip():
+        return res.stdout.strip()
+    raise ValueError("couldn't be read as a Word document — please save it as .docx or PDF")
+
+
+def _read_text_file(path: str) -> str:
+    raw = Path(path).read_bytes()
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return raw.decode("utf-16", errors="ignore")
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return raw.decode("cp1252", errors="ignore")
 
 
 def _extract_excel_file(path: str, fname: str) -> str:
-    """Extract candidate or JD content from Excel (.xlsx, .xls) and CSV files."""
+    """Extract job-description content from Excel (.xlsx, .xls) and CSV files."""
     ext = Path(fname).suffix.lower()
     try:
         if ext == ".csv":
-            df = pd.read_csv(path)
+            try:
+                df = pd.read_csv(path)
+            except UnicodeDecodeError:
+                df = pd.read_csv(path, encoding="cp1252")
         else:
             engine = "openpyxl" if ext == ".xlsx" else None
-            excel_data = pd.read_excel(path, sheet_name=None, engine=engine)
-            dfs = [sheet for sheet in excel_data.values()]
-            df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-
-        df = df.dropna(how='all')
-        lines = []
-        for idx, row in df.iterrows():
-            row_parts = []
-            for col, val in row.items():
-                if pd.notna(val) and str(val).strip():
-                    row_parts.append(f"{col}: {val}")
-            if row_parts:
-                lines.append(f"Candidate/Profile #{idx+1}: " + " | ".join(row_parts))
-        return "\n\n".join(lines)
+            sheets = pd.read_excel(path, sheet_name=None, engine=engine)
+            df = pd.concat(list(sheets.values()), ignore_index=True) if sheets else pd.DataFrame()
     except Exception:
-        try:
-            df = pd.read_excel(path)
-            return df.to_string(index=False)
-        except Exception:
-            return ""
+        log.exception("Spreadsheet parse failed")
+        return ""
+    df = df.dropna(how="all")
+    lines = []
+    for _, row in df.iterrows():
+        parts = [f"{col}: {val}" for col, val in row.items() if pd.notna(val) and str(val).strip()]
+        if parts:
+            lines.append(" | ".join(parts))
+    return "\n".join(lines)
+
+
+def _read_cv_with_notes(path: str, fname: str):
+    """Returns (text, notes) where notes are user-facing remarks about what was ignored."""
+    ext = Path(fname).suffix.lower()
+    notes = []
+    if ext == ".pdf":
+        text, flags = extract_pdf_text_with_flags(path)
+        if flags.get("hidden_spans_dropped"):
+            notes.append("contained hidden or tiny text, which was ignored")
+        if flags.get("pages_truncated") or flags.get("chars_truncated"):
+            notes.append("is very long; only the first part was read")
+        return text, notes
+    if ext == ".docx":
+        text, flags = extract_docx_text_with_flags(path)
+        if flags.get("hidden_runs_dropped"):
+            notes.append("contained hidden or tiny text, which was ignored")
+        if flags.get("chars_truncated"):
+            notes.append("is very long; only the first part was read")
+        return text, notes
+    if ext == ".doc":
+        return _extract_doc_file(path), notes
+    if ext in (".xlsx", ".xls", ".csv"):
+        return _extract_excel_file(path, fname), notes
+    if ext == ".txt":
+        return _read_text_file(path), notes
+    raise ValueError("unsupported file type")
 
 
 def _read_cv(path: str, fname: str) -> str:
-    ext = Path(fname).suffix.lower()
-    if ext == ".pdf":
-        return extract_pdf_text(path)
-    if ext == ".docx":
-        return extract_docx_text(path)
-    if ext == ".doc":
-        return _extract_doc_file(path)
-    if ext in [".xlsx", ".xls", ".csv"]:
-        return _extract_excel_file(path, fname)
-    if ext == ".txt":
-        try:
-            return Path(path).read_text(encoding="utf-8", errors="ignore")
-        except:
-            return ""
-    return ""
+    return _read_cv_with_notes(path, fname)[0]
 
 
 def _extract_from_upload(f) -> str:
-    """Extract text from a Streamlit UploadedFile object."""
-    suffix = Path(f.name).suffix
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+    """Extract text from a Streamlit UploadedFile inside a private temp folder."""
+    if f.size > config.MAX_FILE_MB * 1024 * 1024:
+        raise ValueError(f"is larger than {config.MAX_FILE_MB} MB")
+    with screening_workspace() as wd:
+        path = safe_upload_path(wd, f.name)
         f.seek(0)
-        tmp.write(f.read())
-        path = tmp.name
-    try:
-        return _read_cv(path, f.name)
-    finally:
-        f.seek(0)
-        Path(path).unlink(missing_ok=True)
+        path.write_bytes(f.read())
+        return _read_cv(str(path), f.name)
 
 
 def _exp_subtitle(text: str) -> str:
     """Extract a short subtitle from relevant_experience text."""
-    import re as _re
-    m = _re.search(r'(\d+)\+?\s+years?', text, _re.I)
+    text = str(text or "")
+    m = re.search(r'(\d+)\+?\s+years?', text, re.I)
     if m:
         return f"{m.group(1)}+ years experience"
     return text[:44].rstrip() + ("…" if len(text) > 44 else "")
 
 
 # ─────────────────────────── Session & Client Auth State ─────────────────────
-if "client_auth" not in st.session_state:
+_TRIAL_Q = config.PLAN_QUOTAS["trial"]
+_GUEST_AUTH = {
+    "logged_in": False, "email": "", "contact_email": "", "company": "", "tier": "guest",
+    "resumes_used": 0, "max_resumes": _TRIAL_Q, "remaining": _TRIAL_Q,
+}
+
+
+def _set_auth(acc: dict) -> None:
     st.session_state.client_auth = {
-        "logged_in": False,
-        "email": "",
-        "name": "",
-        "company": "",
-        "tier": "guest",  # 'guest' | 'trial' | 'pro' | 'agency'
-        "resumes_used": 0,
-        "max_resumes": 10,
-        "remaining": 10,
-        "license_key": "",
+        "logged_in": True,
+        "email": acc["email"],
+        "contact_email": acc.get("contact_email") or acc["email"],
+        "company": acc.get("company") or "",
+        "tier": acc.get("tier", "trial"),
+        "resumes_used": int(acc.get("resumes_used", 0)),
+        "max_resumes": int(acc.get("max_resumes", _TRIAL_Q)),
+        "remaining": int(acc.get("remaining", 0)),
     }
 
+
+def _reset_results() -> None:
+    for k in list(st.session_state.keys()):
+        if isinstance(k, str) and k.startswith(("sel_stat_", "num_adj_", "txt_notes_")):
+            del st.session_state[k]
+    st.session_state.results = []
+    st.session_state.audit_stats = {}
+    st.session_state.run_meta = {}
+    st.session_state.recruiter_overrides = {}
+    st.session_state.processed = False
+    st.session_state.show_full = False
+
+
+_SESSION_COOKIE = "rankcv_session"
+
+
+def _queue_cookie(token: str, max_age: int) -> None:
+    """The cookie is written by a small script rendered at the end of the run (see bottom of file)."""
+    st.session_state.cookie_write = (token, max_age)
+
+
+def _sign_in(acc: dict) -> None:
+    _set_auth(acc)
+    token = create_session(acc["email"])
+    st.session_state.session_token = token
+    _queue_cookie(token, config.SESSION_DAYS * 86400)
+
+
+def _sign_out() -> None:
+    delete_session(st.session_state.get("session_token", ""))
+    st.session_state.session_token = ""
+    _queue_cookie("", 0)
+    st.session_state.client_auth = dict(_GUEST_AUTH)
+    _reset_results()
+
+
+if "client_auth" not in st.session_state:
+    st.session_state.client_auth = dict(_GUEST_AUTH)
+
+# Stay signed in across refreshes: restore the session from the browser cookie once per session
+if not st.session_state.client_auth.get("logged_in") and not st.session_state.get("cookie_checked"):
+    st.session_state.cookie_checked = True
+    try:
+        _cookie_token = st.context.cookies.get(_SESSION_COOKIE, "")
+    except Exception:
+        _cookie_token = ""
+    if _cookie_token:
+        _restored = account_for_session(_cookie_token)
+        if _restored:
+            _set_auth(_restored)
+            st.session_state.session_token = _cookie_token
+
+_acc_warn = ""
+
+# Keep the plan and quota current (also picks up a new or cancelled Stripe subscription)
+if st.session_state.client_auth.get("logged_in"):
+    _acc, _acc_warn = refresh_entitlements(st.session_state.client_auth["email"])
+    if _acc:
+        _set_auth(_acc)
+    else:
+        _sign_out()
+
 _is_auth = st.session_state.client_auth.get("logged_in", False)
-_auth_email = st.session_state.client_auth.get("email", "")
+_auth_email = st.session_state.client_auth.get("contact_email", "")
 _auth_tier = st.session_state.client_auth.get("tier", "guest")
-_auth_rem = st.session_state.client_auth.get("remaining", 10)
+_auth_rem = st.session_state.client_auth.get("remaining", _TRIAL_Q)
+_auth_max = st.session_state.client_auth.get("max_resumes", _TRIAL_Q)
 
 if _is_auth:
-    _badge_text = "Agency (1,500)" if _auth_tier == "agency" else ("Pro (500)" if _auth_tier == "pro" else f"Trial: {_auth_rem}/10 left")
+    _badge_text = f"{config.PLAN_LABELS.get(_auth_tier, 'Plan')}: {_auth_rem}/{_auth_max} left"
     _email_display = _auth_email if len(_auth_email) <= 20 else _auth_email[:18] + "…"
     nav_auth_btn = f'''
     <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#1E3A8A !important;background:#EFF6FF !important;border:1.5px solid #BFDBFE !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;">
-      <span>🛡️</span><span>{_email_display} ({_badge_text})</span>
+      <span>🛡️</span><span>{_e(_email_display)} ({_e(_badge_text)})</span>
     </a>
     '''
 else:
@@ -1807,8 +1979,8 @@ render_html(f"""
 render_html("""
 <div class="iq-hero">
 <div class="iq-eye">&#10022; &nbsp;Visual AI Resume Screening &amp; Candidate Ranking</div>
-<div class="iq-h1">Shortlist Top Talent <span class="bl">in Seconds</span></div>
-<div class="iq-sub">Upload a job description and candidate CVs to instantly screen, score, and rank top talent.</div>
+<div class="iq-h1">Shortlist Top Talent <span class="bl">in Minutes</span></div>
+<div class="iq-sub">Upload a job description and candidate CVs to screen, score, and rank applicants &mdash; then review and decide.</div>
 </div>
 """)
 
@@ -1820,21 +1992,21 @@ render_html("""
 <div class="iq-fbar-icon">&#9889;</div>
 <div>
 <div class="iq-fbar-t1">Screen 100s of CVs</div>
-<div class="iq-fbar-t2">In seconds, not days</div>
+<div class="iq-fbar-t2">In minutes, not days</div>
 </div>
 </div>
 <div class="iq-fbar-item">
 <div class="iq-fbar-icon">&#11088;</div>
 <div>
 <div class="iq-fbar-t1">AI Scoring &amp; Ranking</div>
-<div class="iq-fbar-t2">0&ndash;100 match accuracy</div>
+<div class="iq-fbar-t2">0&ndash;100 match score</div>
 </div>
 </div>
 <div class="iq-fbar-item">
 <div class="iq-fbar-icon">&#128200;</div>
 <div>
 <div class="iq-fbar-t1">Identify Top Talent</div>
-<div class="iq-fbar-t2">Contextual semantic fit</div>
+<div class="iq-fbar-t2">Strengths &amp; concerns per CV</div>
 </div>
 </div>
 <div class="iq-fbar-item">
@@ -1853,12 +2025,12 @@ render_html("""
 <div id="security" class="iq-sec-bar">
   <div class="iq-sec-top">
     <div class="iq-sec-title">
-      <span>🛡️ UK GDPR Privacy Shield &amp; Screening Engine</span>
+      <span>🛡️ UK GDPR Privacy Controls &amp; Screening Engine</span>
     </div>
     <div class="iq-sec-badges">
-      <span class="iq-sec-pill iq-pill-green">🔒 PII Stripper Active (Art. 5(1)(c))</span>
-      <span class="iq-sec-pill iq-pill-blue">⚖️ Article 22 Human-in-the-Loop</span>
-      <span class="iq-sec-pill iq-pill-purple">Zero Cloud Storage</span>
+      <span class="iq-sec-pill iq-pill-green">🔒 PII Redaction Before AI Scoring</span>
+      <span class="iq-sec-pill iq-pill-blue">⚖️ Article 22 Human Review</span>
+      <span class="iq-sec-pill iq-pill-purple">🗑️ CV Files Deleted After Each Run</span>
     </div>
   </div>
 </div>
@@ -1868,196 +2040,198 @@ sec_c1, sec_c2, sec_c3 = st.columns([1.6, 1.2, 1.2])
 with sec_c1:
     engine_choice = st.radio(
         "Screening Engine Mode:",
-        ["⚡ Cloud AI (BYOK - Privacy Preserved)", "🛡️ Private In-Memory Engine (Zero External AI Calls)"],
+        ["⚡ Cloud AI (OpenAI)", "🛡️ Private Engine (no external AI calls)"],
         index=0 if st.session_state.get("engine_mode", "cloud") == "cloud" else 1,
         horizontal=True,
         key="engine_choice_radio",
         label_visibility="collapsed"
     )
-    st.session_state.engine_mode = "private" if ("Private" in engine_choice or "Offline" in engine_choice) else "cloud"
+    st.session_state.engine_mode = "private" if "Private" in engine_choice else "cloud"
 
 with sec_c2:
-    with st.popover("🔑 BYOK & Privacy Settings"):
+    with st.popover("🔑 Your Own OpenAI Key (optional)"):
         st.markdown("### 🔑 Bring Your Own Key (BYOK)")
         st.markdown(
-            "Use your company's own LLM account and UK/EU data residency region. "
-            "**RankCV servers never receive or store your key or candidate CVs.**"
+            "Cloud AI uses RankCV's OpenAI account by default. Enter your organisation's own key "
+            "to have OpenAI process requests under **your** agreement with them."
         )
-        custom_key_val = st.text_input(
+        st.session_state.custom_api_key = st.text_input(
             "OpenAI API Key (sk-...)",
             value=st.session_state.get("custom_api_key", ""),
             type="password",
             placeholder="sk-proj-...",
-            help="Stored only in your current browser session state."
+            help="Held in server memory for this session only. Never stored or logged."
         )
-        st.session_state.custom_api_key = custom_key_val
-
-        region_choice = st.selectbox(
-            "Cloud Data Region / Endpoint",
-            ["Default (OpenAI Direct)", "Azure UK South (London)", "Azure EU West (Ireland)", "Custom Base URL"],
-            index=0
+        st.session_state.custom_base_url = st.text_input(
+            "Custom endpoint (optional, advanced)",
+            value=st.session_state.get("custom_base_url", ""),
+            placeholder="https://<resource>.openai.azure.com/openai/v1/",
+            help="Azure OpenAI (v1 API) or api.openai.com only, and only with your own key. "
+                 f"Your Azure deployment must be named '{config.get_setting('OPENAI_MODEL', 'gpt-4o')}'.",
         )
-        st.session_state.target_region = region_choice
-
-        if region_choice == "Custom Base URL":
-            base_url_val = st.text_input(
-                "Base URL",
-                value=st.session_state.get("custom_base_url", ""),
-                placeholder="https://api.openai.com/v1"
-            )
-            st.session_state.custom_base_url = base_url_val
-        elif "UK South" in region_choice:
-            st.caption("🇬🇧 Configured for UK sovereign data processing under UK GDPR.")
-        elif "EU West" in region_choice:
-            st.caption("🇪🇺 Configured for EU data sovereignty.")
-
-        st.caption("✅ Data Minimisation: Candidate names, emails, phone numbers & UK postcodes are stripped locally before transmission.")
+        st.caption(
+            "Before Cloud AI scoring, names, emails, phone numbers, postcodes, personal links, dates of "
+            "birth and common protected-characteristic fields are redacted automatically (best-effort). "
+            "Choose the Private Engine to keep CV content away from third-party AI entirely."
+        )
 
 with sec_c3:
-    with st.popover("⚖️ UK Licence & GDPR Terms"):
-        st.markdown("### ⚖️ Software Licence & UK GDPR Terms")
-        st.caption("Governing Law: England and Wales")
-        st.markdown("""
-> [!NOTE] **Core Compliance Summary**
-> * **Roles:** The client is the **Data Controller** of candidate data. RankCV is software-only and never stores or accesses your candidate data.
-> * **Processor:** The LLM provider (OpenAI/Azure) acts as your direct Processor under your own API agreement and DPA.
-> * **Human Oversight (Article 22):** RankCV is strictly **Decision Support**. Solely automated candidate rejections are prohibited under UK law. Final shortlists must be reviewed and approved by a human recruiter.
-> * **Data Minimisation:** Names, emails, phones, and UK postcodes are automatically redacted prior to AI evaluation.
-> * **Anti-Discrimination:** Protected characteristics under the UK Equality Act 2010 are excluded from automated scoring.
-> * **Jurisdiction:** Governed by the laws of England and Wales.
+    with st.popover("⚖️ GDPR & Legal"):
+        st.markdown("### ⚖️ How RankCV handles candidate data")
+        st.markdown(f"""
+- **Roles:** your organisation is the **controller** of candidate data. RankCV ({config.COMPANY_NAME}) is your **processor** under our [Data Processing Agreement](?page=dpa).
+- **AI provider:** in Cloud AI mode, redacted CV text is sent to OpenAI (US) as our sub-processor, or under your own agreement if you use your own key. The Private Engine sends nothing to any AI provider.
+- **Storage:** uploaded files are deleted as soon as their text is extracted. Results stay in your session's memory only and are never written to our database.
+- **Human oversight (Article 22):** scores are decision support. Every candidate starts as *Under Review*; a recruiter must record each decision.
+- **Law:** England and Wales.
+
+[Privacy Notice](?page=privacy) · [Terms](?page=terms) · [Sub-processors](?page=subprocessors) · [Cookies](?page=cookies)
 """)
 
 
-# ─────────────────────────── Client Authentication & License Portal ──────────
+# ─────────────────────────── Client Authentication ───────────────────────────
 render_html('<div id="client-auth"></div>')
 
 _c_logged_in = st.session_state.client_auth.get("logged_in", False)
-_c_tier = st.session_state.client_auth.get("tier", "guest")
-_c_email = st.session_state.client_auth.get("email", "")
-_c_used = st.session_state.client_auth.get("resumes_used", 0)
-_c_max = st.session_state.client_auth.get("max_resumes", 10)
-_c_rem = max(0, _c_max - _c_used)
 
 if _c_logged_in:
-    # ── Authenticated State (Active Subscriber or Free Trial User) ───────────
-    _plan_name = "Agency Scale-Up Plan (1,500 CVs/mo)" if _c_tier == "agency" else ("Professional Recruiter Plan (500 CVs/mo)" if _c_tier == "pro" else "10 CV Free Trial")
-    _plan_icon = "★" if _c_tier in ["pro", "agency"] else "🎁"
+    _ca = st.session_state.client_auth
+    _c_tier, _c_rem, _c_max, _c_used = _ca["tier"], _ca["remaining"], _ca["max_resumes"], _ca["resumes_used"]
+    _plan_name = (f"{config.PLAN_LABELS.get(_c_tier, 'Plan')} ({_c_max:,} CVs per billing period)"
+                  if _c_tier in ("pro", "agency") else f"Free Trial ({_c_max} CVs)")
+    _plan_icon = "★" if _c_tier in ("pro", "agency") else "🎁"
     render_html(f"""
     <div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:.85rem 1.25rem;margin:0.5rem 0 0.8rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
       <div style="display:flex;align-items:center;gap:.75rem;">
         <span style="font-size:1.4rem;">{_plan_icon}</span>
         <div>
-          <div style="font-size:.9rem;font-weight:800;color:#1E3A8A;">Active Plan: {_plan_name}</div>
+          <div style="font-size:.9rem;font-weight:800;color:#1E3A8A;">Active Plan: {_e(_plan_name)}</div>
           <div style="font-size:.78rem;color:#3B82F6;font-weight:600;">
-            Logged in as <b>{_c_email}</b> &bull; Quota: <b>{_c_rem}/{_c_max} CVs remaining</b> ({_c_used} evaluated)
+            Signed in as <b>{_e(_ca['contact_email'])}</b> &bull; <b>{_c_rem:,}/{_c_max:,} CVs remaining</b> ({_c_used:,} used)
           </div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.6rem;">
-        <span style="font-size:.72rem;background:#10B981;color:#fff;font-weight:800;padding:.22rem .65rem;border-radius:99px;">✓ AUTHENTICATED</span>
+        <span style="font-size:.72rem;background:#10B981;color:#fff;font-weight:800;padding:.22rem .65rem;border-radius:99px;">✓ VERIFIED</span>
       </div>
     </div>
     """)
-    col_so1, col_so2 = st.columns([5, 1])
+    if _acc_warn:
+        st.warning(_acc_warn)
+    col_so0, col_so1, col_so2, col_so3 = st.columns([3, 1.1, 1.1, 1])
+    with col_so1:
+        if st.button("↻ Refresh plan", key="btn_refresh_plan", use_container_width=True,
+                     help="Just subscribed? Pull your plan from Stripe now."):
+            _acc2, _w2 = refresh_entitlements(_ca["email"], force=True)
+            if _acc2:
+                _set_auth(_acc2)
+            _flash("warning" if _w2 else "success", _w2 or "Plan refreshed.")
+            st.rerun()
     with col_so2:
+        if config.STRIPE_PORTAL_URL:
+            st.link_button("Manage billing", config.STRIPE_PORTAL_URL, use_container_width=True)
+    with col_so3:
         if st.button("🚪 Sign Out", key="btn_signout", use_container_width=True):
-            st.session_state.client_auth = {
-                "logged_in": False,
-                "email": "",
-                "name": "",
-                "company": "",
-                "tier": "guest",
-                "resumes_used": 0,
-                "max_resumes": 10,
-                "remaining": 10,
-                "license_key": "",
-            }
+            _sign_out()
             st.rerun()
 else:
-    # ── Unauthenticated State (Login & Sign-Up Gate) ─────────────────────────
-    _show_exp = st.session_state.get("show_auth_portal", False)
-    with st.expander("👤 Client Sign In & 10 CV Free Trial Activation", expanded=_show_exp):
-        c_tab1, c_tab2 = st.tabs(["📧 Work Email Free Trial (10 CVs)", "🔑 Subscription License Key"])
-        
-        with c_tab1:
+    _show_exp = st.session_state.get("show_auth_portal", False) or bool(st.session_state.auth_pending_email)
+    with st.expander(f"👤 Sign In / Start Your {_TRIAL_Q} CV Free Trial", expanded=_show_exp):
+        _pending = st.session_state.auth_pending_email
+        if not _pending:
             st.markdown(
-                "Enter your **Work Email** to unlock your **10 CV Free Trial** and receive candidate screening summary reports."
+                f"Enter your **work email** and we'll send you a 6-digit sign-in code. New accounts get "
+                f"**{_TRIAL_Q} free CV evaluations**. Subscribed through Stripe? Use your billing email "
+                f"and your plan is applied automatically."
             )
             col_e1, col_e2, col_e3 = st.columns([2.2, 1.8, 1.2])
             with col_e1:
-                email_in = st.text_input(
-                    "Work Email",
-                    placeholder="recruiter@yourcompany.co.uk",
-                    key="client_email_input"
-                ).strip()
+                email_in = st.text_input("Work Email", placeholder="recruiter@yourcompany.co.uk",
+                                         key="client_email_input").strip()
             with col_e2:
-                company_in = st.text_input(
-                    "Company Name (Optional)",
-                    placeholder="e.g. Acme Recruitment",
-                    key="client_company_input"
-                ).strip()
+                company_in = st.text_input("Company Name (Optional)", placeholder="e.g. Acme Recruitment",
+                                           key="client_company_input").strip()
             with col_e3:
                 st.write("")
                 st.write("")
-                if st.button("Unlock 10 CVs →", type="primary", use_container_width=True, key="btn_start_trial"):
-                    ok, msg, user_data = register_or_login_trial(email_in, company=company_in)
+                send_code = st.button("Email me a code →", type="primary", use_container_width=True,
+                                      key="btn_send_code")
+            if send_code:
+                if st.session_state.auth_codes_sent >= 8:
+                    st.error("Too many sign-in attempts from this browser session. Please try again later.")
+                else:
+                    ok, msg, code = request_login_code(email_in)
+                    if not ok:
+                        st.error(msg)
+                    else:
+                        st.session_state.auth_codes_sent += 1
+                        if email_configured():
+                            sent = send_login_code(normalize_email(email_in), code)
+                        elif not config.IS_PRODUCTION:
+                            sent = True
+                            st.session_state.dev_login_code = code
+                        else:
+                            sent = False
+                        if sent:
+                            st.session_state.auth_pending_email = normalize_email(email_in)
+                            st.session_state.auth_pending_company = company_in
+                            st.session_state.show_auth_portal = True
+                            _flash("success", msg)
+                            st.rerun()
+                        else:
+                            st.error("We couldn't send the sign-in email. Please try again shortly or contact support.")
+        else:
+            _is_new = not get_account(_pending)
+            st.markdown(f"Enter the 6-digit code we sent to **{_pending}**.")
+            if st.session_state.dev_login_code:
+                st.info(f"Development mode (email delivery not configured): your code is "
+                        f"**{st.session_state.dev_login_code}**")
+            col_v1, col_v2 = st.columns([2.2, 3])
+            with col_v1:
+                code_in = st.text_input("Sign-in code", max_chars=6, placeholder="123456", key="auth_code_input")
+            terms_ok = True
+            if _is_new:
+                terms_ok = st.checkbox(
+                    "I agree to the [Terms of Service](?page=terms) and the [Data Processing Agreement](?page=dpa), "
+                    "and I have read the [Privacy Notice](?page=privacy).",
+                    key="auth_terms",
+                )
+            col_b1, col_b2, col_b3, _ = st.columns([1.3, 1.1, 1.3, 2])
+            with col_b1:
+                if st.button("Verify & sign in", type="primary", use_container_width=True, key="btn_verify"):
+                    ok, msg, acc = verify_login_code(_pending, code_in,
+                                                     company=st.session_state.auth_pending_company,
+                                                     accept_terms=terms_ok)
                     if ok:
-                        st.session_state.client_auth = {
-                            "logged_in": True,
-                            "email": user_data["email"],
-                            "name": user_data.get("name", ""),
-                            "company": user_data.get("company", ""),
-                            "tier": user_data.get("tier", "trial"),
-                            "resumes_used": user_data.get("resumes_used", 0),
-                            "max_resumes": user_data.get("max_resumes", 10),
-                            "remaining": user_data.get("remaining", 10),
-                            "license_key": user_data.get("license_key", ""),
-                        }
-                        st.session_state["show_auth_portal"] = False
-                        st.success(msg)
+                        _sign_in(acc)
+                        st.session_state.auth_pending_email = ""
+                        st.session_state.dev_login_code = ""
+                        st.session_state.show_auth_portal = False
+                        _flash("success", msg)
                         st.rerun()
                     else:
                         st.error(msg)
+            with col_b2:
+                if st.button("Resend code", use_container_width=True, key="btn_resend"):
+                    ok, msg, code = request_login_code(_pending)
+                    if ok:
+                        if email_configured():
+                            ok = send_login_code(_pending, code)
+                        elif not config.IS_PRODUCTION:
+                            st.session_state.dev_login_code = code
+                        else:
+                            ok = False
+                    if ok:
+                        st.success("A new code is on its way.")
+                    else:
+                        st.error(msg if "wait" in msg or "Too many" in msg else "We couldn't send the email. Please try again shortly.")
+            with col_b3:
+                if st.button("Use a different email", use_container_width=True, key="btn_change_email"):
+                    st.session_state.auth_pending_email = ""
+                    st.session_state.dev_login_code = ""
+                    st.rerun()
 
-        with c_tab2:
-            st.markdown(
-                "Enter your **Subscription License Key** (sent to your billing email automatically after subscribing on Stripe)."
-            )
-            col_k1, col_k2, col_k3 = st.columns([2.2, 1.8, 1.2])
-            with col_k1:
-                key_input = st.text_input(
-                    "License Key",
-                    placeholder="e.g. RCV-PRO-2026-UK or RCV-AGENCY-2026-UK",
-                    key="lic_key_input"
-                ).strip()
-            with col_k2:
-                sub_email = st.text_input(
-                    "Billing Email (Optional)",
-                    placeholder="billing@company.co.uk",
-                    key="lic_email_input"
-                ).strip()
-            with col_k3:
-                st.write("")
-                st.write("")
-                if st.button("Activate Plan →", type="primary", use_container_width=True, key="btn_act_lic"):
-                    ok, msg, user_data = activate_license(key_input, email=sub_email)
-                    if ok:
-                        st.session_state.client_auth = {
-                            "logged_in": True,
-                            "email": user_data["email"],
-                            "name": user_data.get("name", ""),
-                            "company": user_data.get("company", ""),
-                            "tier": user_data.get("tier", "pro"),
-                            "resumes_used": user_data.get("resumes_used", 0),
-                            "max_resumes": user_data.get("max_resumes", 500),
-                            "remaining": user_data.get("remaining", 500),
-                            "license_key": user_data.get("license_key", key_input),
-                        }
-                        st.session_state["show_auth_portal"] = False
-                        st.success(msg)
-                        st.rerun()
-                    else:
-                        st.error(msg)
+_show_flash()
 
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
@@ -2133,7 +2307,7 @@ with col1:
   <div class="iq-pnum">1</div>Job Description
 </div>""")
 
-        role_choice = st.selectbox(
+        st.selectbox(
             "💡 Or choose a sample role:",
             list(SAMPLE_ROLES.keys()),
             key="sample_role_sel",
@@ -2144,24 +2318,18 @@ with col1:
 
         tab_paste, tab_file = st.tabs(["Paste Text", "Upload File"])
 
-        # Immediately check session state for fast feedback
         jd_text = st.session_state.get("jd_paste", "").strip()
 
         with tab_paste:
             jd_input = st.text_area(
-                "",
+                "Job description",
                 placeholder="Paste your job description, role overview, and key requirements here…",
                 height=270,
-                max_chars=5000,
+                max_chars=10000,
                 key="jd_paste",
                 label_visibility="collapsed",
             )
-            char_count = len(jd_input)
-            render_html(
-                f'<div class="iq-char">'
-                f'<span id="iq-live-chars">{char_count:,} / 5,000</span>'
-                f'</div>'
-            )
+            render_html(f'<div class="iq-char"><span id="iq-live-chars">{len(jd_input):,} / 10,000</span></div>')
             if jd_input.strip():
                 jd_text = jd_input.strip()
 
@@ -2173,15 +2341,24 @@ with col1:
                 label_visibility="collapsed",
             )
             if jd_file:
-                cache_key = f"_jd_cache_{jd_file.name}_{jd_file.size}"
+                cache_key = f"_jd_cache_{jd_file.file_id}"
                 if cache_key not in st.session_state:
-                    st.session_state[cache_key] = _extract_from_upload(jd_file)
+                    for _old in [k for k in st.session_state.keys() if str(k).startswith("_jd_cache_")]:
+                        del st.session_state[_old]
+                    try:
+                        st.session_state[cache_key] = _extract_from_upload(jd_file)[:10000]
+                    except ValueError as ex:
+                        st.session_state[cache_key] = ""
+                        st.error(f"This file {ex}.")
+                    except Exception:
+                        log.exception("JD file parse failed")
+                        st.session_state[cache_key] = ""
+                        st.error("We couldn't read that file. Try PDF, DOCX or TXT, or paste the text.")
                 extracted = st.session_state[cache_key]
                 if extracted.strip():
                     jd_text = extracted.strip()
-                    st.caption(f"✅ Extracted {len(jd_text):,} characters from {jd_file.name}")
+                    st.caption(f"✅ Extracted {len(jd_text):,} characters from your file")
 
-        # Status badge (with live 0ms client-side sync)
         if jd_text:
             render_html(f'<div id="iq-jd-status-badge" class="iq-status-ok">✅ Job description ready ({len(jd_text):,} chars)</div>')
         else:
@@ -2191,25 +2368,17 @@ with col1:
 # ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
 with col2:
     with st.container(border=True):
-        _c_logged_in = st.session_state.client_auth.get("logged_in", False)
-        _c_tier = st.session_state.client_auth.get("tier", "guest")
-        _c_used = st.session_state.client_auth.get("resumes_used", 0)
-        _c_max = st.session_state.client_auth.get("max_resumes", 10)
-        _c_rem = max(0, _c_max - _c_used) if _c_logged_in else 10
-
-        if _c_logged_in:
-            if _c_tier == "agency":
-                _tier_label = f"★ Agency Plan ({_c_rem} CVs left)"
-                _max_cvs = min(1500, _c_rem)
-            elif _c_tier == "pro":
-                _tier_label = f"★ Pro Plan ({_c_rem} CVs left)"
-                _max_cvs = min(500, _c_rem)
+        _ca = st.session_state.client_auth
+        if _ca.get("logged_in"):
+            _c_tier, _c_rem = _ca["tier"], _ca["remaining"]
+            if _c_tier in ("pro", "agency"):
+                _tier_label = f"★ {config.PLAN_LABELS[_c_tier]} ({_c_rem:,} CVs left)"
             else:
-                _tier_label = f"🎁 Free Trial ({_c_rem}/10 CVs left)"
-                _max_cvs = min(10, _c_rem)
+                _tier_label = f"🎁 Free Trial ({_c_rem}/{_ca['max_resumes']} CVs left)"
+            _max_cvs = min(config.MAX_BATCH_CVS, _c_rem)
         else:
-            _tier_label = "🎁 10 CVs Free Trial"
-            _max_cvs = 10
+            _tier_label = f"🎁 {_TRIAL_Q} CVs Free Trial"
+            _max_cvs = _TRIAL_Q
 
         render_html(f"""
 <div class="iq-phead">
@@ -2217,29 +2386,27 @@ with col2:
 </div>
 <div class="iq-cr-head">
   <div style="font-size:.82rem;font-weight:700;color:#64748B;">Candidate Resumes (PDF, DOCX, TXT)</div>
-  <div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">{_tier_label}</div>
+  <div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">{_e(_tier_label)}</div>
 </div>""")
 
         cv_files = st.file_uploader(
-            f"Upload CVs (PDF, DOC/DOCX, TXT, MS Excel — up to {_max_cvs} files)",
-            type=["pdf", "docx", "doc", "txt", "xlsx", "xls", "csv"],
+            f"Upload CVs (PDF, DOC/DOCX, TXT — up to {_max_cvs} files, {config.MAX_FILE_MB} MB each)",
+            type=["pdf", "docx", "doc", "txt"],
             accept_multiple_files=True,
             key="cv_up",
             label_visibility="collapsed",
         )
         total_uploaded = len(cv_files or [])
 
-        # Status badge & limit enforcement
         if total_uploaded > _max_cvs:
             render_html(
                 f'<div class="iq-status-wait" style="background:#FEF2F2;color:#DC2626;border-color:#FCA5A5">'
-                f'⚠️ <b>{total_uploaded} CVs uploaded</b> — Your {_tier_label} is capped at {_max_cvs} CVs per batch. '
+                f'⚠️ <b>{total_uploaded} CVs uploaded</b> — this run is limited to {_max_cvs} CVs '
+                f'(your remaining quota, max {config.MAX_BATCH_CVS} per batch). '
                 f'Please remove {total_uploaded - _max_cvs} file(s) or upgrade your plan.</div>'
             )
         elif total_uploaded > 0:
-            render_html(
-                f'<div class="iq-status-ok">✅ <b>{total_uploaded}/{_max_cvs} CVs selected</b> ready for screening</div>'
-            )
+            render_html(f'<div class="iq-status-ok">✅ <b>{total_uploaded}/{_max_cvs} CVs selected</b> ready for screening</div>')
         else:
             render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 5 demo CVs below…</div>')
 
@@ -2252,7 +2419,116 @@ with col2:
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
-_AV_CLS = ["iq-cr-av1","iq-cr-av2","iq-cr-av3","iq-cr-av4","iq-cr-av5"]
+def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
+    """
+    Parse every source inside a private temp folder (deleted on exit, even on error or
+    rerun), then score. `sources` is a list of (display_name, Path | UploadedFile).
+    Returns (results, audit_stats, skipped, run_meta).
+    """
+    run_id = uuid.uuid4().hex[:12]
+    job_context = extract_job_context(jd)
+    candidates, skipped, file_notes = [], [], []
+    bar = st.progress(0.0, text=f"Reading {len(sources)} CV(s)…")
+    info = st.empty()
+
+    with screening_workspace() as wd:
+        for idx, (fname, src) in enumerate(sources, 1):
+            render_html(
+                f'<p style="font-size:.82rem;color:#64748B">📄 <b style="color:#2563EB">{_e(fname)}</b> '
+                f'({idx}/{len(sources)})</p>', container=info)
+            try:
+                if isinstance(src, Path):
+                    path = src
+                else:
+                    if src.size > config.MAX_FILE_MB * 1024 * 1024:
+                        raise ValueError(f"is larger than {config.MAX_FILE_MB} MB")
+                    path = safe_upload_path(wd, fname)
+                    src.seek(0)
+                    path.write_bytes(src.read())
+                text, notes = _read_cv_with_notes(str(path), fname)
+                for note in notes:
+                    file_notes.append((fname, note))
+                if not text.strip():
+                    raise ValueError("has no readable text (it may be a scanned image)")
+                candidates.append(extract_resume_keywords(
+                    cv_text=text, required_skills=job_context.get("skills", ""), filename=fname))
+            except ValueError as ex:
+                skipped.append((fname, str(ex)))
+            except Exception:
+                log.exception("CV parse failed")
+                skipped.append((fname, "could not be read"))
+            bar.progress(idx / len(sources) * 0.4, text=f"Reading CVs — {idx}/{len(sources)} done…")
+    # All uploaded files are gone at this point; only extracted text remains in memory.
+
+    results, audit = [], {}
+    if candidates:
+        def _progress(done: int, total: int) -> None:
+            bar.progress(0.4 + 0.6 * done / max(1, total),
+                         text=f"Scoring {len(candidates)} candidate(s) — {done}/{total} batches done…")
+
+        render_html(f'<p style="font-size:.82rem;color:#64748B">🤖 Scoring <b style="color:#2563EB">'
+                    f'{len(candidates)} candidate(s)</b>…</p>', container=info)
+        try:
+            results, audit = rank_candidates_batch(
+                candidates=candidates,
+                job_context=job_context,
+                custom_api_key=st.session_state.get("custom_api_key", "").strip(),
+                offline_mode=offline,
+                base_url=st.session_state.get("custom_base_url", "").strip(),
+                return_audit=True,
+                progress_cb=_progress,
+            )
+        except Exception:
+            log.exception("Scoring failed")
+            results, audit = [], {}
+            skipped.append(("All CVs", "scoring failed unexpectedly — nothing was charged; please try again"))
+    bar.progress(1.0, text="✅ Done")
+    info.empty()
+
+    results = sorted(results or [], key=_score, reverse=True)
+    modes = {r.get("scoring_engine") or ("offline" if "Private" in str(r.get("processing_mode", "")) else "cloud")
+             for r in results}
+    mode_used = audit.get("mode_used") or ("mixed" if len(modes) > 1 else (modes.pop() if modes else ""))
+    run_meta = {
+        "run_id": run_id,
+        "started_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "demo": demo,
+        "mode_requested": "offline" if offline else "cloud",
+        "mode_used": mode_used,
+        "fallback_reason": audit.get("fallback_reason", ""),
+        "files_received": len(sources),
+        "files_scored": len(results),
+        "file_notes": file_notes,
+    }
+    return results, audit, skipped, run_meta
+
+
+def _store_run(results, audit, run_meta) -> None:
+    _reset_results()
+    st.session_state.results = results
+    st.session_state.audit_stats = audit
+    st.session_state.run_meta = run_meta
+    st.session_state.recruiter_overrides = {
+        r.get("candidate_index", i): {"status": "Under Review", "score_delta": 0, "notes": "", "decided_at": ""}
+        for i, r in enumerate(results)
+    }
+    st.session_state.processed = True
+    st.session_state.show_full = True
+
+
+def _flash_run_outcome(results, skipped, run_meta) -> None:
+    if results:
+        _flash("success", f"🎯 Scored {len(results)} candidate(s). Every candidate starts as "
+                          f"*Under Review* — record your decision for each one below.")
+    for fname, why in skipped:
+        _flash("warning", f"⚠️ Skipped **{fname}**: {why}.")
+    for fname, note in run_meta.get("file_notes", []):
+        _flash("info", f"ℹ️ **{fname}** {note}.")
+    if run_meta.get("mode_requested") == "cloud" and run_meta.get("mode_used") in ("offline", "mixed"):
+        reason = (run_meta.get("fallback_reason") or "Cloud AI was unavailable").strip().rstrip(".")
+        _flash("warning", f"⚠️ {reason}. Affected CVs were scored by the keyword-based Private Engine "
+                          f"instead of Cloud AI — see the *Scoring engine* column in the report.")
+
 
 with col3:
     with st.container(border=True):
@@ -2261,257 +2537,95 @@ with col3:
   <div class="iq-pnum">3</div>Candidate Rankings
 </div>""")
 
-        # ── Trigger demo screening ───────────────────────────────────────────
+        # ── Demo: 5 bundled sample CVs, always on the Private Engine, no quota ──
         if demo_btn:
-            if not jd_text.strip():
-                jd_text = SAMPLE_ROLES["Senior Python Backend Engineer"]
-
-            demo_dir = Path("dummy_cvs_pdf")
-            demo_files = sorted(demo_dir.glob("*.pdf"))[:5]
+            demo_files = sorted(Path("dummy_cvs_pdf").glob("*.pdf"))[:5]
             if not demo_files:
                 st.error("Demo CVs not found on server.")
             else:
-                job_context = extract_job_context(jd_text)
-                candidates = []
-                bar = st.progress(0, text=f"Loading {len(demo_files)} Demo CVs…")
-                _info = st.empty()
-                for idx, df in enumerate(demo_files, 1):
-                    render_html(
-                        f'<p style="font-size:.82rem;color:#64748B">'
-                        f'📄 <b style="color:#2563EB">{df.name}</b> ({idx}/{len(demo_files)})</p>',
-                        container=_info,
-                    )
-                    try:
-                        text = _read_cv(str(df), df.name)
-                        if text.strip():
-                            candidates.append(extract_resume_keywords(
-                                cv_text=text,
-                                required_skills=job_context.get("skills", ""),
-                                filename=df.name,
-                            ))
-                    except Exception as ex:
-                        st.warning(f"⚠️ Error reading {df.name}: {ex}")
-                    bar.progress(idx / len(demo_files) * 0.5, text=f"Parsing demo CVs — {idx}/{len(demo_files)} done…")
-
-                if candidates:
-                    render_html(
-                        f'<p style="font-size:.82rem;color:#64748B">'
-                        f'🤖 Ranking <b style="color:#2563EB">{len(candidates)} candidates</b> with AI…</p>',
-                        container=_info,
-                    )
-                    bar.progress(0.7, text=f"AI ranking {len(candidates)} candidates…")
-                    try:
-                        _is_offline = (st.session_state.get("engine_mode") in ["private", "offline"])
-                        _c_key = st.session_state.get("custom_api_key", "").strip()
-                        _b_url = st.session_state.get("custom_base_url", "").strip()
-                        results, audit_stats = rank_candidates_batch(
-                            candidates=candidates,
-                            job_context=job_context,
-                            custom_api_key=_c_key,
-                            offline_mode=_is_offline,
-                            base_url=_b_url,
-                            return_audit=True,
-                        )
-                    except Exception as _err:
-                        results, audit_stats = [], {}
-
-                    bar.progress(1.0, text="✅ Done!"); _info.empty()
-                    st.session_state.results = results
-                    st.session_state.audit_stats = audit_stats
-                    # Initialize default human review overrides
-                    if "recruiter_overrides" not in st.session_state:
-                        st.session_state.recruiter_overrides = {}
-                    for r in results:
-                        idx = r.get("candidate_index")
-                        if idx not in st.session_state.recruiter_overrides:
-                            rec_txt = r.get("recommendation", "").lower()
-                            def_status = "Shortlisted" if "recommend" in rec_txt else ("Consider" if "review" in rec_txt or "moderate" in rec_txt else "Under Review")
-                            st.session_state.recruiter_overrides[idx] = {
-                                "status": def_status,
-                                "score_delta": 0,
-                                "notes": ""
-                            }
-                    st.session_state.processed = True
-                    st.session_state.show_full = True
-                    st.rerun()
-
-        # ── Trigger manual screening ─────────────────────────────────────────
-        if run_btn:
-            # 1. Require Login / Free Trial Activation before screening custom CVs
-            if not st.session_state.client_auth.get("logged_in"):
-                st.session_state["show_auth_portal"] = True
-                st.error("🔒 Authentication Required: Please enter your work email to activate your 10 CV Free Trial or enter your Subscriber License Key above before screening custom CVs.")
+                _jd = jd_text.strip() or SAMPLE_ROLES["Senior Python Backend Engineer"]
+                results, audit, skipped, meta = _run_screening(
+                    [(p.name, p) for p in demo_files], _jd, offline=True, demo=True)
+                _store_run(results, audit, meta)
+                _flash("info", "Demo: 5 sample CVs scored with the Private Engine. Sign in to screen your own CVs.")
+                _flash_run_outcome(results, skipped, meta)
                 st.rerun()
 
-            errors = []
-            active_jd = jd_text.strip() if jd_text else ""
-            if not active_jd:
-                active_jd = st.session_state.get("jd_paste", "").strip()
+        # ── Real screening ───────────────────────────────────────────────────
+        if run_btn:
+            _ca = st.session_state.client_auth
+            if not _ca.get("logged_in"):
+                st.session_state["show_auth_portal"] = True
+                _flash("error", f"🔒 Please sign in (or start your {_TRIAL_Q} CV free trial) above before screening your own CVs.")
+                st.rerun()
+
+            active_jd = (jd_text or "").strip() or st.session_state.get("jd_paste", "").strip()
             if not active_jd:
                 sel_r = st.session_state.get("sample_role_sel")
-                if sel_r and sel_r in SAMPLE_ROLES and SAMPLE_ROLES[sel_r].strip():
+                if sel_r and SAMPLE_ROLES.get(sel_r, "").strip():
                     active_jd = SAMPLE_ROLES[sel_r].strip()
-                    st.session_state["jd_paste"] = active_jd
 
+            errors = []
             if not active_jd:
                 errors.append("Please provide a Job Description in Panel 1 (paste text or choose a sample).")
-            else:
-                jd_text = active_jd
-
             if total_uploaded == 0:
                 errors.append("Please upload at least one candidate CV in Panel 2.")
-
-            # 2. Check quota against persistent SQLite database
-            client_email = st.session_state.client_auth.get("email", "")
-            can_screen, quota_reason, rem_quota = can_screen_cvs(client_email, total_uploaded)
-            if not can_screen:
-                errors.append(quota_reason)
+            elif total_uploaded > _max_cvs:
+                errors.append(f"This batch has {total_uploaded} CVs but the limit for this run is {_max_cvs}. "
+                              f"Remove some files or upgrade your plan.")
 
             if errors:
-                for e in errors:
-                    st.error(e)
+                for err in errors:
+                    st.error(err)
             else:
-                upload_dir = Path("uploads")
-                upload_dir.mkdir(exist_ok=True)
-                saved_paths, saved_names = [], []
-                for f in (cv_files or []):
-                    dest = upload_dir / f.name
-                    f.seek(0)
-                    dest.write_bytes(f.read())
-                    saved_paths.append(str(dest))
-                    saved_names.append(f.name)
-
-                job_context = extract_job_context(jd_text)
-
-                candidates = []
-                bar   = st.progress(0, text="Reading CVs…")
-                _info = st.empty()
-
-                for idx, (path, fname) in enumerate(zip(saved_paths, saved_names), 1):
-                    render_html(
-                        f'<p style="font-size:.82rem;color:#64748B">'
-                        f'📄 <b style="color:#2563EB">{fname}</b> ({idx}/{len(saved_paths)})</p>',
-                        container=_info,
-                    )
-                    try:
-                        text = _read_cv(path, fname)
-                        if not text.strip():
-                            st.warning(f"⚠️ No text in {fname} — skipping.")
-                            continue
-                        candidates.append(extract_resume_keywords(
-                            cv_text=text,
-                            required_skills=job_context.get("skills", ""),
-                            filename=fname,
-                        ))
-                    except Exception as ex:
-                        st.warning(f"⚠️ Error reading {fname}: {ex}")
-                    bar.progress(idx / len(saved_paths) * 0.5,
-                                 text=f"Reading CVs — {idx}/{len(saved_paths)} done…")
-
-                if candidates:
-                    render_html(
-                        f'<p style="font-size:.82rem;color:#64748B">'
-                        f'🤖 Ranking <b style="color:#2563EB">{len(candidates)} candidates</b>…</p>',
-                        container=_info,
-                    )
-                    bar.progress(0.55, text=f"AI ranking {len(candidates)} candidates…")
-                    try:
-                        _is_offline = (st.session_state.get("engine_mode") in ["private", "offline"])
-                        _c_key = st.session_state.get("custom_api_key", "").strip()
-                        _b_url = st.session_state.get("custom_base_url", "").strip()
-                        results, audit_stats = rank_candidates_batch(
-                            candidates=candidates,
-                            job_context=job_context,
-                            custom_api_key=_c_key,
-                            offline_mode=_is_offline,
-                            base_url=_b_url,
-                            return_audit=True,
-                        )
-                    except Exception as _err:
-                        results, audit_stats = [], {}
+                ok, quota_msg, _ = reserve_quota(_ca["email"], total_uploaded)
+                if not ok:
+                    st.error(quota_msg)
                 else:
-                    results, audit_stats = [], {}
-
-                bar.progress(1.0, text="✅ Done!"); _info.empty()
-
-                # Record usage in persistent database
-                record = record_screening(client_email, len(candidates))
-                if record:
-                    st.session_state.client_auth["resumes_used"] = record.get("resumes_used", 0)
-                    st.session_state.client_auth["remaining"] = record.get("remaining", 0)
-
-                st.session_state.results   = results
-                st.session_state.audit_stats = audit_stats
-                # Initialize default human review overrides
-                if "recruiter_overrides" not in st.session_state:
-                    st.session_state.recruiter_overrides = {}
-                for r in results:
-                    idx = r.get("candidate_index")
-                    if idx not in st.session_state.recruiter_overrides:
-                        rec_txt = r.get("recommendation", "").lower()
-                        def_status = "Shortlisted" if "recommend" in rec_txt else ("Consider" if "review" in rec_txt or "moderate" in rec_txt else "Under Review")
-                        st.session_state.recruiter_overrides[idx] = {
-                            "status": def_status,
-                            "score_delta": 0,
-                            "notes": ""
-                        }
-                st.session_state.processed = True
-                st.session_state.show_full = True
-                _rem_disp = st.session_state.client_auth.get("remaining", 0)
-                st.success(f"🎯 Successfully evaluated {len(results)} candidate(s)! ({_rem_disp} CV evaluations remaining in your plan)")
-
-                deleted, _ = delete_uploaded_files(saved_paths)
-                if deleted:
-                    st.caption(f"🗑️ {len(deleted)} file(s) deleted from server.")
-                st.rerun()
+                    scored = 0
+                    try:
+                        results, audit, skipped, meta = _run_screening(
+                            [(f.name, f) for f in cv_files], active_jd,
+                            offline=st.session_state.get("engine_mode") == "private", demo=False)
+                        # Documents flagged as not being CVs are not charged
+                        scored = sum(1 for r in results if _fit_band(r) != "invalid")
+                        _store_run(results, audit, meta)
+                    finally:
+                        # Only CVs that were actually scored count against the quota
+                        release_quota(_ca["email"], total_uploaded - scored)
+                        _acc3 = get_account(_ca["email"])
+                        if _acc3:
+                            _set_auth(_acc3)
+                    _flash_run_outcome(results, skipped, meta)
+                    st.rerun()
 
         # ── Show results ─────────────────────────────────────────────────────
         if st.session_state.processed and st.session_state.results:
             results = st.session_state.results
+            _meta = st.session_state.run_meta
 
             render_html(f"""
 <div class="iq-cr-head">
 <div style="font-size:.82rem;font-weight:700;color:#64748B;">Top Matches ({len(results)} evaluated)</div>
-<div class="iq-cr-tools">
-<div class="iq-cr-search">&#128269; Search candidates...</div>
-<div class="iq-cr-filter">&#9661; Filter</div>
-</div>
+<div style="font-size:.7rem;font-weight:700;color:#475569;">{_e(_MODE_LABELS.get(_meta.get('mode_used'), ''))}</div>
 </div>
 <div class="iq-cr-cols">
 <div class="iq-cr-col-sp"></div>
 <div class="iq-cr-col">Match Score</div>
-<div class="iq-cr-col">Recommendation</div>
+<div class="iq-cr-col">AI Fit</div>
 </div>""")
 
             for rank, r in enumerate(results[:5], 1):
-                score    = r.get("match_score", 0)
-                name     = r.get("candidate_name", "Unknown")
-                rec      = r.get("recommendation", "")
-                skills   = r.get("skills_match", "") or ""
-                exp_text = r.get("relevant_experience", "")
-                initials = "".join(w[0].upper() for w in name.split()[:2]) or "?"
-                av_cls   = _AV_CLS[(rank - 1) % len(_AV_CLS)]
-                sub      = _exp_subtitle(exp_text)
-
-                # Skill tags (max 3 visible + overflow)
+                score    = _score(r)
+                name     = r.get("candidate_name") or "Unknown"
+                skills   = str(r.get("skills_match", "") or "")
+                sub      = _exp_subtitle(r.get("relevant_experience", ""))
                 skill_list = [s.strip() for s in skills.split(",") if s.strip()]
                 extra = max(0, len(skill_list) - 3)
-                sk_html = "".join(f'<span class="iq-cr-sk">{s}</span>' for s in skill_list[:3])
+                sk_html = "".join(f'<span class="iq-cr-sk">{_e(s)}</span>' for s in skill_list[:3])
                 if extra:
                     sk_html += f'<span class="iq-cr-skmore">+{extra}</span>'
-
-                # Recommendation badge
-                rec_l = rec.lower()
-                if "strongly" in rec_l or "highly" in rec_l:
-                    rb_cls, rb_txt = "iq-cr-rb-strong", "Strongly Recommend"
-                elif "not" in rec_l and ("suit" in rec_l or "recommend" in rec_l):
-                    rb_cls, rb_txt = "iq-cr-rb-no", "Not Suitable"
-                elif "recommend" in rec_l:
-                    rb_cls, rb_txt = "iq-cr-rb-good", "Recommend"
-                elif "review" in rec_l:
-                    rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
-                else:
-                    rb_cls, rb_txt = "iq-cr-rb-ok", "Review"
+                rb_cls, rb_txt = _BAND_BADGE[_fit_band(r)]
 
                 render_html(f"""
 <div class="iq-cr-row">
@@ -2519,8 +2633,8 @@ with col3:
 <div class="iq-cr-main">
 <div class="iq-cr-toprow">
 <div class="iq-cr-info">
-<div class="iq-cr-name">{name}</div>
-<div class="iq-cr-sub">{sub}</div>
+<div class="iq-cr-name">{_e(name)}</div>
+<div class="iq-cr-sub">{_e(sub)}</div>
 </div>
 <div class="iq-cr-sc">
 <div class="iq-cr-pct">{score}%</div>
@@ -2535,12 +2649,12 @@ with col3:
             render_html('<div class="iq-cr-footer"></div>')
             if st.button("View All Candidates →", use_container_width=True, key="view_full_btn"):
                 st.session_state.show_full = True
-    
+
         elif st.session_state.processed and not st.session_state.results:
-            st.error("❌ No candidates processed. Check your CV files.")
+            st.error("❌ No candidates could be scored. Check the messages above for each file.")
 
         else:
-            # Idle state — Enterprise Sample Shortlist Preview (matches TuraHire)
+            # Idle state — illustrative sample preview
             render_html("""
 <div class="iq-cr-head">
 <div style="font-size:.82rem;font-weight:700;color:#64748B;">Top Matches Preview</div>
@@ -2549,7 +2663,7 @@ with col3:
 <div class="iq-cr-cols">
 <div class="iq-cr-col-sp"></div>
 <div class="iq-cr-col">Match Score</div>
-<div class="iq-cr-col">Recommendation</div>
+<div class="iq-cr-col">AI Fit</div>
 </div>
 
 <div class="iq-cr-row">
@@ -2612,7 +2726,7 @@ with col3:
 <div class="iq-cr-pct">78%</div>
 <div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:78%; background:linear-gradient(90deg,#3B82F6,#60A5FA)"></div></div>
 </div>
-<div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-ok">Consider</span></div>
+<div class="iq-cr-rec"><span class="iq-cr-rbadge iq-cr-rb-ok">Review</span></div>
 </div>
 <div class="iq-cr-sk-row">
 <span class="iq-cr-sk">Python</span>
@@ -2625,147 +2739,138 @@ with col3:
 
 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
 <div style="font-size:.78rem; color:#475569; font-weight:600;">
-💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 10 Demo CVs</b> in Panel 2 to screen live candidate resumes.
+💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 5 Demo CVs</b> in Panel 2 to screen sample resumes.
 </div>
 </div>
 """)
 
 
 # ─────────────────────────── Full results (below panels) ─────────────────────
+_STATUS_OPTIONS = ["Under Review", "Shortlisted", "Consider", "Rejected"]
+
+
+def _record_decision(c_idx, *, status=None, score_delta=None, notes=None) -> None:
+    ov = st.session_state.recruiter_overrides.setdefault(
+        c_idx, {"status": "Under Review", "score_delta": 0, "notes": "", "decided_at": ""})
+    changed = False
+    for field, val in (("status", status), ("score_delta", score_delta), ("notes", notes)):
+        if val is not None and ov.get(field) != val:
+            ov[field] = val
+            changed = True
+    if changed:
+        ov["decided_at"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
 if st.session_state.get("show_full") and st.session_state.results:
     results = st.session_state.results
+    _meta = st.session_state.run_meta
+    _run = _meta.get("run_id", "run")
+    _ovs = st.session_state.recruiter_overrides
     render_html("<div style='height:1rem'></div>")
+
+    if _meta.get("demo"):
+        st.info("These are demo results for 5 bundled sample CVs, scored with the Private Engine.")
+    st.caption("🔒 Results are kept only for this browser session and are never stored by RankCV. "
+               "Download the report below before closing or refreshing the page.")
 
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Total Screened", len(results))
-    m2.metric("Shortlisted", min(10, len(results)))
-    avg = sum(r.get("match_score", 0) for r in results) / len(results)
-    m3.metric("Avg Match", f"{round(avg, 1)}%")
-    top_score = max(r.get("match_score", 0) for r in results)
-    m4.metric("Top Match", f"{top_score}%")
+    m2.metric("Shortlisted by you", sum(1 for o in _ovs.values() if o.get("status") == "Shortlisted"))
+    m3.metric("Avg Match", f"{round(sum(_score(r) for r in results) / len(results), 1)}%")
+    m4.metric("Top Match", f"{max(_score(r) for r in results)}%")
 
-    # ── Candidate Showcase Grid (Displays all evaluated candidates) ──────
-    if results:
-        _PODIUM_THEMES = [
-            ("🥇 Rank #1 — Top Match", "iq-podium-gold", "iq-pbadge-gold", "#B45309"),
-            ("🥈 Rank #2 — Strong Match", "iq-podium-silver", "iq-pbadge-silver", "#334155"),
-            ("🥉 Rank #3 — High Potential", "iq-podium-bronze", "iq-pbadge-bronze", "#C2410C"),
-            ("⚡ Rank #4 — Consider", "iq-podium-silver", "iq-pbadge-silver", "#475569"),
-            ("📋 Rank #5 — Under Review", "iq-podium-bronze", "iq-pbadge-bronze", "#64748B"),
-        ]
-
-        render_html(f"""
+    # ── Candidate Showcase (top 6) ──────────────────────────────────────
+    _PODIUM_THEMES = [
+        ("🥇 Rank #1", "iq-podium-gold", "iq-pbadge-gold", "#B45309"),
+        ("🥈 Rank #2", "iq-podium-silver", "iq-pbadge-silver", "#334155"),
+        ("🥉 Rank #3", "iq-podium-bronze", "iq-pbadge-bronze", "#C2410C"),
+    ]
+    _showcase = results[:6]
+    render_html(f"""
 <div class="iq-podium-wrap">
   <div class="iq-podium-hdr">
-    <div class="iq-podium-title">🏆 Candidate Showcase ({len(results)} Candidates Evaluated)</div>
+    <div class="iq-podium-title">🏆 Top {len(_showcase)} of {len(results)} Candidates</div>
     <div style="font-size:.78rem;font-weight:700;color:#047857;background:#ECFDF5;padding:.25rem .75rem;border-radius:99px;border:1px solid #A7F3D0;">
-      ✓ Human-in-the-Loop Review Active
+      ✓ Human decision required for every candidate
     </div>
   </div>
 </div>
 """)
 
-        # Render candidates in rows of up to 3 columns so all 5 are displayed
-        BATCH_SIZE = 3
-        for b_start in range(0, len(results), BATCH_SIZE):
-            batch = results[b_start : b_start + BATCH_SIZE]
-            _pod_cols = st.columns(len(batch))
-            for i_in_batch, c_r in enumerate(batch):
-                p_i = b_start + i_in_batch
-                theme_tuple = _PODIUM_THEMES[p_i] if p_i < len(_PODIUM_THEMES) else (f"📋 Rank #{p_i+1}", "iq-podium-silver", "iq-pbadge-silver", "#64748B")
-                p_t, p_c, pb_c, p_col = theme_tuple
+    BATCH_SIZE = 3
+    for b_start in range(0, len(_showcase), BATCH_SIZE):
+        batch = _showcase[b_start: b_start + BATCH_SIZE]
+        _pod_cols = st.columns(len(batch))
+        for i_in_batch, c_r in enumerate(batch):
+            p_i = b_start + i_in_batch
+            p_t, p_c, pb_c, p_col = (_PODIUM_THEMES[p_i] if p_i < len(_PODIUM_THEMES)
+                                     else (f"📋 Rank #{p_i + 1}", "iq-podium-silver", "iq-pbadge-silver", "#64748B"))
+            with _pod_cols[i_in_batch]:
+                p_score = _score(c_r)
+                p_name = c_r.get("candidate_name") or "Unknown"
+                p_skills = [s.strip() for s in str(c_r.get("skills_match", "") or "").split(",") if s.strip()][:3]
+                p_idx = c_r.get("candidate_index", p_i)
+                curr_status = _ovs.get(p_idx, {}).get("status", "Under Review")
 
-                with _pod_cols[i_in_batch]:
-                    p_score = c_r.get("match_score", 0)
-                    p_name  = c_r.get("candidate_name", "Unknown")
-                    p_exp   = c_r.get("relevant_experience", "")
-                    p_skills = [s.strip() for s in (c_r.get("skills_match", "") or "").split(",") if s.strip()][:3]
-                    p_rec   = c_r.get("recommendation", "")
-                    p_idx   = c_r.get("candidate_index", p_i)
+                if curr_status == "Shortlisted":
+                    card_status_cls = "iq-card-shortlisted"
+                    dec_strip_html = ('<div class="iq-decision-strip iq-dec-strip-shortlisted">'
+                                      '<span>✅</span><span>Your decision: <b>Shortlisted</b></span></div>')
+                elif curr_status == "Rejected":
+                    card_status_cls = "iq-card-passed"
+                    dec_strip_html = ('<div class="iq-decision-strip iq-dec-strip-passed">'
+                                      '<span>❌</span><span>Your decision: <b>Passed</b></span></div>')
+                else:
+                    card_status_cls = ""
+                    dec_strip_html = ('<div class="iq-decision-strip iq-dec-strip-consider">'
+                                      f'<span>⚡</span><span>Your decision: <b>{_e(curr_status)}</b></span></div>')
 
-                    # Fetch current recruiter decision status
-                    if "recruiter_overrides" not in st.session_state:
-                        st.session_state.recruiter_overrides = {}
-                    c_ov = st.session_state.recruiter_overrides.get(p_idx, {})
-                    curr_status = c_ov.get("status", "Shortlisted" if p_score >= 70 else "Under Review")
-
-                    if curr_status == "Shortlisted":
-                        card_status_cls = "iq-card-shortlisted"
-                        dec_strip_html = (
-                            '<div class="iq-decision-strip iq-dec-strip-shortlisted">'
-                            '<span>✅</span><span>Decision: <b>Shortlisted for Interview</b></span>'
-                            '</div>'
-                        )
-                    elif curr_status == "Rejected":
-                        card_status_cls = "iq-card-passed"
-                        dec_strip_html = (
-                            '<div class="iq-decision-strip iq-dec-strip-passed">'
-                            '<span>❌</span><span>Decision: <b>Passed (Archived)</b></span>'
-                            '</div>'
-                        )
-                    else:
-                        card_status_cls = ""
-                        dec_strip_html = (
-                            '<div class="iq-decision-strip iq-dec-strip-consider">'
-                            '<span>⚡</span><span>Decision: <b>Under Review</b></span>'
-                            '</div>'
-                        )
-
-                    sk_badges = "".join(f'<span class="iq-cr-sk" style="font-size:.72rem;">{s}</span>' for s in p_skills)
-                    render_html(f"""
+                sk_badges = "".join(f'<span class="iq-cr-sk" style="font-size:.72rem;">{_e(s)}</span>' for s in p_skills)
+                render_html(f"""
 <div class="iq-podium-card {p_c} {card_status_cls}">
-  <span class="iq-podium-badge {pb_c}">{p_t}</span>
+  <span class="iq-podium-badge {pb_c}">{_e(p_t)} &mdash; {_BAND_BADGE[_fit_band(c_r)][1]}</span>
   <div>
-    <div style="font-size:1.15rem;font-weight:800;color:#0F172A;margin-top:.4rem;">{p_name}</div>
-    <div style="font-size:.78rem;color:#64748B;font-weight:500;margin-bottom:.8rem;">{p_exp}</div>
+    <div style="font-size:1.15rem;font-weight:800;color:#0F172A;margin-top:.4rem;">{_e(p_name)}</div>
+    <div style="font-size:.78rem;color:#64748B;font-weight:500;margin-bottom:.8rem;">{_e(c_r.get("relevant_experience", ""))}</div>
     <div style="display:flex;align-items:baseline;gap:.4rem;margin-bottom:.4rem;">
       <span style="font-size:1.6rem;font-weight:900;color:{p_col};">{p_score}%</span>
-      <span style="font-size:.8rem;color:#64748B;font-weight:600;">Match Fit</span>
+      <span style="font-size:.8rem;color:#64748B;font-weight:600;">AI Match</span>
     </div>
     <div style="height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden;margin-bottom:.9rem;">
       <div style="height:100%;width:{p_score}%;background:{p_col};border-radius:99px;"></div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:1rem;">{sk_badges}</div>
     <div style="font-size:.8rem;color:#334155;line-height:1.45;background:rgba(255,255,255,.7);padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(0,0,0,.05);">
-      <b>Recruiter Rationale:</b> {p_rec}
+      <b>AI Rationale:</b> {_e(c_r.get("recommendation", ""))}
     </div>
     {dec_strip_html}
   </div>
 </div>
 """)
-                    p_b1, p_b2 = st.columns([1, 1])
-                    with p_b1:
-                        is_short = (curr_status == "Shortlisted")
-                        lbl_short = "✓ Shortlisted" if is_short else "✅ Shortlist"
-                        short_kind = "primary" if is_short else "secondary"
-                        if st.button(lbl_short, key=f"btn_short_{p_idx}", use_container_width=True, type=short_kind):
-                            if p_idx not in st.session_state.recruiter_overrides:
-                                st.session_state.recruiter_overrides[p_idx] = {}
-                            st.session_state.recruiter_overrides[p_idx]["status"] = "Shortlisted"
-                            st.session_state[f"sel_stat_{p_idx}"] = "Shortlisted"
-                            st.toast(f"🎯 {p_name} added to Shortlist!", icon="✅")
-                            st.rerun()
-                    with p_b2:
-                        is_pass = (curr_status == "Rejected")
-                        lbl_pass = "✕ Passed" if is_pass else "❌ Pass"
-                        pass_kind = "primary" if is_pass else "secondary"
-                        if st.button(lbl_pass, key=f"btn_pass_{p_idx}", use_container_width=True, type=pass_kind):
-                            if p_idx not in st.session_state.recruiter_overrides:
-                                st.session_state.recruiter_overrides[p_idx] = {}
-                            st.session_state.recruiter_overrides[p_idx]["status"] = "Rejected"
-                            st.session_state[f"sel_stat_{p_idx}"] = "Rejected"
-                            st.toast(f"📋 {p_name} marked as Pass / Archive", icon="❌")
-                            st.rerun()
-            render_html("<div style='height:.75rem'></div>")
+                p_b1, p_b2 = st.columns([1, 1])
+                with p_b1:
+                    is_short = curr_status == "Shortlisted"
+                    if st.button("✓ Shortlisted" if is_short else "✅ Shortlist", key=f"btn_short_{_run}_{p_idx}",
+                                 use_container_width=True, type="primary" if is_short else "secondary"):
+                        _record_decision(p_idx, status="Shortlisted")
+                        st.session_state[f"sel_stat_{_run}_{p_idx}"] = "Shortlisted"
+                        st.toast(f"🎯 {p_name} shortlisted", icon="✅")
+                        st.rerun()
+                with p_b2:
+                    is_pass = curr_status == "Rejected"
+                    if st.button("✕ Passed" if is_pass else "❌ Pass", key=f"btn_pass_{_run}_{p_idx}",
+                                 use_container_width=True, type="primary" if is_pass else "secondary"):
+                        _record_decision(p_idx, status="Rejected")
+                        st.session_state[f"sel_stat_{_run}_{p_idx}"] = "Rejected"
+                        st.toast(f"📋 {p_name} marked as Pass", icon="❌")
+                        st.rerun()
+        render_html("<div style='height:.75rem'></div>")
 
     # ── Score Distribution Visualisation ─────────────────────────────
     with st.expander("📊 Candidate Match Score Visualisation", expanded=True):
         chart_data = pd.DataFrame([
-            {
-                "Candidate": r.get("candidate_name", f"CV #{i+1}"),
-                "Match Score (%)": r.get("match_score", 0),
-            }
-            for i, r in enumerate(results[:10])
+            {"Candidate": f"{i + 1}. {r.get('candidate_name') or 'Candidate'}", "Match Score (%)": _score(r)}
+            for i, r in enumerate(results[:20])
         ])
         chart = alt.Chart(chart_data).mark_bar(cornerRadius=6, color="#2563EB").encode(
             x=alt.X("Match Score (%):Q", scale=alt.Scale(domain=[0, 100]), title="Match Score (%)"),
@@ -2775,43 +2880,41 @@ if st.session_state.get("show_full") and st.session_state.results:
         st.altair_chart(chart, use_container_width=True)
 
     # ── Search + Filter bar ──────────────────────────────────────────
-    _fc1, _fc2 = st.columns([3, 2])
+    _fc1, _fc2, _fc3 = st.columns([3, 2, 1.2])
     with _fc1:
-        _search = st.text_input(
-            "", placeholder="🔍  Search candidates by name or skill…",
-            label_visibility="collapsed", key="res_search"
-        )
+        _search = st.text_input("Search candidates", placeholder="🔍  Search candidates by name or skill…",
+                                label_visibility="collapsed", key="res_search")
     with _fc2:
-        _filter = st.selectbox(
-            "",
-            ["All Candidates", "Highly Recommended", "Recommended", "Consider", "Not Recommended"],
-            label_visibility="collapsed", key="res_filter"
-        )
+        _filter = st.selectbox("Filter candidates",
+                               ["All Candidates", "Strong Match", "Good Match", "Review", "Weak / Not a CV",
+                                "Not yet decided"],
+                               label_visibility="collapsed", key="res_filter")
 
-    # ── Filter logic ─────────────────────────────────────────────────
-    _ranked = [(i + 1, results[i]) for i in range(min(10, len(results)))]
+    _ranked = list(enumerate(results, 1))
     if _search:
         _sq = _search.strip().lower()
-        _ranked = [
-            (rk, r) for rk, r in _ranked
-            if _sq in r.get("candidate_name", "").lower()
-            or _sq in r.get("skills_match", "").lower()
-        ]
-    _fv = _filter if "_filter" in dir() else "All Candidates"
-    if _fv == "Highly Recommended":
-        _ranked = [(rk, r) for rk, r in _ranked if r.get("match_score", 0) >= 80]
-    elif _fv == "Recommended":
-        _ranked = [(rk, r) for rk, r in _ranked if 60 <= r.get("match_score", 0) < 80]
-    elif _fv == "Consider":
-        _ranked = [(rk, r) for rk, r in _ranked if 40 <= r.get("match_score", 0) < 60]
-    elif _fv == "Not Recommended":
-        _ranked = [(rk, r) for rk, r in _ranked if r.get("match_score", 0) < 40]
+        _ranked = [(rk, r) for rk, r in _ranked
+                   if _sq in str(r.get("candidate_name", "")).lower() or _sq in str(r.get("skills_match", "")).lower()]
+    _band_filter = {"Strong Match": ("strong",), "Good Match": ("good",), "Review": ("moderate",),
+                    "Weak / Not a CV": ("weak", "invalid")}
+    if _filter in _band_filter:
+        _ranked = [(rk, r) for rk, r in _ranked if _fit_band(r) in _band_filter[_filter]]
+    elif _filter == "Not yet decided":
+        _ranked = [(rk, r) for rk, r in _ranked
+                   if _ovs.get(r.get("candidate_index", rk - 1), {}).get("status", "Under Review") == "Under Review"]
 
-    # ── Section header ───────────────────────────────────────────────
+    _PAGE = 20
+    _pages = max(1, -(-len(_ranked) // _PAGE))
+    with _fc3:
+        _pg = st.number_input("Page", min_value=1, max_value=_pages, value=1, step=1,
+                              key=f"res_page_{_run}", label_visibility="collapsed",
+                              disabled=_pages == 1, help=f"{_pages} page(s) of {_PAGE}")
+    _shown = _ranked[(_pg - 1) * _PAGE: _pg * _PAGE]
+
     render_html(
         f'<div class="iq-results-hdr">'
         f'<span class="iq-results-hdr-title">📋 All Candidate Profiles &amp; Recruiter Review</span>'
-        f'<span class="iq-results-count">{len(_ranked)} shown</span>'
+        f'<span class="iq-results-count">{len(_ranked)} match &middot; page {_pg}/{_pages}</span>'
         f'</div>'
     )
 
@@ -2824,43 +2927,36 @@ if st.session_state.get("show_full") and st.session_state.results:
 
     _MEDALS = {1: "🥇", 2: "🥈", 3: "🥉"}
 
-    for rank, r in _ranked:
-        score     = r.get("match_score", 0)
-        name      = r.get("candidate_name", "Unknown")
-        rec       = r.get("recommendation", "—")
-        strengths = r.get("strengths", [])
-        concerns  = r.get("concerns", [])
+    for rank, r in _shown:
+        score     = _score(r)
+        name      = r.get("candidate_name") or "Unknown"
+        strengths = [str(s) for s in (r.get("strengths") or [])]
+        concerns  = [str(c) for c in (r.get("concerns") or [])]
         sub       = _exp_subtitle(r.get("relevant_experience", ""))
         s_lbl, s_stars = _fmt_score(score)
-        c_cls = "iq-tag-m" if score >= 70 else "iq-tag-r"
-
-        score_level = "hi" if score >= 80 else ("mid" if score >= 60 else "lo")
-        accent_col  = "#10B981" if score >= 80 else ("#F59E0B" if score >= 60 else "#EF4444")
-
-        if score >= 80:
-            rec_short = "✦ Highly Rec."
-        elif score >= 60:
-            rec_short = "✓ Recommended"
-        elif score >= 40:
-            rec_short = "◎ Consider"
-        else:
-            rec_short = "✗ Not Rec."
+        band = _fit_band(r)
+        c_cls = "iq-tag-m" if band in ("strong", "good") else "iq-tag-r"
+        score_level = "hi" if score >= 80 else ("mid" if score >= 65 else "lo")
+        accent_col  = "#10B981" if score >= 80 else ("#F59E0B" if score >= 65 else "#EF4444")
+        c_idx = r.get("candidate_index", rank - 1)
+        c_ov = _ovs.setdefault(c_idx, {"status": "Under Review", "score_delta": 0, "notes": "", "decided_at": ""})
 
         medal = _MEDALS.get(rank, f"#{rank}")
-        exp_label = f"{medal}  {name}   ·   {s_lbl}/10  {s_stars}   ·   {rec_short}"
+        exp_label = (f"{medal}  {name}   ·   {s_lbl}/10  {s_stars}   ·   {_BAND_BADGE[band][1]}"
+                     f"   ·   Decision: {c_ov.get('status', 'Under Review')}")
 
-        str_html = "".join(f'<span class="iq-tag iq-tag-g">&#10003; {s}</span>' for s in strengths) \
+        str_html = "".join(f'<span class="iq-tag iq-tag-g">&#10003; {_e(s)}</span>' for s in strengths) \
                    or '<span class="iq-tag iq-tag-m">None noted</span>'
-        con_html = "".join(f'<span class="iq-tag {c_cls}">&#10007; {c}</span>' for c in concerns) \
+        con_html = "".join(f'<span class="iq-tag {c_cls}">&#10007; {_e(c)}</span>' for c in concerns) \
                    or '<span class="iq-tag iq-tag-m">None noted</span>'
 
-        with st.expander(exp_label, expanded=(rank == 1)):
+        with st.expander(exp_label, expanded=(rank == 1 and _pg == 1)):
             render_html(f"""
 <div class="iq-det" style="border-left:4px solid {accent_col}">
   <div class="iq-det-hrow">
     <div class="iq-det-hinfo">
-      <div class="iq-det-name">{name}</div>
-      <div style="font-size:.78rem;color:#64748B;font-weight:500;margin-top:2px;">{sub}</div>
+      <div class="iq-det-name">{_e(name)}</div>
+      <div style="font-size:.78rem;color:#64748B;font-weight:500;margin-top:2px;">{_e(sub)}</div>
     </div>
     <div class="iq-det-badge iq-det-badge-{score_level}">
       <div class="iq-det-badgenum">{s_lbl}</div>
@@ -2880,18 +2976,10 @@ if st.session_state.get("show_full") and st.session_state.results:
     </div>
   </div>
   <div class="iq-det-divider"></div>
-  <div class="iq-det-lbl">Recommendation</div>
-  <div style="margin-top:.5rem">{_rec_badge(rec)}</div>
+  <div class="iq-det-lbl">AI Recommendation</div>
+  <div style="margin-top:.5rem">{_rec_badge(r)}</div>
+  <div style="font-size:.72rem;color:#94A3B8;margin-top:.5rem;">Scored by: {_e(r.get("processing_mode", ""))}</div>
 </div>""")
-
-            # ── Recruiter Human-in-the-Loop Override Panel (UK GDPR Article 22) ──
-            c_idx = r.get("candidate_index", rank - 1)
-            if "recruiter_overrides" not in st.session_state:
-                st.session_state.recruiter_overrides = {}
-            if c_idx not in st.session_state.recruiter_overrides:
-                def_s = "Shortlisted" if score >= 70 else ("Consider" if score >= 50 else "Under Review")
-                st.session_state.recruiter_overrides[c_idx] = {"status": def_s, "score_delta": 0, "notes": ""}
-            c_ov = st.session_state.recruiter_overrides[c_idx]
 
             render_html("""
 <div class="iq-override-card">
@@ -2899,150 +2987,55 @@ if st.session_state.get("show_full") and st.session_state.results:
     <span>⚖️ Recruiter Oversight &amp; Decision (UK GDPR Art. 22)</span>
   </div>
   <div style="font-size:.76rem;color:#64748B;margin-bottom:.5rem;">
-    Solely automated candidate rejections are legally prohibited. Review the candidate and record your independent decision.
+    The AI score is advice only. Review the candidate and record your own decision.
   </div>
 </div>""")
+            _sk, _nk, _tk = f"sel_stat_{_run}_{c_idx}", f"num_adj_{_run}_{c_idx}", f"txt_notes_{_run}_{c_idx}"
+            if _sk not in st.session_state:
+                st.session_state[_sk] = c_ov.get("status", "Under Review")
+            if _nk not in st.session_state:
+                st.session_state[_nk] = int(c_ov.get("score_delta", 0))
+            if _tk not in st.session_state:
+                st.session_state[_tk] = c_ov.get("notes", "")
             ov_col1, ov_col2, ov_col3 = st.columns([1.2, 1.2, 2.2])
             with ov_col1:
-                stat_options = ["Shortlisted", "Consider", "Rejected", "Under Review"]
-                curr_sel = c_ov.get("status", "Shortlisted")
-                if f"sel_stat_{c_idx}" in st.session_state and st.session_state[f"sel_stat_{c_idx}"] != curr_sel:
-                    st.session_state[f"sel_stat_{c_idx}"] = curr_sel
-                sel_idx = stat_options.index(curr_sel) if curr_sel in stat_options else 0
-                new_status = st.selectbox("Decision Status:", stat_options, index=sel_idx, key=f"sel_stat_{c_idx}")
-                st.session_state.recruiter_overrides[c_idx]["status"] = new_status
+                new_status = st.selectbox("Decision Status:", _STATUS_OPTIONS, key=_sk)
             with ov_col2:
-                new_pts = st.number_input("Score Adj (+/-):", min_value=-20, max_value=20, value=c_ov.get("score_delta", 0), step=1, key=f"num_adj_{c_idx}")
-                st.session_state.recruiter_overrides[c_idx]["score_delta"] = new_pts
+                new_pts = st.number_input("Score Adj (+/-):", min_value=-20, max_value=20, step=1, key=_nk)
             with ov_col3:
-                new_note = st.text_input("Reviewer Notes:", value=c_ov.get("notes", ""), placeholder="e.g. Verified technical references; invite to interview…", key=f"txt_notes_{c_idx}")
-                st.session_state.recruiter_overrides[c_idx]["notes"] = new_note
+                new_note = st.text_input("Reviewer Notes:", max_chars=500,
+                                         placeholder="e.g. Verified technical references; invite to interview…",
+                                         key=_tk)
+            _record_decision(c_idx, status=new_status, score_delta=int(new_pts), notes=new_note)
+            if c_ov.get("decided_at"):
+                st.caption(f"Decision recorded {c_ov['decided_at']}")
 
-    # ── Download — styled Excel (.xlsx) with UK GDPR Compliance Audit ──
-    import datetime
-    _rows = []
-    for i, r in enumerate(results):
-        cand_idx = r.get("candidate_index", i)
-        ov = st.session_state.get("recruiter_overrides", {}).get(cand_idx, {})
-        human_status = ov.get("status", "Shortlisted" if r.get("match_score", 0) >= 70 else "Consider")
-        score_delta = ov.get("score_delta", 0)
-        final_score = min(100, max(0, r.get("match_score", 0) + score_delta))
-        human_notes = ov.get("notes", "")
-
-        _rows.append({
-            "Rank":                         i + 1,
-            "Name":                         r.get("candidate_name", ""),
-            "Email":                        r.get("email", ""),
-            "AI Match Score":               f"{r.get('match_score', 0)}%",
-            "Recruiter Final Score":        f"{final_score}%",
-            "Recruiter Decision (Art. 22)": human_status,
-            "Recruiter Reviewer Notes":     human_notes,
-            "Processing Engine":            r.get("processing_mode", "Cloud AI (BYOK - Privacy Preserved)"),
-            "PII Redaction Active":         "YES (UK GDPR Art. 5(1)(c))",
-            "Strengths":                    "; ".join(r.get("strengths", [])),
-            "Concerns":                     "; ".join(r.get("concerns", [])),
-            "AI Recommendation":            r.get("recommendation", ""),
-        })
-
-    _df_xl = pd.DataFrame(_rows)
-    _buf   = io.BytesIO()
-
-    with pd.ExcelWriter(_buf, engine="openpyxl") as _xw:
-        _df_xl.to_excel(_xw, index=False, sheet_name="RankCV Results")
-        _ws = _xw.sheets["RankCV Results"]
-
-        # ── Header row style ─────────────────────────────────────────
-        _hfill = _PFill("solid", fgColor="2563EB")
-        _hfont = _Font(bold=True, color="FFFFFF", size=11, name="Calibri")
-        _halign = _Align(horizontal="center", vertical="center")
-        for _cell in _ws[1]:
-            _cell.fill   = _hfill
-            _cell.font   = _hfont
-            _cell.alignment = _halign
-        _ws.row_dimensions[1].height = 28
-
-        # ── Alternating rows ─────────────────────────────────────────
-        _fill_even = _PFill("solid", fgColor="EFF6FF")
-        _fill_odd  = _PFill("solid", fgColor="FFFFFF")
-        _body_font = _Font(size=10, name="Calibri", color="0B1120")
-        _thin_side = _Side(style="thin", color="E2E8F0")
-        _thin_border = _Border(
-            left=_thin_side, right=_thin_side,
-            top=_thin_side,  bottom=_thin_side,
-        )
-        for _ri, _row in enumerate(_ws.iter_rows(min_row=2), start=2):
-            _fill = _fill_even if _ri % 2 == 0 else _fill_odd
-            for _cell in _row:
-                _cell.fill      = _fill
-                _cell.font      = _body_font
-                _cell.border    = _thin_border
-                _cell.alignment = _Align(wrap_text=True, vertical="top")
-            _ws.row_dimensions[_ri].height = 52
-
-        # ── Column widths ─────────────────────────────────────────────
-        for _col, _w in zip("ABCDEFGHIJKL", [8, 22, 28, 14, 18, 24, 30, 28, 20, 36, 36, 50]):
-            _ws.column_dimensions[_col].width = _w
-
-        _ws.freeze_panes = "A2"
-
-        # ── Sheet 2: UK GDPR Compliance Audit Sheet ───────────────────
-        _audit_stats = st.session_state.get("audit_stats", {})
-        _audit_rows = [
-            {"Audit Parameter": "Statutory Framework", "Compliance Record": "UK General Data Protection Regulation (UK GDPR) & Data Protection Act 2018"},
-            {"Audit Parameter": "Governing Jurisdiction", "Compliance Record": "England and Wales"},
-            {"Audit Parameter": "Data Controller", "Compliance Record": "Employer / Client Recruitment Organization"},
-            {"Audit Parameter": "Data Processor Status", "Compliance Record": "RankCV Web Application (In-Memory Processing Only, Zero Database Retention)"},
-            {"Audit Parameter": "Article 22 Human Oversight", "Compliance Record": "VERIFIED — Human recruiter conducted independent review & holds sole decision authority"},
-            {"Audit Parameter": "Article 5(1)(c) Data Minimisation", "Compliance Record": "VERIFIED — Candidate personal identifiers (names, emails, phones, postcodes) stripped prior to external AI evaluation"},
-            {"Audit Parameter": "Candidate PII Scrubbing Record", "Compliance Record": f"Emails: {_audit_stats.get('emails', 0)} | Phones: {_audit_stats.get('phones', 0)} | Postcodes: {_audit_stats.get('postcodes', 0)} | Names: {_audit_stats.get('names', 0)}"},
-            {"Audit Parameter": "Processing Architecture", "Compliance Record": "PRIVATE IN-MEMORY ENGINE (ZERO EXTERNAL AI TRANSFER)" if st.session_state.get("engine_mode") in ["private", "offline"] else "CLOUD AI (BYOK - PRIVACY PRESERVED)"},
-            {"Audit Parameter": "Article 5(1)(e) Storage Limitation", "Compliance Record": "VERIFIED — Zero cloud storage. Uploaded CVs parsed ephemerally in-memory and immediately destroyed."},
-            {"Audit Parameter": "Equality Act 2010 Compliance", "Compliance Record": "VERIFIED — Protected characteristics excluded from scoring algorithms to prevent algorithmic bias."},
-            {"Audit Parameter": "Audit Timestamp (UTC)", "Compliance Record": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")},
-            {"Audit Parameter": "Recruiter Sign-Off Declaration", "Compliance Record": "I declare that candidate shortlisting decisions were finalized under human discretion and not through solely automated profiling."},
-        ]
-        _df_audit = pd.DataFrame(_audit_rows)
-        _df_audit.to_excel(_xw, index=False, sheet_name="UK GDPR Compliance Audit")
-        _ws_audit = _xw.sheets["UK GDPR Compliance Audit"]
-
-        # Style Audit sheet
-        _afill = _PFill("solid", fgColor="0F766E")
-        for _cell in _ws_audit[1]:
-            _cell.fill = _afill
-            _cell.font = _hfont
-            _cell.alignment = _halign
-        _ws_audit.row_dimensions[1].height = 28
-        for _ri, _row in enumerate(_ws_audit.iter_rows(min_row=2), start=2):
-            _fill = _fill_even if _ri % 2 == 0 else _fill_odd
-            for _cell in _row:
-                _cell.fill   = _fill
-                _cell.font   = _body_font
-                _cell.border = _thin_border
-                _cell.alignment = _Align(wrap_text=True, vertical="center")
-            _ws_audit.row_dimensions[_ri].height = 26
-        _ws_audit.column_dimensions["A"].width = 34
-        _ws_audit.column_dimensions["B"].width = 85
-
-    _buf.seek(0)
-    _xl_b64 = base64.b64encode(_buf.read()).decode()
-    _mime    = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    render_html(
-        f'<div class="iq-dl-wrap">'
-        f'<a class="iq-dl-btn" href="data:{_mime};base64,{_xl_b64}" '
-        f'download="rankcv_results.xlsx">'
-        f'⬇️&nbsp;&nbsp;Download Shortlist Report with UK GDPR Audit Log (.xlsx)</a>'
-        f'</div>'
+    # ── Download — Excel report with an accurate audit sheet ─────────
+    _reviewed = sum(1 for o in _ovs.values() if o.get("decided_at"))
+    _controller = (st.session_state.client_auth.get("company")
+                   or st.session_state.client_auth.get("contact_email") or "Customer")
+    _xl_bytes = build_excel_report(results, _ovs, _meta, st.session_state.get("audit_stats", {}), _controller)
+    st.download_button(
+        "⬇️  Download Shortlist Report with UK GDPR Audit Log (.xlsx)",
+        data=_xl_bytes,
+        file_name=f"rankcv_results_{_run}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+        type="primary",
+        key=f"dl_{_run}",
     )
+    if _reviewed < len(results):
+        st.caption(f"{len(results) - _reviewed} candidate(s) have no recorded decision yet; the report marks them 'Not reviewed'.")
 
-    render_html("""
+    render_html(f"""
 <div class="iq-trial-upgrade">
   <div style="font-size:1.15rem;font-weight:800;color:#0B1120;margin-bottom:.35rem">
     Ready to screen 100s of CVs across active roles?
   </div>
   <div style="font-size:.9rem;color:#64748B;max-width:540px;margin:0 auto 1.1rem;line-height:1.6">
-    RankCV helps recruitment &amp; HR teams automate bulk resume screening, candidate communications, and interview scheduling.
+    RankCV helps recruitment &amp; HR teams screen, score and shortlist CVs in bulk &mdash; with a recruiter in control of every decision.
   </div>
-  <a class="iq-bp" href="https://wa.me/447379975532" target="_blank" style="padding:.65rem 1.6rem;font-size:.9rem">
+  <a class="iq-bp" href="{_e(config.WHATSAPP_URL)}" target="_blank" rel="noopener" style="padding:.65rem 1.6rem;font-size:.9rem">
     Book a Quick Walkthrough on WhatsApp &nbsp;&rarr;
   </a>
 </div>
@@ -3062,8 +3055,8 @@ render_html("""
 <div class="iq-bento-card">
 <div>
 <div class="iq-bento-tag">Instant Funnel</div>
-<div class="iq-bento-title">Screen 100+ CVs in Seconds</div>
-<div class="iq-bento-sub">Automatically filter bulk resumes. Cut out hours of manual reading with parallel multi-file ingestion.</div>
+<div class="iq-bento-title">Screen 100+ CVs in Minutes</div>
+<div class="iq-bento-sub">Rank bulk resumes automatically. Cut out hours of manual reading with parallel batch scoring.</div>
 </div>
 <div class="iq-mockup-box">
 <div class="iq-funnel-step">
@@ -3084,7 +3077,7 @@ render_html("""
 <div class="iq-funnel-sub">Matched to job requirements</div>
 </div>
 </div>
-<span class="iq-funnel-badge">30 Seconds</span>
+<span class="iq-funnel-badge">Minutes</span>
 </div>
 <div class="iq-funnel-step">
 <div class="iq-funnel-left">
@@ -3097,7 +3090,7 @@ render_html("""
 <span class="iq-funnel-badge iq-funnel-badge-green">Shortlist Ready</span>
 </div>
 <div class="iq-funnel-highlight">
-&#9201; 95% Screening Time Saved for Hiring Leads
+&#9201; Hours of manual screening saved on every role
 </div>
 </div>
 </div>
@@ -3172,7 +3165,7 @@ render_html("""
 <div>
 <div class="iq-bento-tag">Client &amp; Manager Reports</div>
 <div class="iq-bento-title">Executive Shortlist Reports</div>
-<div class="iq-bento-sub">Export interview-ready candidate reports formatted with scores, strengths, and interview probe notes.</div>
+<div class="iq-bento-sub">Export interview-ready candidate reports formatted with scores, strengths, concerns, and your recruiter decisions.</div>
 </div>
 <div class="iq-mockup-box">
 <div class="iq-excel-preview">
@@ -3205,19 +3198,19 @@ render_html("""
 </div>
 <div class="iq-pillars-grid">
 <div class="iq-pillar-item">
-<div class="iq-pillar-stat">45s</div>
-<div class="iq-pillar-title">Seconds, Not Days</div>
-<div class="iq-pillar-desc">Cut CV screening from days of manual reading to seconds with parallel batch parsing and automated scoring.</div>
+<div class="iq-pillar-stat">Minutes</div>
+<div class="iq-pillar-title">Not Days</div>
+<div class="iq-pillar-desc">Cut CV screening from days of manual reading to minutes with parallel batch parsing and automated scoring.</div>
 </div>
 <div class="iq-pillar-item">
-<div class="iq-pillar-stat">99%</div>
-<div class="iq-pillar-title">Semantic Precision</div>
-<div class="iq-pillar-desc">Surface qualified candidates based on actual capability and seniority rather than keyword stuffing.</div>
+<div class="iq-pillar-stat">0&ndash;100</div>
+<div class="iq-pillar-title">Explained Scores</div>
+<div class="iq-pillar-desc">Every score comes with strengths and concerns, so recruiters can see why a candidate ranked where they did.</div>
 </div>
 <div class="iq-pillar-item">
-<div class="iq-pillar-stat">0 ATS</div>
+<div class="iq-pillar-stat">Excel</div>
 <div class="iq-pillar-title">Works Beside Your ATS</div>
-<div class="iq-pillar-desc">No rip-and-replace integrations. Upload candidate batches, rank them, and export directly to your workflow.</div>
+<div class="iq-pillar-desc">No integration needed. Upload a batch, rank it, and export the shortlist to Excel for your ATS.</div>
 </div>
 </div>
 </div>
@@ -3375,26 +3368,30 @@ render_html("""
 
 
 # ─────────────────────────── Pricing & Payment ────────────────────────────────
-_stripe_pro_url = os.getenv("STRIPE_PRO_URL", "https://buy.stripe.com/4gM28rdxmck239y8Mk43S03").strip()
-_stripe_agency_url = os.getenv("STRIPE_AGENCY_URL", "https://buy.stripe.com/4gM00j2SIfwebG41jS43S02").strip()
-try:
-    if "STRIPE_PRO_URL" in st.secrets and str(st.secrets["STRIPE_PRO_URL"]).strip():
-        _stripe_pro_url = str(st.secrets["STRIPE_PRO_URL"]).strip()
-    if "STRIPE_AGENCY_URL" in st.secrets and str(st.secrets["STRIPE_AGENCY_URL"]).strip():
-        _stripe_agency_url = str(st.secrets["STRIPE_AGENCY_URL"]).strip()
-except Exception:
-    pass
+def _checkout_url(base: str) -> str:
+    """Pre-fill the signed-in email on Stripe Checkout so the plan links to this account."""
+    email = st.session_state.client_auth.get("contact_email", "") if st.session_state.client_auth.get("logged_in") else ""
+    if not email or not base.startswith("https://buy.stripe.com/"):
+        return base
+    from urllib.parse import quote
+    return f"{base}{'&' if '?' in base else '?'}prefilled_email={quote(email)}"
+
+
+_stripe_pro_url = _checkout_url(config.STRIPE_PRO_URL)
+_stripe_agency_url = _checkout_url(config.STRIPE_AGENCY_URL)
+_PRO_Q, _AG_Q = config.PLAN_QUOTAS["pro"], config.PLAN_QUOTAS["agency"]
+_PRO_P, _AG_P = config.PLAN_PRICES_GBP["pro"], config.PLAN_PRICES_GBP["agency"]
 
 render_html(f"""
 <div id="pricing" class="iq-price-sec">
   <div class="iq-price-hdr">
     <div class="iq-price-eye">Transparent Pricing</div>
     <div class="iq-price-h2">Simple Plans for Fast-Moving Hiring Teams</div>
-    <div class="iq-price-sub">Instant activation. Cancel anytime. Full UK GDPR Article 22 compliance and audit logs included in every tier.</div>
+    <div class="iq-price-sub">Instant activation. Cancel anytime. Human-review workflow and UK GDPR audit sheet included in every plan.</div>
   </div>
 
   <div class="iq-price-grid">
-    <!-- Plan 1: Professional £99/mo -->
+    <!-- Plan 1: Professional -->
     <div class="iq-plan-card">
       <div>
         <span class="iq-plan-badge iq-badge-starter">Boutique &amp; In-House</span>
@@ -3403,28 +3400,28 @@ render_html(f"""
         <div class="iq-plan-price-row">
           <div class="iq-plan-price-wrap">
             <span class="iq-plan-curr">&pound;</span>
-            <span class="iq-plan-amt">99</span>
+            <span class="iq-plan-amt">{_PRO_P}</span>
             <span class="iq-plan-period">/ month</span>
           </div>
-          <div class="iq-plan-annual-sub">Save 17% with annual billing &bull; 2 months free</div>
+          <div class="iq-plan-annual-sub">Billed monthly &bull; cancel anytime</div>
         </div>
         <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>500 CVs per month</b> (1 seat &bull; up to 10 live jobs)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Connect your own OpenAI account</b> (BYOK supported)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top 3 Podium</b> &amp; Excel shortlist report</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR Article 22</b> audit compliance sheet</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>{_PRO_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Cloud AI or Private Engine</b> &mdash; optional own OpenAI key</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top candidate podium</b> &amp; Excel shortlist report</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR Article 22</b> review workflow &amp; audit sheet</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard email support</b> &amp; instant activation</span></li>
         </ul>
       </div>
       <div>
-        <a class="iq-plan-btn iq-btn-primary" href="{_stripe_pro_url}" target="_blank">
+        <a class="iq-plan-btn iq-btn-primary" href="{_e(_stripe_pro_url)}" target="_blank" rel="noopener">
           Subscribe to Pro &nbsp;&rarr;
         </a>
-        <div class="iq-guarantee">&#128274; 14-day / 25 CV free trial &bull; Cancel anytime</div>
+        <div class="iq-guarantee">&#128274; {_TRIAL_Q} CV free trial first &bull; Cancel anytime</div>
       </div>
     </div>
 
-    <!-- Plan 2: Agency £199/mo -->
+    <!-- Plan 2: Agency -->
     <div class="iq-plan-card featured">
       <div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem;">
@@ -3432,28 +3429,28 @@ render_html(f"""
           <span style="font-size:.62rem;font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.15rem .45rem;border-radius:5px;">FOUNDING LOCK</span>
         </div>
         <div class="iq-plan-name">Agency</div>
-        <div class="iq-plan-desc">High-volume screening with ATS connectors for staffing firms &amp; agencies.</div>
+        <div class="iq-plan-desc">High-volume screening for staffing firms &amp; agencies.</div>
         <div class="iq-plan-price-row">
           <div class="iq-plan-price-wrap">
             <span class="iq-plan-curr">&pound;</span>
-            <span class="iq-plan-amt">199</span>
+            <span class="iq-plan-amt">{_AG_P}</span>
             <span class="iq-plan-period">/ month</span>
           </div>
-          <div class="iq-plan-annual-sub">Save 17% with annual billing &bull; 2 months free</div>
+          <div class="iq-plan-annual-sub">Billed monthly &bull; cancel anytime</div>
         </div>
         <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>1,500 CVs per month</b> (5 seats &bull; Unlimited live jobs)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>{_AG_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Everything in Professional</b> included</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>ATS / CRM integrations</b> (Zapier + native connectors)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Connect your own OpenAI account</b> (Dedicated agency quota)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Excel export</b> ready to import into any ATS</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Use your own OpenAI account</b> (optional)</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority email support</b> &amp; 1 guided setup session</span></li>
         </ul>
       </div>
       <div>
-        <a class="iq-plan-btn iq-btn-agency" href="{_stripe_agency_url}" target="_blank">
+        <a class="iq-plan-btn iq-btn-agency" href="{_e(_stripe_agency_url)}" target="_blank" rel="noopener">
           Subscribe to Agency &nbsp;&rarr;
         </a>
-        <div class="iq-guarantee">&#128274; First 20 lock rate for 12 mos &bull; Guided setup</div>
+        <div class="iq-guarantee">&#128274; First 20 customers lock this price for 12 months</div>
       </div>
     </div>
   </div>
@@ -3462,15 +3459,15 @@ render_html(f"""
   <div class="iq-terms-grid">
     <div class="iq-term-item">
       <div class="iq-term-title">&#10024; Free Trial</div>
-      <div class="iq-term-desc">14 days or 25 CVs, no card needed. Full scoring &amp; audit reports.</div>
+      <div class="iq-term-desc">{_TRIAL_Q} CV evaluations, no card needed. Full scoring &amp; audit reports.</div>
     </div>
     <div class="iq-term-item">
-      <div class="iq-term-title">&#128176; Annual Billing</div>
-      <div class="iq-term-desc">Get 2 months free when choosing annual billing. Save 17% automatically.</div>
+      <div class="iq-term-title">&#128273; Instant Activation</div>
+      <div class="iq-term-desc">Subscribe with your work email, then sign in with the same email &mdash; your plan applies automatically.</div>
     </div>
     <div class="iq-term-item">
-      <div class="iq-term-title">&#128200; Overage</div>
-      <div class="iq-term-desc">&pound;0.12 per extra CV, with automated warnings at 80% and 100%.</div>
+      <div class="iq-term-title">&#128200; Monthly Quota</div>
+      <div class="iq-term-desc">Your CV allowance resets each billing period. Screening pauses at your limit; upgrade any time.</div>
     </div>
     <div class="iq-term-item">
       <div class="iq-term-title">&#128274; Founding Lock</div>
@@ -3485,124 +3482,93 @@ render_html(f"""
     <span class="iq-pay-pill" style="font-weight:800;color:#1A1F71">VISA</span>
     <span class="iq-pay-pill"><span style="color:#EB001B">&#9679;</span><span style="color:#F79E1B;margin-left:-4px">&#9679;</span> Mastercard</span>
     <span class="iq-pay-pill">UK Debit Cards</span>
-    <span class="iq-pay-pill" style="color:#6366F1;font-weight:800;">&#128274; Powered by Stripe UK (FCA Authorised)</span>
+    <span class="iq-pay-pill" style="color:#6366F1;font-weight:800;">&#128274; Secure payments by Stripe</span>
   </div>
 </div>
 """)
 
 
 # ─────────────────────────── FAQ ─────────────────────────────────────────────
-render_html("""
+_FAQ_ARROW = ('<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" '
+              'stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>')
+
+
+def _faq(question: str, answer_html: str) -> str:
+    return (f'<details class="iq-faq-item"><summary class="iq-faq-summary"><span>{question}</span>{_FAQ_ARROW}'
+            f'</summary><div class="iq-faq-body">{answer_html}</div></details>')
+
+
+_faq_items = [
+    ("What is included in the free trial?",
+     f"Sign in with your work email to screen <b>{_TRIAL_Q} candidate CVs free&mdash;no credit card required</b>. "
+     "You get 0&ndash;100 match scores, strengths &amp; concerns for every candidate, the recruiter review workflow, "
+     "and the Excel shortlist report with its UK GDPR audit sheet."),
+    ("What are the plan limits?",
+     f"<b>Professional</b> includes <b>{_PRO_Q:,} CVs per month</b> and <b>Agency</b> includes <b>{_AG_Q:,} CVs per month</b>, "
+     f"screened in batches of up to {config.MAX_BATCH_CVS}. Your allowance resets at the start of each billing period. "
+     "When you reach it, screening pauses until the next period or until you upgrade. Only CVs that are actually "
+     "scored count towards your allowance."),
+    ("How do I subscribe, cancel or change plan?",
+     "Choose a plan above and pay through Stripe using your work email. Then sign in to RankCV with that same email "
+     "and your plan is applied automatically. You can update your card, switch plans or cancel at any time from the "
+     "billing portal (<i>Manage billing</i> once you're signed in); cancellations take effect at the end of the paid month."),
+    ("What is the Founding Customer price guarantee?",
+     "The <b>first 20 customers</b> who subscribe to either Professional or Agency keep their introductory "
+     "subscription price for a full <b>12 months</b>."),
+    ("Where does my candidate data go?",
+     "Uploaded files are saved to a private temporary folder on our server under random names and <b>deleted as soon "
+     "as their text has been extracted</b>. Screening results stay in your browser session's memory so you can review "
+     "them; they are never written to our database and are discarded when your session ends.<br><br>"
+     "In <b>Cloud AI</b> mode, CV text is sent to OpenAI's API (United States) after names, contact details, postcodes, "
+     "personal links, dates of birth and common protected-characteristic fields are redacted automatically. Under "
+     "OpenAI's API terms this data is not used to train models and is kept for up to 30 days for abuse monitoring. "
+     "In <b>Private Engine</b> mode no CV content leaves our server. You can also use your own OpenAI key. "
+     "See our <a href=\"?page=privacy\" target=\"_self\">Privacy Notice</a> and "
+     "<a href=\"?page=subprocessors\" target=\"_self\">sub-processors</a>."),
+    ("Does RankCV integrate with my ATS?",
+     "RankCV works alongside your ATS: upload a batch, review the ranking, and export the shortlist to Excel, which "
+     "most ATS and CRM tools can import. Direct integrations are not available yet."),
+    ("How does RankCV help hiring teams comply with UK GDPR?",
+     "RankCV is a <b>decision-support tool</b>:"
+     '<ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">'
+     "<li><b>Article 22 human review:</b> no candidate is rejected automatically. Every candidate starts as "
+     "<i>Under Review</i> and recruiters record each decision, score adjustment and note.</li>"
+     "<li><b>Data minimisation:</b> automatic, best-effort redaction of identifying details before Cloud AI scoring, "
+     "or the Private Engine with no external AI at all.</li>"
+     "<li><b>Storage limitation:</b> CV files are deleted after each run and results are not stored in our database.</li>"
+     "<li><b>Accountability:</b> the Excel report records which engine scored each CV and which decisions a recruiter "
+     "actually made, with timestamps.</li>"
+     "<li><b>Processor terms:</b> our <a href=\"?page=dpa\" target=\"_self\">Data Processing Agreement</a> applies to every account.</li>"
+     "</ul>"),
+    ("How fast is the batch screening process?",
+     "The Private Engine scores a batch in seconds. Cloud AI scores CVs in parallel batches of about ten; a batch of "
+     "50 CVs typically takes around a minute, depending on OpenAI's response times."),
+]
+
+render_html(f"""
 <div id="faq" class="iq-faq-sec">
 <div class="iq-faq-hdr">
 <div class="iq-faq-eye">Frequently Asked Questions</div>
 <div class="iq-faq-h2">Got Questions? We&rsquo;ve Got Answers</div>
-<div class="iq-faq-sub">Everything you need to know about plans, CV limits, candidate data privacy, and UK GDPR Article 22 compliance.</div>
+<div class="iq-faq-sub">Everything you need to know about plans, CV limits, candidate data privacy, and UK GDPR Article 22.</div>
 </div>
 <div class="iq-faq-list">
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>What is included in the free trial?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-You can test RankCV with <b>14 days or up to 25 candidate CVs completely free&mdash;no credit card required</b>. You get instant access to 0&ndash;100 match scores, 3-panel candidate evaluation, AI strengths &amp; concerns breakdowns, and executive shortlist report downloads with embedded UK GDPR audit sheets.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>What are the plan limits and how does overage work?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-The <b>Professional</b> plan includes <b>500 CVs per month</b> (1 seat and up to 10 active live jobs). The <b>Agency</b> plan includes <b>1,500 CVs per month</b> (5 seats and unlimited active live jobs).<br><br>
-If your team requires extra capacity during a hiring surge, overage is billed transparently at <b>&pound;0.12 per extra CV</b>. To prevent unexpected charges, our system sends automated warning alerts when your team reaches <b>80% and 100%</b> of your monthly quota.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>Is there a discount for annual billing?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-Yes. Both plans offer an annual billing option with <b>two months free</b>:
-<ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">
-  <li><b>Professional Annual:</b> &pound;990 / year (saving &pound;198 vs. monthly).</li>
-  <li><b>Agency Annual:</b> &pound;1,990 / year (saving &pound;398 vs. monthly).</li>
-</ul>
-Annual billing can be activated during checkout or adjusted from your billing portal at any time.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>What is the Founding Customer price guarantee?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-The <b>first 20 customers</b> who subscribe to either Professional or Agency keep their introductory subscription price for a full <b>12 months</b>. Even as we expand features and native ATS connectors, your subscription rate is 100% price-locked.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>Where does my candidate data go?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-<b>RankCV does not save or store your candidate CVs, text, or screening results on any persistent database or disk.</b> Files uploaded during your screening session are held in temporary memory and purged once the session ends.<br><br>
-When using Cloud AI, resume text is evaluated via OpenAI's commercial API. Under OpenAI's standard commercial terms, API data is <b>not used to train AI models</b> and is retained for up to 30 days solely for abuse monitoring before deletion. You can also <b>connect your own OpenAI account (BYOK)</b> under settings to maintain direct control over your organization's data retention and compliance terms.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>What ATS integrations and setup assistance are included in Agency?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-The Agency plan includes <b>native ATS and CRM integrations</b> via Zapier plus direct connectors for platforms like Greenhouse, Lever, Workday, Ashby, and BambooHR. It also includes <b>1 guided setup session</b> with our UK integration team to configure your custom scoring rubrics, ATS webhooks, and team workflows.
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>How does RankCV help hiring teams comply with UK GDPR?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-RankCV is designed as an <b>objective decision-support tool</b> to assist human recruiters, aligned with UK GDPR, the Data Protection Act 2018, and ICO guidance:
-<ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">
-  <li><b>Article 22 Human-in-the-Loop:</b> No candidate is ever rejected automatically. Recruiters retain complete oversight to review, adjust scores, add notes, and approve final shortlists.</li>
-  <li><b>Data Minimisation:</b> Built-in PII Stripper allows scrubbing identifying details (names, postcodes, phone numbers, emails) prior to evaluation.</li>
-  <li><b>Zero Persistent Storage:</b> Uploaded CVs are not stored in any external database by RankCV, reducing your attack surface and data retention footprint.</li>
-  <li><b>Accountability Audit Trail:</b> Every batch exports an Excel report documenting scoring criteria and human recruiter sign-offs.</li>
-</ul>
-</div>
-</details>
-
-<details class="iq-faq-item">
-<summary class="iq-faq-summary">
-<span>How fast is the batch screening process?</span>
-<svg class="iq-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-</summary>
-<div class="iq-faq-body">
-Parallel multi-file processing enables RankCV to parse, score, and rank a batch of 10 to 50 resumes in under 45 seconds&mdash;saving hours of manual resume skimming for each open role.
-</div>
-</details>
-
+{"".join(_faq(q, a) for q, a in _faq_items)}
 </div>
 </div>
 """)
 
 
-render_html("""
-<div class="iq-foot">
-<div class="iq-foot-txt">RankCV &middot; AI CV Screening &amp; Candidate Ranking Platform</div>
-</div>
-""")
+_render_footer()
 
 
+# ─────────────────────────── Session cookie writer ───────────────────────────
+_cw = st.session_state.pop("cookie_write", None)
+if _cw is not None:
+    _token, _max_age = _cw
+    st.html(
+        "<script>document.cookie = " + json.dumps(f"{_SESSION_COOKIE}=") + " + " + json.dumps(_token)
+        + f' + "; Max-Age={int(_max_age)}; Path=/; SameSite=Strict"'
+        + ' + (location.protocol === "https:" ? "; Secure" : "");</script>',
+        unsafe_allow_javascript=True,
+    )
