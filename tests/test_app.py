@@ -124,3 +124,57 @@ def test_excel_export_neutralises_formulas_and_reports_real_review_state():
     assert audit["Article 22 Human Oversight"].startswith("1 of 2")
     assert audit["External AI Sub-processor"] == "None (Private Engine)"
     assert "VERIFIED" not in " ".join(audit.astype(str))
+
+
+def _request_code(at, email):
+    next(t for t in at.text_input if t.label == "Work Email").set_value(email)
+    _button(at, "Email me a code").click().run()
+    return at
+
+
+@pytest.mark.parametrize("dev_flag", [False, True])
+def test_sign_in_code_never_shown_on_screen_outside_localhost(monkeypatch, dev_flag):
+    # No email provider configured, as on a fresh deployment before secrets are added.
+    for name in ("BREVO_API_KEY", "SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD"):
+        monkeypatch.setattr(config, name, "")
+    monkeypatch.setattr(config, "DEV_SHOW_LOGIN_CODE", dev_flag)
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
+    _request_code(at, "lead@acme-recruit.co.uk")
+    assert not at.exception, at.exception
+    shown = " ".join(i.value for i in at.info)
+    assert "your code is" not in shown
+    assert any("couldn't send the sign-in email" in e.value for e in at.error)
+    assert not at.session_state.client_auth["logged_in"]
+
+
+def test_sign_in_flow_with_emailed_code(monkeypatch):
+    sent = {}
+    import utils.mailer as mailer
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(mailer, "send_login_code", lambda to, code: sent.update(to=to, code=code) or True)
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
+    _request_code(at, "Lead@Acme-Recruit.co.uk")
+    assert sent["to"] == "lead@acme-recruit.co.uk"
+    assert at.session_state.auth_pending_email == "lead@acme-recruit.co.uk"
+
+    # Wrong code first
+    next(t for t in at.text_input if t.label == "Sign-in code").set_value("000000" if sent["code"] != "000000" else "111111")
+    next(c for c in at.checkbox if "Terms of Service" in c.label).check()
+    _button(at, "Verify & sign in").click().run()
+    assert any("Incorrect code" in e.value for e in at.error)
+    assert not at.session_state.client_auth["logged_in"]
+
+    # Correct code
+    next(t for t in at.text_input if t.label == "Sign-in code").set_value(sent["code"])
+    _button(at, "Verify & sign in").click().run()
+    assert not at.exception, at.exception
+    auth = at.session_state.client_auth
+    assert auth["logged_in"] and auth["email"] == "lead@acme-recruit.co.uk" and auth["remaining"] == 10
+    assert at.session_state.session_token
+    assert at_mod.account_for_session(at.session_state.session_token)["email"] == "lead@acme-recruit.co.uk"
+
+    # Sign out removes the server-side session
+    token = at.session_state.session_token
+    _button(at, "Sign Out").click().run()
+    assert not at.session_state.client_auth["logged_in"]
+    assert at_mod.account_for_session(token) == {}

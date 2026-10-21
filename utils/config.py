@@ -32,6 +32,9 @@ def _int_setting(name: str, default: int) -> int:
 # ── Environment ──────────────────────────────────────────────────────────────
 APP_ENV = get_setting("APP_ENV", "development").lower()
 IS_PRODUCTION = APP_ENV == "production"
+# Local development only: show sign-in codes on screen when no email provider is configured.
+# Also requires the browser to be on localhost (see app.py), so it can never work on a public URL.
+DEV_SHOW_LOGIN_CODE = (not IS_PRODUCTION) and get_setting("DEV_SHOW_LOGIN_CODE", "false").lower() == "true"
 APP_URL = get_setting("APP_URL", "http://localhost:8501")
 
 # Used to hash login codes. MUST be set to a long random value in production.

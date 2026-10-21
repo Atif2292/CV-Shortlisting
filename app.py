@@ -1871,6 +1871,17 @@ def _set_auth(acc: dict) -> None:
     }
 
 
+def _dev_codes_allowed() -> bool:
+    """On-screen sign-in codes: local development only (flag set AND browser on localhost)."""
+    if not config.DEV_SHOW_LOGIN_CODE:
+        return False
+    try:
+        host = (st.context.headers.get("Host") or "").split(":")[0].lower()
+    except Exception:
+        host = ""
+    return host in ("localhost", "127.0.0.1", "[::1]")
+
+
 def _reset_results() -> None:
     for k in list(st.session_state.keys()):
         if isinstance(k, str) and k.startswith(("sel_stat_", "num_adj_", "txt_notes_")):
@@ -2167,7 +2178,7 @@ else:
                         st.session_state.auth_codes_sent += 1
                         if email_configured():
                             sent = send_login_code(normalize_email(email_in), code)
-                        elif not config.IS_PRODUCTION:
+                        elif _dev_codes_allowed():
                             sent = True
                             st.session_state.dev_login_code = code
                         else:
@@ -2217,7 +2228,7 @@ else:
                     if ok:
                         if email_configured():
                             ok = send_login_code(_pending, code)
-                        elif not config.IS_PRODUCTION:
+                        elif _dev_codes_allowed():
                             st.session_state.dev_login_code = code
                         else:
                             ok = False
@@ -3566,9 +3577,12 @@ _render_footer()
 _cw = st.session_state.pop("cookie_write", None)
 if _cw is not None:
     _token, _max_age = _cw
-    st.html(
-        "<script>document.cookie = " + json.dumps(f"{_SESSION_COOKIE}=") + " + " + json.dumps(_token)
-        + f' + "; Max-Age={int(_max_age)}; Path=/; SameSite=Strict"'
-        + ' + (location.protocol === "https:" ? "; Secure" : "");</script>',
-        unsafe_allow_javascript=True,
-    )
+    try:
+        st.html(
+            "<script>document.cookie = " + json.dumps(f"{_SESSION_COOKIE}=") + " + " + json.dumps(_token)
+            + f' + "; Max-Age={int(_max_age)}; Path=/; SameSite=Strict"'
+            + ' + (location.protocol === "https:" ? "; Secure" : "");</script>',
+            unsafe_allow_javascript=True,
+        )
+    except TypeError:
+        log.warning("This Streamlit version can't run scripts in st.html; sign-in won't persist across refreshes")
