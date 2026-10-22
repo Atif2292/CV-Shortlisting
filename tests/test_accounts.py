@@ -65,9 +65,22 @@ def test_resend_is_rate_limited():
     assert not ok and "wait" in msg
 
 
-def test_free_webmail_cannot_start_trial():
-    ok, msg, _ = at.request_login_code("someone@gmail.com")
+def test_free_webmail_blocked_only_when_work_email_required():
+    ok, msg, _ = at.request_login_code("someone@gmail.com")      # fixture turns the rule on
     assert not ok and "work email" in msg
+
+
+def test_webmail_allowed_when_work_email_rule_switched_off(monkeypatch):
+    monkeypatch.setattr(config, "TRIAL_REQUIRE_WORK_EMAIL", False)
+    for addr in ("someone@gmail.com", "a.person@outlook.com", "me@icloud.com"):
+        ok, msg, code = at.request_login_code(addr)
+        assert ok and code, (addr, msg)
+
+
+def test_throwaway_inboxes_are_always_refused(monkeypatch):
+    monkeypatch.setattr(config, "TRIAL_REQUIRE_WORK_EMAIL", False)
+    ok, msg, _ = at.request_login_code("abuse@mailinator.com")
+    assert not ok and "Temporary email" in msg
 
 
 def test_plus_addresses_share_one_trial():
@@ -255,3 +268,8 @@ def test_configured_price_ids_take_precedence(monkeypatch):
     assert at._tier_for_price({"id": "price_agency", "unit_amount": 100}) == "agency"
     big = {"id": "other", "unit_amount": 19900, "currency": "gbp", "recurring": {"interval": "month"}}
     assert at._tier_for_price(big) is None
+
+
+def test_company_email_required_by_default():
+    import inspect
+    assert 'get_setting("TRIAL_REQUIRE_WORK_EMAIL", "true")' in inspect.getsource(config)

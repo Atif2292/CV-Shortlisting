@@ -64,7 +64,8 @@ MAX_BATCH_CVS = _int_setting("MAX_BATCH_CVS", 100)
 # Per-file limit enforced in code (Streamlit's maxUploadSize is the hard cap)
 MAX_FILE_MB = _int_setting("MAX_FILE_MB", 10)
 
-# Free-trial anti-abuse: refuse free webmail domains for trials (paid plans unaffected)
+# Free trials need a company email: free webmail (gmail, outlook…) is refused unless set to "false".
+# Throwaway inboxes are always refused. Paying customers can use any email.
 TRIAL_REQUIRE_WORK_EMAIL = get_setting("TRIAL_REQUIRE_WORK_EMAIL", "true").lower() == "true"
 
 # ── Stripe ───────────────────────────────────────────────────────────────────
@@ -94,9 +95,8 @@ COMPANY_NAME = get_setting("COMPANY_NAME", "RankCV")
 COMPANY_NUMBER = get_setting("COMPANY_NUMBER")        # optional (sole traders have none)
 COMPANY_ADDRESS = get_setting("COMPANY_ADDRESS")      # optional but recommended
 ICO_REG_NUMBER = get_setting("ICO_REG_NUMBER")        # optional until registered with the ICO
-SUPPORT_EMAIL = get_setting("SUPPORT_EMAIL")          # optional; WhatsApp is shown if unset
-WHATSAPP_URL = get_setting("WHATSAPP_URL", "https://wa.me/447379975532")
-CONTACT = SUPPORT_EMAIL or f"WhatsApp {WHATSAPP_URL}"
+SUPPORT_EMAIL = get_setting("SUPPORT_EMAIL", "support@rankcv.io")
+CONTACT = SUPPORT_EMAIL
 HOSTING_PROVIDER = get_setting("HOSTING_PROVIDER", "Streamlit Community Cloud (Snowflake Inc.), United States")
 DATABASE_PROVIDER = get_setting("DATABASE_PROVIDER", "Stored on our application host (see hosting provider)")
 EMAIL_PROVIDER = get_setting(
@@ -134,6 +134,4 @@ def production_config_warnings() -> list:
     if DATABASE_URL.startswith("sqlite"):
         warnings.append("Using SQLite on the app server: usage counts and sign-in sessions reset when the "
                         "host restarts. Paid plans are re-read from Stripe.")
-    if not SUPPORT_EMAIL:
-        warnings.append("SUPPORT_EMAIL not set: legal pages show the WhatsApp link as the contact.")
     return warnings

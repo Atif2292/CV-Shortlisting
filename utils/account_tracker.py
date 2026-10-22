@@ -46,8 +46,13 @@ FREE_EMAIL_DOMAINS = {
     "live.com", "live.co.uk", "msn.com", "yahoo.com", "yahoo.co.uk", "ymail.com",
     "icloud.com", "me.com", "mac.com", "aol.com", "proton.me", "protonmail.com",
     "gmx.com", "gmx.co.uk", "mail.com", "zoho.com", "yandex.com", "tutanota.com",
-    "mailinator.com", "guerrillamail.com", "10minutemail.com", "tempmail.com",
-    "temp-mail.org", "sharklasers.com", "yopmail.com", "trashmail.com",
+}
+# Throwaway inboxes: always refused for free trials (otherwise trials would be unlimited)
+DISPOSABLE_EMAIL_DOMAINS = {
+    "mailinator.com", "guerrillamail.com", "guerrillamail.net", "10minutemail.com", "tempmail.com",
+    "temp-mail.org", "sharklasers.com", "yopmail.com", "trashmail.com", "getnada.com",
+    "dispostable.com", "maildrop.cc", "throwawaymail.com", "fakeinbox.com", "mintemail.com",
+    "mohmal.com", "emailondeck.com", "tempmailo.com", "tempinbox.com", "spamgourmet.com",
 }
 
 _EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$")
@@ -387,14 +392,18 @@ def request_login_code(email: str) -> Tuple[bool, str, Optional[str]]:
     key = canonical_email(addr)
     domain = addr.rsplit("@", 1)[1]
 
-    if config.TRIAL_REQUIRE_WORK_EMAIL and domain in FREE_EMAIL_DOMAINS and not get_account(key):
+    blocked = domain in DISPOSABLE_EMAIL_DOMAINS or (
+        config.TRIAL_REQUIRE_WORK_EMAIL and domain in FREE_EMAIL_DOMAINS)
+    if blocked and not get_account(key):
         try:
             paying = lookup_stripe_plan(addr) is not None
         except RuntimeError:
             paying = False
         if not paying:
-            return False, ("Please use your work email address. Free webmail and disposable "
-                           "addresses can't start a free trial."), None
+            if domain in DISPOSABLE_EMAIL_DOMAINS:
+                return False, "Temporary email addresses can't be used. Please use your normal email.", None
+            return False, ("Please use your work email address. Free webmail addresses "
+                           "can't start a free trial."), None
 
     now = _now()
     code = f"{secrets.randbelow(1_000_000):06d}"

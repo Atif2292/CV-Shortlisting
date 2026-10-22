@@ -56,9 +56,13 @@ def test_home_page_has_no_false_claims():
     assert not at.exception, at.exception
     text = _all_markdown(at)
     for banned in ("Zero Cloud Storage", "Zapier", "£0.12", "Annual Billing", "14 days", "25 CV",
-                   "99%", "Greenhouse", "interview scheduling", "RCV-PRO", "Try 10 Demo"):
+                   "99%", "Greenhouse", "interview scheduling", "RCV-PRO", "Try 10 Demo",
+                   "WhatsApp", "wa.me", "Alex Chen"):
         assert banned not in text, banned
     assert "Reviews &amp; Testimonials" in text or "Reviews & Testimonials" in text
+    assert "support@rankcv.io" in text
+    for sample in ("Candidate A", "Candidate E", "Generative AI", "Commercial Awareness"):
+        assert sample in text
 
 
 def test_screening_requires_sign_in():
@@ -74,7 +78,7 @@ def test_navbar_and_cta_offer_log_in_and_sign_up_without_reloading():
     html_out = "\n".join(m.value for m in at.markdown if m.allow_html)
     assert "?auth=" not in html_out and "?page=" not in html_out        # no links that reload the app
     labels = [b.label for b in at.button]
-    assert labels.count("Log in") == 2 and labels.count("Sign up free") == 2
+    assert labels.count("Log in") == 1 and labels.count("Sign up free") == 1      # navbar only
     next(b for b in at.button if b.key == "nav_signup").click().run()
     assert any(t.label == "Work email" for t in at.text_input)
 
