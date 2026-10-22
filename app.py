@@ -314,6 +314,8 @@ button[data-testid="baseButton-secondary"]:hover {
     transition: border-color .2s, background .2s !important;
     text-align: center !important;
 }
+/* Uploaded-file list: use the drop zone's height instead of a 106px strip */
+[data-testid="stFileUploaderDropzone"] [data-testid="stFileChips"] { max-height: 210px !important; }
 [data-testid="stFileUploaderDropzone"]:hover {
     border-color: #2563EB !important;
     background: rgba(37,99,235,.03) !important;
@@ -434,6 +436,14 @@ a.iq-nav-demo:active {
     color: #FFFFFF !important; background: #1D4ED8 !important; text-decoration: none !important;
 }
 
+/* Signed-in account pill (a class, because inline styles in rendered HTML are trimmed) */
+.iq-nav-acct {
+    font-size: var(--fs-small) !important; font-weight: 700 !important; color: #1E3A8A !important;
+    background: #EFF6FF !important; border: 1.5px solid #BFDBFE !important; padding: .42rem .85rem !important;
+    border-radius: 8px !important; text-decoration: none !important; display: inline-flex !important;
+    align-items: center !important; gap: .35rem !important; box-shadow: 0 1px 3px rgba(0,0,0,.05) !important;
+    white-space: nowrap !important;
+}
 /* ── Hero — use <div> not h-tags to avoid Streamlit anchor icons ── */
 .iq-hero { text-align: center; padding: 2.6rem 1rem 1.6rem; max-width: 860px; margin: 0 auto; }
 .iq-eye {
@@ -553,13 +563,13 @@ a.iq-nav-demo:active {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:.05rem;
 }
-.iq-det-badge-hi  { background:linear-gradient(135deg,#D1FAE5,#A7F3D0); }
-.iq-det-badge-mid { background:linear-gradient(135deg,#FEF3C7,#FDE68A); }
-.iq-det-badge-lo  { background:linear-gradient(135deg,#FEE2E2,#FECACA); }
+.iq-det-badge-hi  { background:#E3F4EC; }
+.iq-det-badge-mid { background:#E2F3F2; }
+.iq-det-badge-lo  { background:#FCF1DA; }
 .iq-det-badgenum  { font-size:1.45rem; font-weight:900; line-height:1.1; letter-spacing:-1px; color:#0B1120; }
-.iq-det-badge-hi  .iq-det-badgenum  { color:#065F46; }
-.iq-det-badge-mid .iq-det-badgenum  { color:#92400E; }
-.iq-det-badge-lo  .iq-det-badgenum  { color:#991B1B; }
+.iq-det-badge-hi  .iq-det-badgenum  { color:#157A52; }
+.iq-det-badge-mid .iq-det-badgenum  { color:#1C7A78; }
+.iq-det-badge-lo  .iq-det-badgenum  { color:#8A5D06; }
 .iq-det-badgedenom { font-size:.65rem; color:#64748B; font-weight:600; }
 .iq-det-badgestars { font-size:.7rem; color:#F59E0B; line-height:1.4; }
 .iq-det-divider { height:1px; background:#F1F5F9; margin:.85rem 0 .95rem; }
@@ -572,10 +582,10 @@ a.iq-nav-demo:active {
 .iq-tag { display:inline-flex; align-items:center; gap:.28rem; background:rgba(37,99,235,.06); color:#2563EB; border:1px solid rgba(37,99,235,.14); border-radius:6px; padding:4px 10px; font-size:.77rem; font-weight:600; }
 .iq-tag-g { background:rgba(5,150,105,.07); color:#059669; border-color:rgba(5,150,105,.15); }
 .iq-tag-m { background:rgba(100,116,139,.07); color:#64748B; border-color:rgba(100,116,139,.15); }
-.iq-tag-r { background:rgba(220,38,38,.06); color:#DC2626; border-color:rgba(220,38,38,.12); }
-.rec-highly      { background:#DCFCE7; color:#15803D; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(5,150,105,.15); }
-.rec-recommended { background:#DBEAFE; color:#1D4ED8; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(37,99,235,.15); }
-.rec-review      { background:#FEF3C7; color:#92400E; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(245,158,11,.2); }
+.iq-tag-r { background:rgba(232,163,23,.10); color:#8A5D06; border-color:rgba(232,163,23,.28); }
+.rec-highly      { background:#E3F4EC; color:#157A52; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(5,150,105,.15); }
+.rec-recommended { background:#E2F3F2; color:#1C7A78; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(43,163,160,.2); }
+.rec-review      { background:#FCF1DA; color:#8A5D06; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid rgba(245,158,11,.2); }
 .rec-unsuitable  { background:#F3F4F6; color:#6B7280; border-radius:9px; padding:7px 16px; font-size:.88rem; font-weight:700; display:inline-block; border:1px solid #E2E8F0; }
 
 /* ── View full results link ── */
@@ -890,7 +900,7 @@ a.iq-nav-demo:active {
 @media (max-width: 860px) {
     .iq-feat-h2 { white-space: normal; }
 }
-.iq-feat-sub { font-size: 1rem; color: #64748B; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+.iq-feat-sub { font-size: 1rem; color: #64748B; max-width: 720px; margin: 0 auto; line-height: 1.5; }
 .iq-feat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -1022,7 +1032,7 @@ a.iq-nav-demo:active {
 .iq-gauge-row { margin-bottom: .5rem; }
 .iq-gauge-row:last-child { margin-bottom: 0; }
 .iq-gauge-info { display: flex; justify-content: space-between; font-size: .7rem; font-weight: 700; color: #334155; margin-bottom: .2rem; }
-.iq-gauge-track { height: 5px; background: #E2E8F0; border-radius: 99px; overflow: hidden; }
+.iq-gauge-track { height: 5px; background: #E4E8F4; border-radius: 99px; overflow: hidden; }
 .iq-gauge-bar { height: 100%; border-radius: 99px; }
 
 .iq-cand-mini-row {
@@ -1296,14 +1306,14 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 .iq-cr-name   { font-size:.84rem; font-weight:700; color:#0B1120; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .iq-cr-sub    { font-size:.7rem; color:#94A3B8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .iq-cr-sc     { flex-shrink:0; min-width:52px; }
-.iq-cr-pct    { font-size:1.15rem; font-weight:900; color:#10B981; line-height:1; margin-bottom:3px; }
-.iq-cr-bar    { height:3px; background:#E2E8F0; border-radius:99px; overflow:hidden; width:88%; }
-.iq-cr-barfill { height:100%; background:linear-gradient(90deg,#10B981,#34D399); border-radius:99px; }
+.iq-cr-pct    { font-size:1.15rem; font-weight:900; color:#1F9D6B; line-height:1; margin-bottom:3px; }
+.iq-cr-bar    { height:3px; background:#E4E8F4; border-radius:99px; overflow:hidden; width:88%; }
+.iq-cr-barfill { height:100%; background:#1F9D6B; border-radius:99px; }
 .iq-cr-rec    { flex-shrink:0; }
 .iq-cr-rbadge { font-size:.67rem; font-weight:700; padding:.26rem .65rem; border-radius:6px; white-space:nowrap; display:inline-block; }
-.iq-cr-rb-strong { background:#D1FAE5; color:#065F46; }
-.iq-cr-rb-good   { background:#DCFCE7; color:#166534; }
-.iq-cr-rb-ok     { background:#FEF3C7; color:#92400E; }
+.iq-cr-rb-strong { background:#E3F4EC; color:#157A52; }
+.iq-cr-rb-good   { background:#E2F3F2; color:#1C7A78; }
+.iq-cr-rb-ok     { background:#FCF1DA; color:#8A5D06; }
 .iq-cr-rb-no     { background:#F3F4F6; color:#6B7280; }
 .iq-cr-sk-row    { display:flex; flex-wrap:wrap; gap:.28rem; }
 .iq-cr-sk    { font-size:.65rem; background:#EFF6FF; color:#2563EB; border:1px solid #DBEAFE; border-radius:5px; padding:.18rem .5rem; font-weight:600; white-space:nowrap; }
@@ -1833,6 +1843,27 @@ st.markdown("""<style>
   border:none !important; box-shadow:0 2px 8px rgba(66,183,42,.28) !important; }
 .st-key-navrow .st-key-nav_signup .stButton > button[kind]:hover { background:#36A420 !important; }
 .st-key-navrow .stButton > button[kind] p { color:#FFFFFF !important; font-weight:700 !important; }
+.st-key-navrow .st-key-nav_demo .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
+  border:1.5px solid #BFDBFE !important; box-shadow:0 1px 3px rgba(15,23,42,.06) !important; }
+.st-key-navrow .st-key-nav_demo .stButton > button[kind]:hover { background:#EFF6FF !important; border-color:#93C5FD !important; }
+.st-key-navrow .st-key-nav_demo .stButton > button[kind] p { color:#2563EB !important; }
+.iq-nav-right { display:flex; align-items:center; gap:.5rem; flex-shrink:0; }
+.st-key-navrow [data-testid="stMarkdownContainer"]:has(.iq-nav-right) { margin:0 !important; }
+.st-key-navrow [data-testid="stElementContainer"]:has(.iq-nav-right) { margin:0 !important; }
+@media (max-width: 560px) {
+  /* Phones: the demo button shrinks to a ▶ icon so Log in / Sign up still fit */
+  .st-key-navrow .st-key-nav_demo .stButton > button[kind] { padding:.44rem .7rem !important; }
+  .st-key-navrow .st-key-nav_demo .stButton > button[kind] strong { display:none !important; }
+  .st-key-navrow .iq-nav-acct { display:none !important; }
+  .st-key-navrow { gap:.4rem !important; }
+  .st-key-navrow .stButton > button[kind] { padding:.44rem .75rem !important; }
+  .st-key-navrow .iq-logo { margin-right:.4rem; }
+}
+.st-key-navrow .iq-nav-link, .st-key-navrow .iq-logo { white-space:nowrap; }
+@media (max-width: 1440px) { .st-key-navrow .iq-nav-acct .iq-nav-email { display:none !important; } }
+/* Smaller laptops: the plan bar under the hero already shows the account, so the pill steps aside */
+@media (max-width: 1366px) { .st-key-navrow:has(.st-key-nav_demo) .iq-nav-acct { display:none !important; } .st-key-navrow:has(.st-key-nav_demo) .iq-nav-center { gap:1.1rem; } }
+.st-key-navrow .iq-nav-demo { font-size:var(--fs-small) !important; padding:.44rem 1.05rem !important; border-radius:8px !important; white-space:nowrap; }
 /* Legal links rendered as small text buttons that open pop-ups */
 [class*="st-key-legal_links_"] .stButton > button[kind] { background:transparent !important; box-shadow:none !important;
   border:none !important; color:#475569 !important; padding:.1rem .25rem !important; font-size:var(--fs-small) !important;
@@ -1875,6 +1906,14 @@ def _startup_housekeeping() -> bool:
 
 
 _startup_housekeeping()
+
+
+_DEMO_VIDEO = Path(__file__).parent / "static" / "rankcv-demo.mp4"
+
+
+@st.dialog("See RankCV in 2 minutes", width="large")
+def _demo_video_dialog() -> None:
+    st.video(str(_DEMO_VIDEO))
 
 
 @st.dialog("RankCV", width="large")
@@ -1969,6 +2008,10 @@ _BAND_BADGE = {
     "weak":     ("iq-cr-rb-no",     BAND_LABELS["weak"]),
     "invalid":  ("iq-cr-rb-no",     BAND_LABELS["invalid"]),
 }
+# Score-line colours carry the match band; never red, because a person reviews everyone
+_BAND_COLOUR = {"strong": "#1F9D6B", "good": "#2BA3A0", "moderate": "#E8A317",
+                "weak": "#E8A317", "invalid": "#94A3B8"}
+_BAND_LEVEL = {"strong": "hi", "good": "mid", "moderate": "lo", "weak": "lo", "invalid": "lo"}
 _BAND_REC_CSS = {
     "strong": "rec-highly", "good": "rec-recommended", "moderate": "rec-review",
     "weak": "rec-unsuitable", "invalid": "rec-unsuitable",
@@ -1977,23 +2020,23 @@ _BAND_REC_CSS = {
 
 # Illustrative candidates for the idle "Top Matches Preview" (mixed sectors on purpose)
 _SAMPLE_CANDIDATES = [
-    ("Candidate A", "Data &amp; AI", "6+ years", 96, "strong",
+    ("Candidate A", "Data &amp; AI", "10+ years", 96, "strong",
      ["Python", "SQL", "Power BI", "Generative AI", "Azure"]),
-    ("Candidate B", "Business", "8+ years", 94, "strong",
+    ("Candidate B", "Business", "15+ years", 94, "strong",
      ["Project Management", "Stakeholder Management", "Agile", "Budgeting", "Business Analysis"]),
-    ("Candidate C", "Security &amp; Cloud", "5+ years", 88, "strong",
+    ("Candidate C", "Security &amp; Cloud", "6+ years", 88, "strong",
      ["Cybersecurity", "AWS", "DevOps", "Automation", "Risk &amp; Compliance"]),
-    ("Candidate D", "Finance &amp; Operations", "7+ years", 82, "strong",
+    ("Candidate D", "Finance &amp; Operations", "12+ years", 82, "strong",
      ["Financial Analysis", "Budgeting", "Power BI", "Forecasting", "Process Improvement"]),
-    ("Candidate E", "Sales &amp; Customer Success", "4+ years", 70, "good",
+    ("Candidate E", "Sales &amp; Customer Success", "3+ years", 70, "good",
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
 _SAMPLE_PREVIEW_HTML = "".join(
     f'''<div class="iq-cr-row"><div class="iq-cr-rank">{i}</div><div class="iq-cr-main">
 <div class="iq-cr-toprow"><div class="iq-cr-info"><div class="iq-cr-name">{name}</div>
 <div class="iq-cr-sub">{sector} &bull; {years}</div></div>
-<div class="iq-cr-sc"><div class="iq-cr-pct">{score}%</div>
-<div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%"></div></div></div>
+<div class="iq-cr-sc"><div class="iq-cr-pct" style="color:{_BAND_COLOUR[band]}">{score}%</div>
+<div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%;background:{_BAND_COLOUR[band]}"></div></div></div>
 <div class="iq-cr-rec"><span class="iq-cr-rbadge {_BAND_BADGE[band][0]}">{_BAND_BADGE[band][1]}</span></div></div>
 <div class="iq-cr-sk-row">{"".join(f'<span class="iq-cr-sk">{sk}</span>' for sk in skills)}</div>
 </div></div>
@@ -2420,7 +2463,7 @@ if _is_auth:
     _badge_text = f"{config.PLAN_LABELS.get(_auth_tier, 'Plan')}: {_auth_rem}/{_auth_max} left"
     _email_display = _auth_email if len(_auth_email) <= 20 else _auth_email[:18] + "…"
     nav_auth_btn = f'''
-    <a href="#client-auth" style="font-size:var(--fs-small) !important;font-weight:700 !important;color:#1E3A8A !important;background:#EFF6FF !important;border:1.5px solid #BFDBFE !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;">
+    <a href="#client-auth" class="iq-nav-acct">
       <span>🛡️</span><span class="iq-nav-email">{_e(_email_display)}&nbsp;</span><span>({_e(_badge_text)})</span>
     </a>
     '''
@@ -2447,30 +2490,22 @@ _NAV_LINKS = """
 if not _is_auth:
     with st.container(key="navrow", horizontal=True, vertical_alignment="center", gap="small"):
         render_html(f'<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>{_NAV_LINKS}<div></div></div>')
+        if _DEMO_VIDEO.exists() and st.button("▶ **Watch demo**", key="nav_demo"):
+            _demo_video_dialog()
         if st.button("Log in", key="nav_login"):
             _go_auth("login")
         if st.button("Sign up free", key="nav_signup", type="primary"):
             _go_auth("signup")
 else:
-  render_html(f"""
-<div class="iq-nav">
-  <div class="iq-logo">Rank<b>CV</b></div>
-  <div class="iq-nav-center">
-    <a href="#screening-workspace" class="iq-nav-link">Screen CVs</a>
-    <a href="#how-it-works" class="iq-nav-link">How It Works</a>
-    <a href="#features" class="iq-nav-link">Features</a>
-    <a href="#pricing" class="iq-nav-link">Pricing</a>
-    <a href="#security" class="iq-nav-link">Security &amp; GDPR</a>
-    <a href="#faq" class="iq-nav-link">FAQ</a>
-  </div>
-  <div style="display:flex;align-items:center;gap:.65rem;flex-shrink:0;">
-    {nav_auth_btn}
-    <a class="iq-nav-demo" href="{_nav_cta[0]}"{_nav_cta[2]} style="font-size:var(--fs-small) !important;font-weight:700 !important;color:#FFFFFF !important;background:#2563EB !important;padding:.44rem 1.15rem !important;border-radius:8px !important;border:none !important;box-shadow:0 2px 8px rgba(37,99,235,.25) !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
-      <span>{_nav_cta[1]}</span>
-    </a>
-  </div>
-</div>
-""")
+    with st.container(key="navrow", horizontal=True, vertical_alignment="center", gap="small"):
+        render_html(f'<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>{_NAV_LINKS}<div></div></div>')
+        if _DEMO_VIDEO.exists() and st.button("▶ **Watch demo**", key="nav_demo"):
+            _demo_video_dialog()
+        render_html(f"""
+<div class="iq-nav-right">
+  {nav_auth_btn}
+  <a class="iq-nav-demo" href="{_nav_cta[0]}"{_nav_cta[2]}><span>{_nav_cta[1]}</span></a>
+</div>""")
 
 
 # ─────────────────────────── Hero ────────────────────────────────────────────
@@ -2973,7 +3008,8 @@ with col3:
                 sk_html = "".join(f'<span class="iq-cr-sk">{_e(s)}</span>' for s in skill_list[:3])
                 if extra:
                     sk_html += f'<span class="iq-cr-skmore">+{extra}</span>'
-                rb_cls, rb_txt = _BAND_BADGE[_fit_band(r)]
+                _band = _fit_band(r)
+                rb_cls, rb_txt = _BAND_BADGE[_band]
 
                 _rows_html.append(f"""
 <div class="iq-cr-row">
@@ -2985,8 +3021,8 @@ with col3:
 <div class="iq-cr-sub">{_e(sub)}</div>
 </div>
 <div class="iq-cr-sc">
-<div class="iq-cr-pct">{score}%</div>
-<div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%"></div></div>
+<div class="iq-cr-pct" style="color:{_BAND_COLOUR[_band]}">{score}%</div>
+<div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%;background:{_BAND_COLOUR[_band]}"></div></div>
 </div>
 <div class="iq-cr-rec"><span class="iq-cr-rbadge {rb_cls}">{rb_txt}</span></div>
 </div>
@@ -3083,6 +3119,7 @@ if st.session_state.get("show_full") and st.session_state.results:
                                      else (f"📋 Rank #{p_i + 1}", "iq-podium-silver", "iq-pbadge-silver", "#64748B"))
             with _pod_cols[i_in_batch]:
                 p_score = _score(c_r)
+                p_bcol = _BAND_COLOUR[_fit_band(c_r)]
                 p_name = c_r.get("candidate_name") or "Unknown"
                 p_skills = [s.strip() for s in str(c_r.get("skills_match", "") or "").split(",") if s.strip()][:3]
                 p_idx = c_r.get("candidate_index", p_i)
@@ -3109,11 +3146,11 @@ if st.session_state.get("show_full") and st.session_state.results:
     <div style="font-size:var(--fs-h3);font-weight:800;color:#0F172A;margin-top:.4rem;">{_e(p_name)}</div>
     <div style="font-size:var(--fs-small);color:#64748B;font-weight:500;margin-bottom:.8rem;">{_e(c_r.get("relevant_experience", ""))}</div>
     <div style="display:flex;align-items:baseline;gap:.4rem;margin-bottom:.4rem;">
-      <span style="font-size:var(--fs-h2);font-weight:900;color:{p_col};">{p_score}%</span>
+      <span style="font-size:var(--fs-h2);font-weight:900;color:{p_bcol};">{p_score}%</span>
       <span style="font-size:var(--fs-small);color:#64748B;font-weight:600;">AI Match</span>
     </div>
-    <div style="height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden;margin-bottom:.9rem;">
-      <div style="height:100%;width:{p_score}%;background:{p_col};border-radius:99px;"></div>
+    <div style="height:6px;background:#E4E8F4;border-radius:99px;overflow:hidden;margin-bottom:.9rem;">
+      <div style="height:100%;width:{p_score}%;background:{p_bcol};border-radius:99px;"></div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:1rem;">{sk_badges}</div>
     <div style="font-size:var(--fs-small);color:#334155;line-height:1.45;background:rgba(255,255,255,.7);padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(0,0,0,.05);">
@@ -3145,13 +3182,15 @@ if st.session_state.get("show_full") and st.session_state.results:
     # ── Score Distribution Visualisation ─────────────────────────────
     with st.expander("📊 Candidate Match Score Visualisation", expanded=True):
         chart_data = pd.DataFrame([
-            {"Candidate": f"{i + 1}. {r.get('candidate_name') or 'Candidate'}", "Match Score (%)": _score(r)}
+            {"Candidate": f"{i + 1}. {r.get('candidate_name') or 'Candidate'}", "Match Score (%)": _score(r),
+             "Match": _BAND_BADGE[_fit_band(r)][1], "Colour": _BAND_COLOUR[_fit_band(r)]}
             for i, r in enumerate(results[:20])
         ])
-        chart = alt.Chart(chart_data).mark_bar(cornerRadius=6, color="#2563EB").encode(
+        chart = alt.Chart(chart_data).mark_bar(cornerRadius=6).encode(
             x=alt.X("Match Score (%):Q", scale=alt.Scale(domain=[0, 100]), title="Match Score (%)"),
             y=alt.Y("Candidate:N", sort="-x", title=""),
-            tooltip=["Candidate", "Match Score (%)"]
+            color=alt.Color("Colour:N", scale=None, legend=None),
+            tooltip=["Candidate", "Match Score (%)", "Match"]
         ).properties(height=max(160, len(chart_data) * 28))
         st.altair_chart(chart, use_container_width=True)
 
@@ -3215,8 +3254,8 @@ if st.session_state.get("show_full") and st.session_state.results:
         s_lbl, s_stars = _fmt_score(score)
         band = _fit_band(r)
         c_cls = "iq-tag-m" if band in ("strong", "good") else "iq-tag-r"
-        score_level = "hi" if score >= 80 else ("mid" if score >= 65 else "lo")
-        accent_col  = "#10B981" if score >= 80 else ("#F59E0B" if score >= 65 else "#EF4444")
+        score_level = _BAND_LEVEL[band]
+        accent_col  = _BAND_COLOUR[band]
         c_idx = r.get("candidate_index", rank - 1)
         c_ov = _ovs.setdefault(c_idx, {"status": "Under Review", "score_delta": 0, "notes": "", "decided_at": ""})
 
@@ -3326,9 +3365,9 @@ render_html("""
 <div id="how-it-works"></div>
 <div id="features" class="iq-feat-sec">
 <div class="iq-feat-hdr">
-<div class="iq-feat-eye">Platform Capabilities</div>
-<div class="iq-feat-h2">Visual AI Resume Screening &amp; Candidate Ranking</div>
-<div class="iq-feat-sub">Built specifically for hiring teams and recruitment leads. Spot top talent in seconds without reading through hundreds of pages.</div>
+<div class="iq-feat-eye">What RankCV does for you</div>
+<div class="iq-feat-h2">From a pile of CVs to&nbsp;your&nbsp;top&nbsp;5.</div>
+<div class="iq-feat-sub">Upload a job description and your candidates’ CVs. RankCV scores and ranks every applicant and explains why, so you can spot the best people without reading hundreds of pages.</div>
 </div>
 <div class="iq-bento-grid">
 <div class="iq-bento-card">
@@ -3382,20 +3421,20 @@ render_html("""
 </div>
 <div class="iq-mockup-box">
 <div class="iq-gauge-row">
-<div class="iq-gauge-info"><span>&#127919; Core Role Requirements</span><span style="color:#2563EB">96% Match</span></div>
-<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:96%; background:#2563EB"></div></div>
+<div class="iq-gauge-info"><span>&#127919; Core Role Requirements</span><span style="color:#2B5BE0">96% Match</span></div>
+<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:96%; background:#2B5BE0"></div></div>
 </div>
 <div class="iq-gauge-row">
-<div class="iq-gauge-info"><span>&#128188; Experience Depth</span><span style="color:#F59E0B">92% Match</span></div>
-<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:92%; background:#F59E0B"></div></div>
+<div class="iq-gauge-info"><span>&#128188; Experience Depth</span><span style="color:#2B5BE0">92% Match</span></div>
+<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:92%; background:#2B5BE0"></div></div>
 </div>
 <div class="iq-gauge-row">
-<div class="iq-gauge-info"><span>&#127891; Qualifications &amp; Background</span><span style="color:#10B981">88% Match</span></div>
-<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:88%; background:#10B981"></div></div>
+<div class="iq-gauge-info"><span>&#127891; Qualifications &amp; Background</span><span style="color:#2B5BE0">88% Match</span></div>
+<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:88%; background:#2B5BE0"></div></div>
 </div>
 <div class="iq-gauge-row">
-<div class="iq-gauge-info"><span>&#11088; Overall Recruiter Rating</span><span style="color:#8B5CF6">94% (Strong Match)</span></div>
-<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:94%; background:#8B5CF6"></div></div>
+<div class="iq-gauge-info"><span>&#11088; Overall match</span><span style="color:#1F9D6B">94% (Strong Match)</span></div>
+<div class="iq-gauge-track"><div class="iq-gauge-bar" style="width:94%; background:#1F9D6B"></div></div>
 </div>
 </div>
 </div>
