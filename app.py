@@ -1643,42 +1643,113 @@ button[kind="primary"]:has(div:contains("Passed")) {
 
 st.markdown(build_css(), unsafe_allow_html=True)
 st.markdown("""<style>
+/* ── One type scale for the whole site ─────────────────────────────────── */
+:root { --fs-h2:1.9rem; --fs-h3:1.2rem; --fs-body:1.08rem; --fs-small:.9rem; }
+@media (max-width: 768px) { :root { --fs-h2:1.6rem; --fs-h3:1.15rem; } }
+
+/* Section headings */
+.iq-feat-h2, .iq-faq-h2, .iq-price-h2, .iq-ts-h, .iq-pillar-stat, .rc-auth-tag, .rc-auth-title
+  { font-size:var(--fs-h2) !important; }
+
+/* Card / item titles */
+.iq-fbar-t1, .iq-bento-title, .iq-feat-title, .iq-plan-name, .iq-faq-summary, .iq-pillar-title,
+.iq-det-name, .iq-sec-title, .iq-cr-title, .iq-term-title, .iq-podium-title, .iq-cr-pct, .iq-st,
+.stExpander summary p, .stExpander summary span
+  { font-size:var(--fs-h3) !important; }
+
+/* Body text */
+.iq-sub, .iq-feat-sub, .iq-feat-desc, .iq-bento-sub, .iq-pillar-desc, .iq-faq-sub, .iq-faq-body,
+.iq-faq-body li, .iq-price-sub, .iq-plan-desc, .iq-plan-feat-item, .iq-term-desc, .iq-ts-s,
+.iq-beta-text, .iq-fbar-t2, .iq-funnel-txt, .iq-cand-mini-name, .iq-cr-name, .iq-nav-link,
+.iq-plan-btn, .iq-bp, .iq-dl-btn, .iq-ss, .iq-trial-info, .iq-det-email,
+.rec-highly, .rec-recommended, .rec-review, .rec-unsuitable, .rc-auth-sub, .rc-auth-points li,
+.stMarkdown p, .stMarkdown li, [data-testid="stMarkdownContainer"] p,
+.stButton > button, .stButton > button p, .stDownloadButton > button, .stLinkButton a,
+button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumberInput input,
+.stSelectbox div[data-baseweb="select"], [data-testid="stAlertContainer"] p
+  { font-size:var(--fs-body) !important; }
+
+/* Small text: labels, chips, badges, captions, footer */
+.iq-eye, .iq-feat-eye, .iq-faq-eye, .iq-price-eye, .iq-bento-tag, .iq-plan-badge, .iq-feat-badge,
+.iq-sec-pill, .iq-cr-sk, .iq-cr-skmore, .iq-cr-rbadge, .iq-cr-col, .iq-cr-sub, .iq-cr-rank, .iq-tag,
+.iq-pay-pill, .iq-guarantee, .iq-foot-txt, .iq-status-ok, .iq-status-wait, .iq-char, .iq-phead,
+.iq-tpn, .iq-tpc, .iq-plan-period, .iq-plan-annual-sub, .iq-results-hdr-title, .iq-results-count,
+.iq-det-lbl, .iq-det-badgedenom, .iq-det-badgestars, .iq-podium-badge, .iq-decision-strip,
+.iq-override-title, .iq-dl-badge, .iq-funnel-sub, .iq-funnel-badge, .iq-funnel-highlight,
+.iq-gauge-info, .iq-cand-mini-role, .iq-score-pill, .iq-excel-hdr-row, .iq-excel-data-row,
+.iq-excel-footer, .iq-beta-stars, .iq-trial-pill, .iq-legal-prefix, .rc-auth-note,
+.stWidgetLabel p, label p, [data-testid="stMetricLabel"] p, [data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p, [class*="st-key-legal_links_"] .stButton > button p
+  { font-size:var(--fs-small) !important; }
+
+/* Hero extras */
+.iq-hero-note { font-size:var(--fs-body); color:#0F172A; font-weight:600; margin-top:.7rem; }
+.iq-hero-trust { text-align:center; font-size:var(--fs-small); color:#047857; font-weight:600; margin:-.3rem 0 .2rem; }
+.st-key-hero_demo { margin-top:-.6rem; }
+.st-key-hero_demo .stButton > button[kind] { background:transparent !important; box-shadow:none !important; border:none !important;
+  color:#2563EB !important; font-weight:700 !important; text-decoration:underline !important; padding:.2rem .4rem !important; min-height:0 !important; }
+.st-key-hero_demo .stButton > button[kind]:hover { color:#1D4ED8 !important; transform:none !important; }
+
+/* Invisible style/script blocks shouldn't take up layout space (styles still apply) */
+[data-testid="stElementContainer"]:has(style), [data-testid="stElementContainer"]:has(script) { display:none !important; }
+
+/* Ranking cards: name on its own line so it is never cut off (narrow panels and phones) */
+.iq-cr-toprow { flex-wrap:wrap !important; row-gap:.35rem !important; }
+.iq-cr-info { flex:1 1 100% !important; }
+.iq-cr-name, .iq-cr-sub { white-space:normal !important; }
+.iq-cr-sc { flex:1 1 auto !important; }
+
+@media (max-width: 768px) {
+  /* Less empty space above the navbar; logo level with the buttons */
+  [data-testid="stMainBlockContainer"], .block-container { padding-top:1rem !important; }
+  .st-key-navrow { padding:.2rem 0 .35rem !important; }
+  .st-key-navrow .iq-nav { padding:0 !important; }
+  .st-key-navrow .stMarkdown, .st-key-navrow [data-testid="stMarkdownContainer"] { margin:0 !important; }
+  /* Illustration rows: let the badge drop under the title instead of squeezing it */
+  .iq-funnel-step { flex-wrap:wrap !important; gap:.4rem !important; }
+  /* Report preview: #, candidate and score only */
+  .iq-excel-hdr-row, .iq-excel-data-row { grid-template-columns:1.4rem 1fr 3.4rem !important; }
+  .iq-excel-hdr-row span:nth-child(4), .iq-excel-data-row span:nth-child(4) { display:none !important; }
+  /* Pricing badges wrap neatly */
+  .iq-plan-card div[style*="space-between"] { flex-wrap:wrap !important; gap:.4rem !important; }
+  /* Shorter job-description box = less scrolling */
+  .st-key-jd_paste textarea { height:170px !important; min-height:170px !important; }
+  /* Comfortable tap targets */
+  .stButton > button { min-height:46px !important; }
+}
+</style>""", unsafe_allow_html=True)
+st.markdown("""<style>
 /* Signed-out navbar: HTML nav + real Streamlit buttons on one row */
 .st-key-navrow { border-bottom:1px solid #E2E8F0; background:#F5F7FB; padding:.35rem 0 .45rem; flex-wrap:nowrap !important; }
 .st-key-navrow .iq-nav { border-bottom:none !important; padding:.6rem 0 !important; background:transparent !important; }
 .st-key-navrow > [data-testid="stElementContainer"]:first-child { flex:1 1 auto !important; min-width:0; }
 .st-key-navrow .iq-logo { margin-right:1.6rem; }
 .st-key-navrow .iq-nav-center { gap:1.5rem; }
-.st-key-navrow .stButton > button[kind] { padding:.44rem 1.05rem !important; font-size:.84rem !important;
+.st-key-navrow .stButton > button[kind] { padding:.44rem 1.05rem !important; font-size:var(--fs-small) !important;
   border-radius:8px !important; white-space:nowrap; }
 .st-key-navrow .st-key-nav_login .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
   border:1.5px solid #BFDBFE !important; box-shadow:none !important; }
 /* Legal links rendered as small text buttons that open pop-ups */
 [class*="st-key-legal_links_"] .stButton > button[kind] { background:transparent !important; box-shadow:none !important;
-  border:none !important; color:#475569 !important; padding:.1rem .25rem !important; font-size:.78rem !important;
+  border:none !important; color:#475569 !important; padding:.1rem .25rem !important; font-size:var(--fs-small) !important;
   font-weight:500 !important; text-decoration:underline !important; min-height:0 !important; }
 [class*="st-key-legal_links_"] .stButton > button[kind]:hover { color:#2563EB !important; transform:none !important; }
-.iq-legal-prefix { font-size:.78rem; color:#64748B; }
+.iq-legal-prefix { font-size:var(--fs-small); color:#64748B; }
 .st-key-legal_links_signup { margin-top:-.4rem; }
 .st-key-auth_back .stButton > button[kind], .st-key-legal_back .stButton > button[kind] { background:transparent !important;
   box-shadow:none !important; border:none !important; color:#2563EB !important; font-weight:700 !important; padding:.2rem .3rem !important; }
-/* Hero: larger supporting text, tighter gap to the feature bar */
+/* Hero: tighter gap to the feature bar */
 .iq-hero { padding-bottom:.4rem !important; }
-.iq-eye { font-size:.8rem !important; }
-.iq-sub { font-size:1.25rem !important; line-height:1.5 !important; color:#475569 !important;
-  max-width:720px !important; margin-bottom:0 !important; }
+.iq-sub { line-height:1.55 !important; color:#475569 !important; max-width:720px !important; margin-bottom:0 !important; }
 .iq-fbar { margin-top:.6rem !important; }
-.iq-fbar-t1 { font-size:1rem !important; }
-.iq-fbar-t2 { font-size:.9rem !important; }
 @media (max-width: 768px) {
   .iq-fbar-item { flex-direction:column !important; align-items:flex-start !important; gap:.45rem !important;
     padding:.95rem 1rem !important; }
-  .iq-fbar-icon { width:34px !important; height:34px !important; font-size:.95rem !important; }
-  .iq-sub { font-size:1.2rem !important; }
+  .iq-fbar-icon { width:34px !important; height:34px !important; }
   .iq-hero { padding-top:1.4rem !important; padding-bottom:0 !important; }
   .iq-nav-email { display:none !important; }
   .iq-nav > div:last-child { gap:.4rem !important; }
-  .iq-nav > div:last-child a { padding:.4rem .7rem !important; font-size:.78rem !important; white-space:nowrap; }
+  .iq-nav > div:last-child a { padding:.4rem .7rem !important; font-size:var(--fs-small) !important; white-space:nowrap; }
 }
 </style>""", unsafe_allow_html=True)
 
@@ -1730,7 +1801,7 @@ def _render_footer(where: str = "main") -> None:
     render_html('<div class="iq-foot"><div class="iq-foot-txt">'
                 'RankCV &middot; AI CV Screening &amp; Candidate Ranking Platform</div></div>')
     _legal_links(f"footer_{where}")
-    render_html(f'<div class="iq-foot-txt" style="text-align:center;font-size:.75rem;margin:.2rem 0 1rem;">'
+    render_html(f'<div class="iq-foot-txt" style="text-align:center;font-size:var(--fs-small);margin:.2rem 0 1rem;">'
                 f'{details}</div>')
 
 
@@ -2048,38 +2119,38 @@ _AUTH_CSS = """
 <style>
 .stApp { background: #F0F2F5 !important; }
 .rc-auth-top { display:flex; justify-content:space-between; align-items:center; padding:.4rem 0 0; }
-.rc-auth-top a { color:#2563EB !important; font-weight:700; text-decoration:none !important; font-size:.92rem; }
+.rc-auth-top a { color:#2563EB !important; font-weight:700; text-decoration:none !important; font-size:var(--fs-body); }
 .rc-auth-hero { padding: 5.5rem 1.5rem 0 0; }
 .rc-auth-logo { font-size:3.7rem; font-weight:900; color:#2563EB; letter-spacing:-2px; line-height:1; }
 .rc-auth-logo span { color:#0F172A; }
-.rc-auth-tag { font-size:1.65rem; line-height:1.32; color:#1C1E21; font-weight:500; margin:1.1rem 0 1.5rem; max-width:520px; }
+.rc-auth-tag { font-size:var(--fs-h2); line-height:1.32; color:#1C1E21; font-weight:500; margin:1.1rem 0 1.5rem; max-width:520px; }
 .rc-auth-points { list-style:none; padding:0; margin:0; }
-.rc-auth-points li { font-size:1rem; color:#334155; margin:.55rem 0; font-weight:500; }
+.rc-auth-points li { font-size:var(--fs-body); color:#334155; margin:.55rem 0; font-weight:500; }
 .st-key-auth_card { background:#FFFFFF; border-radius:12px; padding:1.5rem 1.3rem 1.4rem !important;
   box-shadow:0 2px 4px rgba(0,0,0,.10), 0 8px 16px rgba(0,0,0,.10); margin-top:3.2rem; max-width:430px; }
-.st-key-auth_card input { height:52px !important; font-size:1.05rem !important; }
-.rc-auth-title { font-size:1.65rem; font-weight:800; color:#1C1E21; line-height:1.2; }
-.rc-auth-sub { color:#606770; font-size:.95rem; margin:.25rem 0 .9rem; }
+.st-key-auth_card input { height:52px !important; font-size:var(--fs-body) !important; }
+.rc-auth-title { font-size:var(--fs-h2); font-weight:800; color:#1C1E21; line-height:1.2; }
+.rc-auth-sub { color:#606770; font-size:var(--fs-body); margin:.25rem 0 .9rem; }
 .rc-auth-divider { border-top:1px solid #DADDE1; margin:.9rem 0 1rem; }
-.rc-auth-note { font-size:.8rem; color:#606770; text-align:center; margin-top:.4rem; }
+.rc-auth-note { font-size:var(--fs-small); color:#606770; text-align:center; margin-top:.4rem; }
 .st-key-auth_card .st-key-btn_go_signup .stButton > button[kind],
 .st-key-auth_card .st-key-btn_signup .stButton > button[kind] {
   background:#42B72A !important; color:#FFFFFF !important; border:none !important;
-  box-shadow:none !important; font-size:1.05rem !important; }
+  box-shadow:none !important; font-size:var(--fs-body) !important; }
 .st-key-auth_card .st-key-btn_go_signup .stButton > button[kind]:hover,
 .st-key-auth_card .st-key-btn_signup .stButton > button[kind]:hover { background:#36A420 !important; }
 .st-key-auth_card .st-key-btn_login_send .stButton > button[kind],
-.st-key-auth_card .st-key-btn_code_continue .stButton > button[kind] { font-size:1.08rem !important; }
+.st-key-auth_card .st-key-btn_code_continue .stButton > button[kind] { font-size:var(--fs-body) !important; }
 .st-key-auth_card .st-key-btn_go_signup, .st-key-auth_card .st-key-btn_go_signup .stButton { display:flex; justify-content:center; width:100%; }
 .st-key-auth_card .st-key-btn_go_signup .stButton > button[kind] { width:auto !important; padding:.75rem 1.8rem !important; }
 .st-key-auth_card .st-key-auth_links .stButton > button[kind] {
   background:transparent !important; color:#2563EB !important; box-shadow:none !important; border:none !important;
-  padding:.3rem .2rem !important; font-weight:600 !important; font-size:.9rem !important; }
+  padding:.3rem .2rem !important; font-weight:600 !important; font-size:var(--fs-body) !important; }
 .st-key-auth_card .st-key-auth_links .stButton > button[kind]:hover { text-decoration:underline !important; transform:none !important; }
 @media (max-width: 768px) {
   .rc-auth-hero { padding:1rem 0 0; text-align:center; }
   .rc-auth-logo { font-size:2.8rem; }
-  .rc-auth-tag { font-size:1.1rem; margin:.6rem auto .4rem; }
+  .rc-auth-tag { font-size:var(--fs-h3); margin:.6rem auto .4rem; }
   .rc-auth-points { display:none; }
   .st-key-auth_card { margin:.6rem auto 0; }
 }
@@ -2244,13 +2315,13 @@ if _is_auth:
     _badge_text = f"{config.PLAN_LABELS.get(_auth_tier, 'Plan')}: {_auth_rem}/{_auth_max} left"
     _email_display = _auth_email if len(_auth_email) <= 20 else _auth_email[:18] + "…"
     nav_auth_btn = f'''
-    <a href="#client-auth" style="font-size:.82rem !important;font-weight:700 !important;color:#1E3A8A !important;background:#EFF6FF !important;border:1.5px solid #BFDBFE !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;">
+    <a href="#client-auth" style="font-size:var(--fs-small) !important;font-weight:700 !important;color:#1E3A8A !important;background:#EFF6FF !important;border:1.5px solid #BFDBFE !important;padding:.42rem .85rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:.35rem !important;box-shadow:0 1px 3px rgba(0,0,0,.05) !important;">
       <span>🛡️</span><span class="iq-nav-email">{_e(_email_display)}&nbsp;</span><span>({_e(_badge_text)})</span>
     </a>
     '''
 else:
     nav_auth_btn = '''
-    <a href="?auth=login" target="_self" style="font-size:.84rem !important;font-weight:700 !important;color:#2563EB !important;background:#FFFFFF !important;border:1.5px solid #BFDBFE !important;padding:.42rem 1rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
+    <a href="?auth=login" target="_self" style="font-size:var(--fs-small) !important;font-weight:700 !important;color:#2563EB !important;background:#FFFFFF !important;border:1.5px solid #BFDBFE !important;padding:.42rem 1rem !important;border-radius:8px !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
       Log in
     </a>
     '''
@@ -2289,7 +2360,7 @@ else:
   </div>
   <div style="display:flex;align-items:center;gap:.65rem;flex-shrink:0;">
     {nav_auth_btn}
-    <a class="iq-nav-demo" href="{_nav_cta[0]}"{_nav_cta[2]} style="font-size:.84rem !important;font-weight:700 !important;color:#FFFFFF !important;background:#2563EB !important;padding:.44rem 1.15rem !important;border-radius:8px !important;border:none !important;box-shadow:0 2px 8px rgba(37,99,235,.25) !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
+    <a class="iq-nav-demo" href="{_nav_cta[0]}"{_nav_cta[2]} style="font-size:var(--fs-small) !important;font-weight:700 !important;color:#FFFFFF !important;background:#2563EB !important;padding:.44rem 1.15rem !important;border-radius:8px !important;border:none !important;box-shadow:0 2px 8px rgba(37,99,235,.25) !important;text-decoration:none !important;display:inline-flex !important;align-items:center !important;cursor:pointer !important;">
       <span>{_nav_cta[1]}</span>
     </a>
   </div>
@@ -2298,13 +2369,18 @@ else:
 
 
 # ─────────────────────────── Hero ────────────────────────────────────────────
-render_html("""
+render_html(f"""
 <div class="iq-hero">
-<div class="iq-eye">&#10022; &nbsp;Visual AI Resume Screening &amp; Candidate Ranking</div>
-<div class="iq-h1">Shortlist Top Talent in <span class="bl">Minutes</span></div>
-<div class="iq-sub">Upload a job description and candidate CVs to screen, score, and rank applicants &mdash; then review and decide.</div>
+<div class="iq-eye">&#10022; &nbsp;AI resume screening and ranking</div>
+<div class="iq-h1">Shortlist top talent in <span class="bl">minutes</span></div>
+<div class="iq-sub">Upload a job description and CVs. RankCV scores and ranks every applicant, then you review and decide.</div>
+<div class="iq-hero-note">Free account includes {_TRIAL_Q} CV evaluations. No card needed.</div>
 </div>
 """)
+with st.container(key="hero_demo", horizontal=True, horizontal_alignment="center"):
+    if st.button("▶  Try 5 demo CVs", key="hero_demo_btn", type="tertiary"):
+        st.session_state.run_demo = True
+render_html('<div class="iq-hero-trust">&#10003; Explainable scores. You make the final decision.</div>')
 
 
 # ─────────────────────────── Feature Bar ─────────────────────────────────────
@@ -2373,16 +2449,16 @@ if _c_logged_in:
     render_html(f"""
     <div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:.85rem 1.25rem;margin:0.5rem 0 0.8rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
       <div style="display:flex;align-items:center;gap:.75rem;">
-        <span style="font-size:1.4rem;">{_plan_icon}</span>
+        <span style="font-size:var(--fs-h2);">{_plan_icon}</span>
         <div>
-          <div style="font-size:.9rem;font-weight:800;color:#1E3A8A;">Active Plan: {_e(_plan_name)}</div>
-          <div style="font-size:.78rem;color:#3B82F6;font-weight:600;">
+          <div style="font-size:var(--fs-body);font-weight:800;color:#1E3A8A;">Active Plan: {_e(_plan_name)}</div>
+          <div style="font-size:var(--fs-small);color:#3B82F6;font-weight:600;">
             Signed in as <b>{_e(_ca['contact_email'])}</b> &bull; <b>{_c_rem:,}/{_c_max:,} CVs remaining</b> ({_c_used:,} used)
           </div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.6rem;">
-        <span style="font-size:.72rem;background:#10B981;color:#fff;font-weight:800;padding:.22rem .65rem;border-radius:99px;">✓ VERIFIED</span>
+        <span style="font-size:var(--fs-small);background:#10B981;color:#fff;font-weight:800;padding:.22rem .65rem;border-radius:99px;">✓ VERIFIED</span>
       </div>
     </div>
     """)
@@ -2558,8 +2634,8 @@ with col2:
   <div class="iq-pnum">2</div>Upload Candidate CVs
 </div>
 <div class="iq-cr-head">
-  <div style="font-size:.82rem;font-weight:700;color:#64748B;">Candidate Resumes (PDF, DOCX, TXT)</div>
-  <div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">{_e(_tier_label)}</div>
+  <div style="font-size:var(--fs-small);font-weight:700;color:#64748B;">Candidate Resumes (PDF, DOCX, TXT)</div>
+  <div style="background:#EFF6FF; color:#2563EB; font-size:var(--fs-small); font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">{_e(_tier_label)}</div>
 </div>""")
 
         cv_files = st.file_uploader(
@@ -2607,7 +2683,7 @@ def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
     with screening_workspace() as wd:
         for idx, (fname, src) in enumerate(sources, 1):
             render_html(
-                f'<p style="font-size:.82rem;color:#64748B">📄 <b style="color:#2563EB">{_e(fname)}</b> '
+                f'<p style="font-size:var(--fs-small);color:#64748B">📄 <b style="color:#2563EB">{_e(fname)}</b> '
                 f'({idx}/{len(sources)})</p>', container=info)
             try:
                 if isinstance(src, Path):
@@ -2639,7 +2715,7 @@ def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
             bar.progress(0.4 + 0.6 * done / max(1, total),
                          text=f"Scoring {len(candidates)} candidate(s) — {done}/{total} batches done…")
 
-        render_html(f'<p style="font-size:.82rem;color:#64748B">🤖 Scoring <b style="color:#2563EB">'
+        render_html(f'<p style="font-size:var(--fs-small);color:#64748B">🤖 Scoring <b style="color:#2563EB">'
                     f'{len(candidates)} candidate(s)</b>…</p>', container=info)
         try:
             results, audit = rank_candidates_batch(
@@ -2711,7 +2787,7 @@ with col3:
 </div>""")
 
         # ── Demo: 5 bundled sample CVs, always on the Private Engine, no quota ──
-        if demo_btn:
+        if demo_btn or st.session_state.pop("run_demo", False):
             demo_files = sorted(Path("dummy_cvs_pdf").glob("*.pdf"))[:5]
             if not demo_files:
                 st.error("Demo CVs not found on server.")
@@ -2779,8 +2855,8 @@ with col3:
 
             render_html(f"""
 <div class="iq-cr-head">
-<div style="font-size:.82rem;font-weight:700;color:#64748B;">Top Matches ({len(results)} evaluated)</div>
-<div style="font-size:.7rem;font-weight:700;color:#475569;">{_e(_MODE_LABELS.get(_meta.get('mode_used'), ''))}</div>
+<div style="font-size:var(--fs-small);font-weight:700;color:#64748B;">Top Matches ({len(results)} evaluated)</div>
+<div style="font-size:var(--fs-small);font-weight:700;color:#475569;">{_e(_MODE_LABELS.get(_meta.get('mode_used'), ''))}</div>
 </div>
 <div class="iq-cr-cols">
 <div class="iq-cr-col-sp"></div>
@@ -2830,8 +2906,8 @@ with col3:
             # Idle state — illustrative sample preview
             render_html("""
 <div class="iq-cr-head">
-<div style="font-size:.82rem;font-weight:700;color:#64748B;">Top Matches Preview</div>
-<div style="background:#EFF6FF; color:#2563EB; font-size:.68rem; font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">✨ Sample Preview</div>
+<div style="font-size:var(--fs-small);font-weight:700;color:#64748B;">Top Matches Preview</div>
+<div style="background:#EFF6FF; color:#2563EB; font-size:var(--fs-small); font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">✨ Sample Preview</div>
 </div>
 <div class="iq-cr-cols">
 <div class="iq-cr-col-sp"></div>
@@ -2841,7 +2917,7 @@ with col3:
 
 """ + _SAMPLE_PREVIEW_HTML + """
 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
-<div style="font-size:.78rem; color:#475569; font-weight:600;">
+<div style="font-size:var(--fs-small); color:#475569; font-weight:600;">
 💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 5 Demo CVs</b> in Panel 2 to screen sample resumes.
 </div>
 </div>
@@ -2893,7 +2969,7 @@ if st.session_state.get("show_full") and st.session_state.results:
 <div class="iq-podium-wrap">
   <div class="iq-podium-hdr">
     <div class="iq-podium-title">🏆 Top {len(_showcase)} of {len(results)} Candidates</div>
-    <div style="font-size:.78rem;font-weight:700;color:#047857;background:#ECFDF5;padding:.25rem .75rem;border-radius:99px;border:1px solid #A7F3D0;">
+    <div style="font-size:var(--fs-small);font-weight:700;color:#047857;background:#ECFDF5;padding:.25rem .75rem;border-radius:99px;border:1px solid #A7F3D0;">
       ✓ Human decision required for every candidate
     </div>
   </div>
@@ -2928,22 +3004,22 @@ if st.session_state.get("show_full") and st.session_state.results:
                     dec_strip_html = ('<div class="iq-decision-strip iq-dec-strip-consider">'
                                       f'<span>⚡</span><span>Your decision: <b>{_e(curr_status)}</b></span></div>')
 
-                sk_badges = "".join(f'<span class="iq-cr-sk" style="font-size:.72rem;">{_e(s)}</span>' for s in p_skills)
+                sk_badges = "".join(f'<span class="iq-cr-sk" style="font-size:var(--fs-small);">{_e(s)}</span>' for s in p_skills)
                 render_html(f"""
 <div class="iq-podium-card {p_c} {card_status_cls}">
   <span class="iq-podium-badge {pb_c}">{_e(p_t)} &mdash; {_BAND_BADGE[_fit_band(c_r)][1]}</span>
   <div>
-    <div style="font-size:1.15rem;font-weight:800;color:#0F172A;margin-top:.4rem;">{_e(p_name)}</div>
-    <div style="font-size:.78rem;color:#64748B;font-weight:500;margin-bottom:.8rem;">{_e(c_r.get("relevant_experience", ""))}</div>
+    <div style="font-size:var(--fs-h3);font-weight:800;color:#0F172A;margin-top:.4rem;">{_e(p_name)}</div>
+    <div style="font-size:var(--fs-small);color:#64748B;font-weight:500;margin-bottom:.8rem;">{_e(c_r.get("relevant_experience", ""))}</div>
     <div style="display:flex;align-items:baseline;gap:.4rem;margin-bottom:.4rem;">
-      <span style="font-size:1.6rem;font-weight:900;color:{p_col};">{p_score}%</span>
-      <span style="font-size:.8rem;color:#64748B;font-weight:600;">AI Match</span>
+      <span style="font-size:var(--fs-h2);font-weight:900;color:{p_col};">{p_score}%</span>
+      <span style="font-size:var(--fs-small);color:#64748B;font-weight:600;">AI Match</span>
     </div>
     <div style="height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden;margin-bottom:.9rem;">
       <div style="height:100%;width:{p_score}%;background:{p_col};border-radius:99px;"></div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:1rem;">{sk_badges}</div>
-    <div style="font-size:.8rem;color:#334155;line-height:1.45;background:rgba(255,255,255,.7);padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(0,0,0,.05);">
+    <div style="font-size:var(--fs-small);color:#334155;line-height:1.45;background:rgba(255,255,255,.7);padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(0,0,0,.05);">
       <b>AI Rationale:</b> {_e(c_r.get("recommendation", ""))}
     </div>
     {dec_strip_html}
@@ -3024,7 +3100,7 @@ if st.session_state.get("show_full") and st.session_state.results:
     if not _ranked:
         render_html(
             '<div style="text-align:center;padding:2.5rem 1rem;color:#94A3B8;'
-            'font-size:.92rem;background:#F8FAFF;border:1.5px dashed #E2E8F0;'
+            'font-size:var(--fs-body);background:#F8FAFF;border:1.5px dashed #E2E8F0;'
             'border-radius:12px;margin:.5rem 0">No candidates match your filter.</div>'
         )
 
@@ -3059,7 +3135,7 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div class="iq-det-hrow">
     <div class="iq-det-hinfo">
       <div class="iq-det-name">{_e(name)}</div>
-      <div style="font-size:.78rem;color:#64748B;font-weight:500;margin-top:2px;">{_e(sub)}</div>
+      <div style="font-size:var(--fs-small);color:#64748B;font-weight:500;margin-top:2px;">{_e(sub)}</div>
     </div>
     <div class="iq-det-badge iq-det-badge-{score_level}">
       <div class="iq-det-badgenum">{s_lbl}</div>
@@ -3081,7 +3157,7 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div class="iq-det-divider"></div>
   <div class="iq-det-lbl">AI Recommendation</div>
   <div style="margin-top:.5rem">{_rec_badge(r)}</div>
-  <div style="font-size:.72rem;color:#94A3B8;margin-top:.5rem;">Scored by: {_e(r.get("processing_mode", ""))}</div>
+  <div style="font-size:var(--fs-small);color:#94A3B8;margin-top:.5rem;">Scored by: {_e(r.get("processing_mode", ""))}</div>
 </div>""")
 
             render_html("""
@@ -3089,7 +3165,7 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div class="iq-override-title">
     <span>⚖️ Recruiter Oversight &amp; Decision (GDPR Art. 22)</span>
   </div>
-  <div style="font-size:.76rem;color:#64748B;margin-bottom:.5rem;">
+  <div style="font-size:var(--fs-small);color:#64748B;margin-bottom:.5rem;">
     The AI score is advice only. Review the candidate and record your own decision.
   </div>
 </div>""")
@@ -3132,13 +3208,13 @@ if st.session_state.get("show_full") and st.session_state.results:
 
     render_html(f"""
 <div class="iq-trial-upgrade">
-  <div style="font-size:1.15rem;font-weight:800;color:#0B1120;margin-bottom:.35rem">
+  <div style="font-size:var(--fs-h3);font-weight:800;color:#0B1120;margin-bottom:.35rem">
     Ready to screen 100s of CVs across active roles?
   </div>
-  <div style="font-size:.9rem;color:#64748B;max-width:540px;margin:0 auto 1.1rem;line-height:1.6">
+  <div style="font-size:var(--fs-body);color:#64748B;max-width:540px;margin:0 auto 1.1rem;line-height:1.6">
     RankCV helps recruitment &amp; HR teams screen, score and shortlist CVs in bulk &mdash; with a recruiter in control of every decision.
   </div>
-  <a class="iq-bp" href="mailto:{_e(config.SUPPORT_EMAIL)}?subject=RankCV%20walkthrough" target="_blank" rel="noopener" style="padding:.65rem 1.6rem;font-size:.9rem">
+  <a class="iq-bp" href="mailto:{_e(config.SUPPORT_EMAIL)}?subject=RankCV%20walkthrough" target="_blank" rel="noopener" style="padding:.65rem 1.6rem;font-size:var(--fs-body)">
     Book a Quick Walkthrough &nbsp;&rarr;
   </a>
 </div>
@@ -3295,9 +3371,9 @@ render_html("""
 
 <div class="iq-pillars-box">
 <div class="iq-pillars-top">
-<div style="font-size:.72rem;font-weight:800;color:#2563EB;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem;">Built for High-Volume Hiring</div>
-<div style="font-size:1.55rem;font-weight:900;color:#0F172A;letter-spacing:-.5px;">Why Recruiters Choose RankCV</div>
-<div style="font-size:.86rem;color:#64748B;margin-top:.25rem;">Speed up time-to-shortlist while maintaining strict candidate evaluation quality</div>
+<div style="font-size:var(--fs-small);font-weight:800;color:#2563EB;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem;">Built for High-Volume Hiring</div>
+<div style="font-size:var(--fs-h2);font-weight:900;color:#0F172A;letter-spacing:-.5px;">Why Recruiters Choose RankCV</div>
+<div style="font-size:var(--fs-body);color:#64748B;margin-top:.25rem;">Speed up time-to-shortlist while maintaining strict candidate evaluation quality</div>
 </div>
 <div class="iq-pillars-grid">
 <div class="iq-pillar-item">
@@ -3547,7 +3623,7 @@ render_html(f"""
       <div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem;">
           <span class="iq-plan-badge iq-badge-agency">&#9733; Agency &amp; Scale-up</span>
-          <span style="font-size:.62rem;font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.15rem .45rem;border-radius:5px;">FOUNDING LOCK</span>
+          <span style="font-size:var(--fs-small);font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.15rem .45rem;border-radius:5px;">FOUNDING LOCK</span>
         </div>
         <div class="iq-plan-name">Agency</div>
         <div class="iq-plan-desc">High-volume screening for staffing firms &amp; agencies.</div>
@@ -3598,7 +3674,7 @@ render_html(f"""
 
   <!-- Trust & Payment Methods Footer -->
   <div class="iq-pay-badges">
-    <span style="font-size:.82rem;font-weight:700;color:#64748B;margin-right:.5rem;">Accepted Payment Methods:</span>
+    <span style="font-size:var(--fs-small);font-weight:700;color:#64748B;margin-right:.5rem;">Accepted Payment Methods:</span>
     <span class="iq-pay-pill"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-right:2px"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.08 1.74-.95 2.76.99.08 2.04-.51 2.68-1.26z"/></svg>Apple Pay</span>
     <span class="iq-pay-pill" style="font-weight:800;color:#1A1F71">VISA</span>
     <span class="iq-pay-pill"><span style="color:#EB001B">&#9679;</span><span style="color:#F79E1B;margin-left:-4px">&#9679;</span> Mastercard</span>

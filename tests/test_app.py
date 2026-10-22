@@ -237,3 +237,14 @@ def test_sign_up_then_log_in_flow(monkeypatch):
     _text(at2, "6-digit code").set_value(sent["code"])
     _button(at2, "Continue").click().run()
     assert at2.session_state.client_auth["logged_in"]
+
+
+def test_hero_copy_and_demo_link():
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
+    text = _all_markdown(at)
+    assert "Shortlist top talent in" in text and "RankCV scores and ranks every applicant" in text
+    assert "Free account includes 10 CV evaluations. No card needed." in text
+    assert "Explainable scores. You make the final decision." in text
+    next(b for b in at.button if b.key == "hero_demo_btn").click().run()
+    assert not at.exception, at.exception
+    assert len(at.session_state.results) == 5
