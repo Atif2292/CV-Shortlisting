@@ -44,10 +44,10 @@ CHUNK_MAX_TOKENS = 6000
 DEFAULT_OPENAI_MODEL = "gpt-4o"
 JD_PROMPT_CHARS = 8000
 
-MODE_LABEL_OFFLINE = "Private Engine (no external AI calls)"
-MODE_LABEL_CLOUD = "Cloud AI (OpenAI)"
-MODE_LABEL_FALLBACK = "Private Engine (Cloud AI unavailable)"
-MODE_LABEL_DOC_CHECK = "Private Engine (failed CV check, not sent to AI)"
+MODE_LABEL_OFFLINE = "Backup engine (on our server)"
+MODE_LABEL_CLOUD = "AI scoring (OpenAI)"
+MODE_LABEL_FALLBACK = "Backup engine (AI unavailable)"
+MODE_LABEL_DOC_CHECK = "Backup engine (failed CV check, not sent to AI)"
 
 FIT_BANDS = ("strong", "good", "moderate", "weak", "invalid")
 INVALID_DOC_STATUSES = {"not_cv", "job_description"}
@@ -1346,7 +1346,7 @@ def rank_candidates_batch(
 
         if chunks and refusal:
             logger.warning("Cloud scoring unavailable; %d candidates scored offline", len(cloud_idx))
-            reasons.append(f"{refusal} Candidates were scored by the offline engine.")
+            reasons.append(f"{refusal} Candidates were scored by the backup engine.")
             for ch in chunks:
                 _score_offline(ch, MODE_LABEL_FALLBACK)
                 _tick(len(chunks))
@@ -1384,10 +1384,10 @@ def rank_candidates_batch(
             audit_stats["chunks_fallback"] = n_failed
             if n_failed:
                 reasons.append(f"Cloud scoring failed for {n_failed} of {len(chunks)} chunk(s) "
-                               f"({'; '.join(sorted(failures))}); those candidates were scored by the offline engine.")
+                               f"({'; '.join(sorted(failures))}); those candidates were scored by the backup engine.")
             if missing_total:
                 reasons.append(f"The AI model returned missing or invalid results for {missing_total} candidate(s); "
-                               f"they were scored by the offline engine.")
+                               f"they were scored by the backup engine.")
 
         if invalid_idx:
             reasons.append(f"{len(invalid_idx)} document(s) failed the local CV check and were not sent to the cloud model.")

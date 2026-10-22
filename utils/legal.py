@@ -68,17 +68,14 @@ When you screen CVs:
 - **CV text and screening results** are held in server memory for your browser session only,
   so you can review them. They are not written to our database and are discarded when your
   session ends.
-- **Cloud AI mode:** before text is sent to OpenAI, we automatically redact names, email
+- **AI scoring:** before text is sent to OpenAI, we automatically redact names, email
   addresses, phone numbers, postcodes, personal web links, dates of birth and common
   protected-characteristic fields (such as gender, marital status, religion and nationality).
   Redaction is automated and best-effort, so it may miss some details. OpenAI processes the
   redacted text in the United States under its API terms. Under those terms, API data is not
   used to train models and is kept for up to 30 days for abuse monitoring.
-- **Private Engine mode:** scoring happens entirely on our server; no CV content is sent to
-  any AI provider.
-- **Your own OpenAI key (BYOK):** if you enter your own key, requests go to OpenAI under your
-  organisation's agreement with OpenAI. Your key is held in server memory for your session
-  only and is never stored or logged.
+- **If our AI provider is unavailable:** CVs are scored on our own server instead and no CV
+  content is sent to any AI provider.
 
 RankCV gives decision support only. Scores must be reviewed by a person before any decision
 about a candidate is made (Article 22 of the UK and EU GDPR).
@@ -202,13 +199,13 @@ def _subprocessors() -> str:
 
 | Provider | Purpose | Data | Location |
 |---|---|---|---|
-| OpenAI, L.L.C. | AI scoring (Cloud AI mode only, unless you use your own key) | Redacted CV text, job description | United States |
+| OpenAI, L.L.C. | AI scoring | Redacted CV text, job description | United States |
 | {c.HOSTING_PROVIDER} | {hosting_purpose} | {hosting_data} | See provider |
 {db_row}| {c.EMAIL_PROVIDER} | Sending sign-in codes | Recruiter email address | See provider |
 | Stripe Payments UK Ltd | Subscriptions and payments | Billing details (entered on Stripe) | UK / EU / US |
 | Google LLC (Google Fonts) | Web font delivery | Visitor IP address and browser details | United States |
 
-Private Engine mode sends no CV content to OpenAI.
+If OpenAI is unavailable, CVs are scored on our own server and nothing is sent to OpenAI.
 """
 
 

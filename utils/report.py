@@ -21,9 +21,9 @@ BAND_LABELS = {
     "invalid": "Not a CV?",
 }
 MODE_LABELS = {
-    "cloud":   "Cloud AI (OpenAI)",
-    "offline": "Private Engine (no external AI calls)",
-    "mixed":   "Cloud AI, with Private Engine fallback for some CVs",
+    "cloud":   "AI scoring (OpenAI)",
+    "offline": "Backup engine (on our server, no AI provider)",
+    "mixed":   "AI scoring, with the backup engine for some CVs",
 }
 
 
@@ -100,7 +100,7 @@ def build_excel_report(results: List[Dict[str, Any]], overrides: Dict[Any, Dict[
     used = run_meta.get("mode_used", "")
     cloud_used = used in ("cloud", "mixed")
     redaction = (
-        "Automated redaction applied before Cloud AI scoring (best-effort): "
+        "Automated redaction applied before AI scoring (best-effort): "
         f"emails {audit_stats.get('emails', 0)}, phones {audit_stats.get('phones', 0)}, "
         f"postcodes {audit_stats.get('postcodes', 0)}, names {audit_stats.get('names', 0)}, "
         f"profile links {audit_stats.get('profiles', 0)}, dates of birth/ages {audit_stats.get('dob_age', 0)}, "
@@ -108,8 +108,6 @@ def build_excel_report(results: List[Dict[str, Any]], overrides: Dict[Any, Dict[
         if cloud_used else "Not applicable — no CV content was sent to an external AI provider."
     )
     engine = MODE_LABELS.get(used, used or "Unknown")
-    if run_meta.get("fallback_reason"):
-        engine += f" — fallback reason: {run_meta['fallback_reason']}"
     audit_rows = [
         ("Statutory Framework", "UK GDPR, EU GDPR and other applicable data-protection laws"),
         ("Service Terms", "RankCV Terms of Service and Data Processing Agreement"),
@@ -118,7 +116,7 @@ def build_excel_report(results: List[Dict[str, Any]], overrides: Dict[Any, Dict[
         ("Run ID / Time", f"{run_meta.get('run_id', '')} · {run_meta.get('started_at', '')}"),
         ("Scoring Engine Used", engine),
         ("External AI Sub-processor",
-         "OpenAI (United States) — redacted CV text only" if cloud_used else "None (Private Engine)"),
+         "OpenAI (United States) — redacted CV text only" if cloud_used else "None (backup engine on our server)"),
         ("Article 22 Human Oversight",
          f"{reviewed} of {len(results)} candidates have a decision recorded by a recruiter in RankCV. "
          "Candidates still 'Under Review' have no human decision and must not be rejected on the AI score alone."),
@@ -128,7 +126,7 @@ def build_excel_report(results: List[Dict[str, Any]], overrides: Dict[Any, Dict[
          "Results are kept in the browser session's memory only and are not stored in RankCV's database."),
         ("Anti-Discrimination",
          "Scoring compares skills, experience and qualifications with the job description. "
-         "Common protected-characteristic fields are redacted before Cloud AI scoring (best-effort). "
+         "Common protected-characteristic fields are redacted before AI scoring (best-effort). "
          "Recruiters should check results for possible bias before deciding."),
         ("Report Generated (UTC)", datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")),
         ("Recruiter Sign-Off",

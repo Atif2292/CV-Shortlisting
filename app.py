@@ -2347,7 +2347,7 @@ render_html("""
 <div id="security" class="iq-sec-bar">
   <div class="iq-sec-top">
     <div class="iq-sec-title">
-      <span>🛡️ GDPR-Ready Privacy Controls &amp; Screening Engine</span>
+      <span>🛡️ GDPR-Ready Privacy Controls</span>
     </div>
     <div class="iq-sec-badges">
       <span class="iq-sec-pill iq-pill-green">🔒 PII Redaction Before AI Scoring</span>
@@ -2357,60 +2357,6 @@ render_html("""
   </div>
 </div>
 """)
-
-sec_c1, sec_c2, sec_c3 = st.columns([1.6, 1.2, 1.2])
-with sec_c1:
-    engine_choice = st.radio(
-        "Screening Engine Mode:",
-        ["⚡ Cloud AI (OpenAI)", "🛡️ Private Engine (no external AI calls)"],
-        index=0 if st.session_state.get("engine_mode", "cloud") == "cloud" else 1,
-        horizontal=True,
-        key="engine_choice_radio",
-        label_visibility="collapsed"
-    )
-    st.session_state.engine_mode = "private" if "Private" in engine_choice else "cloud"
-    st.caption("**Cloud AI** — OpenAI's GPT model reads each CV in context against your job description "
-               "(most accurate). **Private Engine** — keyword and experience matching on our own server; "
-               "no CV content is sent to any AI provider.")
-
-with sec_c2:
-    with st.popover("🔑 Your Own OpenAI Key (optional)"):
-        st.markdown("### 🔑 Bring Your Own Key (BYOK)")
-        st.markdown(
-            "Cloud AI uses RankCV's OpenAI account by default. Enter your organisation's own key "
-            "to have OpenAI process requests under **your** agreement with them."
-        )
-        st.session_state.custom_api_key = st.text_input(
-            "OpenAI API Key (sk-...)",
-            value=st.session_state.get("custom_api_key", ""),
-            type="password",
-            placeholder="sk-proj-...",
-            help="Held in server memory for this session only. Never stored or logged."
-        )
-        st.session_state.custom_base_url = st.text_input(
-            "Custom endpoint (optional, advanced)",
-            value=st.session_state.get("custom_base_url", ""),
-            placeholder="https://<resource>.openai.azure.com/openai/v1/",
-            help="Azure OpenAI (v1 API) or api.openai.com only, and only with your own key. "
-                 f"Your Azure deployment must be named '{config.get_setting('OPENAI_MODEL', 'gpt-4o')}'.",
-        )
-        st.caption(
-            "Before Cloud AI scoring, names, emails, phone numbers, postcodes, personal links, dates of "
-            "birth and common protected-characteristic fields are redacted automatically (best-effort). "
-            "Choose the Private Engine to keep CV content away from third-party AI entirely."
-        )
-
-with sec_c3:
-    with st.popover("⚖️ GDPR & Legal"):
-        st.markdown("### ⚖️ How RankCV handles candidate data")
-        st.markdown(f"""
-- **Roles:** your organisation is the **controller** of candidate data. RankCV ({config.COMPANY_NAME}) is your **processor** under our Data Processing Agreement.
-- **AI provider:** in Cloud AI mode, redacted CV text is sent to OpenAI (US) as our sub-processor, or under your own agreement if you use your own key. The Private Engine sends nothing to any AI provider.
-- **Storage:** uploaded files are deleted as soon as their text is extracted. Results stay in your session's memory only and are never written to our database.
-- **Human oversight (Article 22):** scores are decision support. Every candidate starts as *Under Review*; a recruiter must record each decision.
-- **Law:** England and Wales.
-""")
-        _legal_links("popover")
 
 
 # ─────────────────────────── Client Authentication ───────────────────────────
@@ -2722,7 +2668,7 @@ def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
         "demo": demo,
         "mode_requested": "offline" if offline else "cloud",
         "mode_used": mode_used,
-        "fallback_reason": audit.get("fallback_reason", ""),
+        "fallback_reason": audit.get("fallback_reason", ""),   # technical; logged, not shown to customers
         "files_received": len(sources),
         "files_scored": len(results),
         "file_notes": file_notes,
@@ -2752,9 +2698,9 @@ def _flash_run_outcome(results, skipped, run_meta) -> None:
     for fname, note in run_meta.get("file_notes", []):
         _flash("info", f"ℹ️ **{fname}** {note}.")
     if run_meta.get("mode_requested") == "cloud" and run_meta.get("mode_used") in ("offline", "mixed"):
-        reason = (run_meta.get("fallback_reason") or "Cloud AI was unavailable").strip().rstrip(".")
-        _flash("warning", f"⚠️ {reason}. Affected CVs were scored by the keyword-based Private Engine "
-                          f"instead of Cloud AI — see the *Scoring engine* column in the report.")
+        log.warning("AI scoring fallback: %s", run_meta.get("fallback_reason") or "unknown reason")
+        _flash("warning", "⚠️ AI scoring was unavailable for some CVs, so they were scored by our keyword-based "
+                          "backup engine instead — see the *Scoring Engine* column in the report.")
 
 
 with col3:
@@ -2774,7 +2720,7 @@ with col3:
                 results, audit, skipped, meta = _run_screening(
                     [(p.name, p) for p in demo_files], _jd, offline=True, demo=True)
                 _store_run(results, audit, meta)
-                _flash("info", "Demo: 5 sample CVs scored with the Private Engine. Sign in to screen your own CVs.")
+                _flash("info", "Demo: 5 sample CVs scored instantly. Sign up to screen your own CVs.")
                 _flash_run_outcome(results, skipped, meta)
                 st.rerun()
 
@@ -2926,7 +2872,7 @@ if st.session_state.get("show_full") and st.session_state.results:
     render_html("<div style='height:1rem'></div>")
 
     if _meta.get("demo"):
-        st.info("These are demo results for 5 bundled sample CVs, scored with the Private Engine.")
+        st.info("These are demo results for 5 sample CVs.")
     st.caption("🔒 Results are kept only for this browser session and are never stored by RankCV. "
                "Download the report below before closing or refreshing the page.")
 
@@ -3582,7 +3528,7 @@ render_html(f"""
         </div>
         <ul class="iq-plan-features">
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>{_PRO_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Cloud AI or Private Engine</b> &mdash; optional own OpenAI key</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>AI scoring</b> with strengths &amp; concerns for every CV</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top candidate podium</b> &amp; Excel shortlist report</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>GDPR Article 22</b> review workflow &amp; audit sheet</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard support</b> &amp; {_ACTIVATION.lower()}</span></li>
@@ -3617,7 +3563,7 @@ render_html(f"""
           <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>{_AG_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Everything in Professional</b> included</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Excel export</b> ready to import into any ATS</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Use your own OpenAI account</b> (optional)</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Shortlist reports</b> ready to share with clients</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority support</b> &amp; 1 guided setup session</span></li>
         </ul>
       </div>
@@ -3691,10 +3637,10 @@ _faq_items = [
      "Uploaded files are saved to a private temporary folder on our server under random names and <b>deleted as soon "
      "as their text has been extracted</b>. Screening results stay in your browser session's memory so you can review "
      "them; they are never written to our database and are discarded when your session ends.<br><br>"
-     "In <b>Cloud AI</b> mode, CV text is sent to OpenAI's API (United States) after names, contact details, postcodes, "
+     "For AI scoring, CV text is sent to OpenAI's API (United States) after names, contact details, postcodes, "
      "personal links, dates of birth and common protected-characteristic fields are redacted automatically. Under "
      "OpenAI's API terms this data is not used to train models and is kept for up to 30 days for abuse monitoring. "
-     "In <b>Private Engine</b> mode no CV content leaves our server. You can also use your own OpenAI key. "
+     "If the AI service is ever unavailable, CVs are scored on our own server instead and nothing is sent to an AI provider. "
      "See the <b>Privacy Notice</b> and <b>Sub-processors</b> links at the bottom of this page."),
     ("Does RankCV integrate with my ATS?",
      "RankCV works alongside your ATS: upload a batch, review the ranking, and export the shortlist to Excel, which "
@@ -3704,16 +3650,15 @@ _faq_items = [
      '<ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">'
      "<li><b>Article 22 human review:</b> no candidate is rejected automatically. Every candidate starts as "
      "<i>Under Review</i> and recruiters record each decision, score adjustment and note.</li>"
-     "<li><b>Data minimisation:</b> automatic, best-effort redaction of identifying details before Cloud AI scoring, "
-     "or the Private Engine with no external AI at all.</li>"
+     "<li><b>Data minimisation:</b> automatic, best-effort redaction of identifying details before AI scoring.</li>"
      "<li><b>Storage limitation:</b> CV files are deleted after each run and results are not stored in our database.</li>"
      "<li><b>Accountability:</b> the Excel report records which engine scored each CV and which decisions a recruiter "
      "actually made, with timestamps.</li>"
      "<li><b>Processor terms:</b> our <b>Data Processing Agreement</b> (link at the bottom of this page) applies to every account.</li>"
      "</ul>"),
     ("How fast is the batch screening process?",
-     "The Private Engine scores a batch in seconds. Cloud AI scores CVs in parallel batches of about ten; a batch of "
-     "50 CVs typically takes around a minute, depending on OpenAI's response times."),
+     "CVs are scored in parallel batches of about ten, so a batch of 50 CVs typically takes around a minute. "
+     "The demo is instant."),
 ]
 
 render_html(f"""

@@ -61,6 +61,9 @@ def test_home_page_has_no_false_claims():
         assert banned not in text, banned
     assert "Reviews &amp; Testimonials" in text or "Reviews & Testimonials" in text
     assert "support@rankcv.io" in text
+    for hidden in ("Bring Your Own Key", "Private Engine", "GDPR &amp; Legal", "own OpenAI"):
+        assert hidden not in text, hidden
+    assert not any("Cloud AI" in r.label for r in at.radio)
     for sample in ("Candidate A", "Candidate E", "Generative AI", "Commercial Awareness"):
         assert sample in text
 
@@ -144,7 +147,7 @@ def test_excel_export_neutralises_formulas_and_reports_real_review_state():
     assert res.loc[1, "Final Score"] == "90%" and res.loc[1, "Recruiter Notes"] == "'@ref"
     audit = sheets["GDPR Audit"].set_index("Audit Parameter")["Record"]
     assert audit["Article 22 Human Oversight"].startswith("1 of 2")
-    assert audit["External AI Sub-processor"] == "None (Private Engine)"
+    assert audit["External AI Sub-processor"] == "None (backup engine on our server)"
     assert "VERIFIED" not in " ".join(audit.astype(str))
 
 
