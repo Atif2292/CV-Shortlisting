@@ -1678,6 +1678,7 @@ button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumb
 .iq-override-title, .iq-dl-badge, .iq-funnel-sub, .iq-funnel-badge, .iq-funnel-highlight,
 .iq-gauge-info, .iq-cand-mini-role, .iq-score-pill, .iq-excel-hdr-row, .iq-excel-data-row,
 .iq-excel-footer, .iq-beta-stars, .iq-trial-pill, .iq-legal-prefix, .rc-auth-note,
+.iq-pnum, [data-testid="stFileUploaderDropzoneInstructions"] span, [data-testid="stFileUploaderDropzoneInstructions"] small,
 .stWidgetLabel p, label p, [data-testid="stMetricLabel"] p, [data-testid="stCaptionContainer"],
 [data-testid="stCaptionContainer"] p, [class*="st-key-legal_links_"] .stButton > button p
   { font-size:var(--fs-small) !important; }
@@ -1689,6 +1690,49 @@ button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumb
 .st-key-hero_demo .stButton > button[kind] { background:transparent !important; box-shadow:none !important; border:none !important;
   color:#2563EB !important; font-weight:700 !important; text-decoration:underline !important; padding:.2rem .4rem !important; min-height:0 !important; }
 .st-key-hero_demo .stButton > button[kind]:hover { color:#1D4ED8 !important; transform:none !important; }
+
+/* Balanced grids */
+.iq-bento-grid { grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
+.iq-terms-grid { grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
+@media (max-width: 760px) {
+  .iq-bento-grid, .iq-terms-grid { grid-template-columns:1fr !important; }
+}
+
+/* Top-candidate cards: badge sits above the name instead of on top of it */
+.iq-podium-badge { position:static !important; display:inline-block !important; margin-bottom:.35rem !important; }
+
+/* Numbered rank (4th, 5th) next to the medals in the leaderboard preview */
+.iq-cand-mini-left .iq-medal { width:1.35rem !important; min-width:1.35rem; flex-shrink:0; display:inline-flex !important;
+  justify-content:center; }
+.iq-medal-num { display:inline-flex !important; align-items:center; justify-content:center; width:1.35rem; height:1.35rem;
+  border-radius:50%; background:#F1F5F9; color:#64748B; font-size:var(--fs-small) !important; font-weight:800; }
+
+/* Tablets and small laptops: stack the workspace panels and top-candidate cards full width */
+@media (max-width: 1100px) {
+  .st-key-workspace [data-testid="stHorizontalBlock"]:has(.iq-phead),
+  .st-key-podium [data-testid="stHorizontalBlock"]:has(.iq-podium-card) {
+    flex-direction:column !important; gap:1rem !important; }
+  .st-key-workspace [data-testid="stHorizontalBlock"]:has(.iq-phead) > [data-testid="stColumn"],
+  .st-key-podium [data-testid="stHorizontalBlock"]:has(.iq-podium-card) > [data-testid="stColumn"] {
+    width:100% !important; flex:1 1 100% !important; min-width:0 !important; }
+  .st-key-podium [data-testid="stHorizontalBlock"]:has(.iq-podium-card) > [data-testid="stColumn"]:not(:has(.iq-podium-card)) {
+    display:none !important; }
+  /* Stacked panels don't need a tall drop area */
+  [data-testid="stFileUploaderDropzone"] { min-height:150px !important; }
+}
+
+@media (max-width: 640px) {
+  /* Results summary numbers as a 2 x 2 grid */
+  .st-key-metrics [data-testid="stHorizontalBlock"] { flex-direction:row !important; flex-wrap:wrap !important; gap:.75rem !important; }
+  .st-key-metrics [data-testid="stColumn"] { flex:1 1 calc(50% - .75rem) !important; min-width:calc(50% - .75rem) !important;
+    width:calc(50% - .75rem) !important; }
+  /* Shortlist / Pass stay side by side under each top-candidate card */
+  .st-key-podium [data-testid="stHorizontalBlock"]:not(:has(.iq-podium-card)) { flex-direction:row !important; flex-wrap:nowrap !important; gap:.5rem !important; }
+  .st-key-podium [data-testid="stHorizontalBlock"]:not(:has(.iq-podium-card)) > [data-testid="stColumn"] {
+    flex:1 1 50% !important; min-width:0 !important; width:50% !important; }
+  /* Strengths above concerns instead of two squeezed columns */
+  .iq-det-cols { grid-template-columns:1fr !important; gap:.9rem !important; }
+}
 
 /* Invisible style/script blocks shouldn't take up layout space (styles still apply) */
 [data-testid="stElementContainer"]:has(style), [data-testid="stElementContainer"]:has(script) { display:none !important; }
@@ -1727,8 +1771,13 @@ st.markdown("""<style>
 .st-key-navrow .iq-nav-center { gap:1.5rem; }
 .st-key-navrow .stButton > button[kind] { padding:.44rem 1.05rem !important; font-size:var(--fs-small) !important;
   border-radius:8px !important; white-space:nowrap; }
-.st-key-navrow .st-key-nav_login .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
-  border:1.5px solid #BFDBFE !important; box-shadow:none !important; }
+.st-key-navrow .st-key-nav_login .stButton > button[kind] { background:#2563EB !important; color:#FFFFFF !important;
+  border:none !important; box-shadow:0 2px 8px rgba(37,99,235,.28) !important; }
+.st-key-navrow .st-key-nav_login .stButton > button[kind]:hover { background:#1D4ED8 !important; }
+.st-key-navrow .st-key-nav_signup .stButton > button[kind] { background:#42B72A !important; color:#FFFFFF !important;
+  border:none !important; box-shadow:0 2px 8px rgba(66,183,42,.28) !important; }
+.st-key-navrow .st-key-nav_signup .stButton > button[kind]:hover { background:#36A420 !important; }
+.st-key-navrow .stButton > button[kind] p { color:#FFFFFF !important; font-weight:700 !important; }
 /* Legal links rendered as small text buttons that open pop-ups */
 [class*="st-key-legal_links_"] .stButton > button[kind] { background:transparent !important; box-shadow:none !important;
   border:none !important; color:#475569 !important; padding:.1rem .25rem !important; font-size:var(--fs-small) !important;
@@ -1873,15 +1922,15 @@ _BAND_REC_CSS = {
 
 # Illustrative candidates for the idle "Top Matches Preview" (mixed sectors on purpose)
 _SAMPLE_CANDIDATES = [
-    ("Candidate A", "Data &amp; AI", "6+ years", 94, "strong",
+    ("Candidate A", "Data &amp; AI", "6+ years", 96, "strong",
      ["Python", "SQL", "Power BI", "Generative AI", "Azure"]),
-    ("Candidate B", "Business", "8+ years", 88, "strong",
+    ("Candidate B", "Business", "8+ years", 94, "strong",
      ["Project Management", "Stakeholder Management", "Agile", "Budgeting", "Business Analysis"]),
-    ("Candidate C", "Security &amp; Cloud", "5+ years", 82, "strong",
+    ("Candidate C", "Security &amp; Cloud", "5+ years", 88, "strong",
      ["Cybersecurity", "AWS", "DevOps", "Automation", "Risk &amp; Compliance"]),
-    ("Candidate D", "Finance &amp; Operations", "7+ years", 76, "good",
+    ("Candidate D", "Finance &amp; Operations", "7+ years", 82, "strong",
      ["Financial Analysis", "Budgeting", "Power BI", "Forecasting", "Process Improvement"]),
-    ("Candidate E", "Sales &amp; Customer Success", "4+ years", 68, "good",
+    ("Candidate E", "Sales &amp; Customer Success", "4+ years", 70, "good",
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
 _SAMPLE_PREVIEW_HTML = "".join(
@@ -2121,8 +2170,8 @@ _AUTH_CSS = """
 .rc-auth-top { display:flex; justify-content:space-between; align-items:center; padding:.4rem 0 0; }
 .rc-auth-top a { color:#2563EB !important; font-weight:700; text-decoration:none !important; font-size:var(--fs-body); }
 .rc-auth-hero { padding: 5.5rem 1.5rem 0 0; }
-.rc-auth-logo { font-size:3.7rem; font-weight:900; color:#2563EB; letter-spacing:-2px; line-height:1; }
-.rc-auth-logo span { color:#0F172A; }
+.rc-auth-logo { font-size:3.7rem; font-weight:900; color:#0F172A; letter-spacing:-2px; line-height:1; }
+.rc-auth-logo span { color:#2563EB; }
 .rc-auth-tag { font-size:var(--fs-h2); line-height:1.32; color:#1C1E21; font-weight:500; margin:1.1rem 0 1.5rem; max-width:520px; }
 .rc-auth-points { list-style:none; padding:0; margin:0; }
 .rc-auth-points li { font-size:var(--fs-body); color:#334155; margin:.55rem 0; font-weight:500; }
@@ -2130,6 +2179,7 @@ _AUTH_CSS = """
   box-shadow:0 2px 4px rgba(0,0,0,.10), 0 8px 16px rgba(0,0,0,.10); margin-top:3.2rem; max-width:430px; }
 .st-key-auth_card input { height:52px !important; font-size:var(--fs-body) !important; }
 .rc-auth-title { font-size:var(--fs-h2); font-weight:800; color:#1C1E21; line-height:1.2; }
+.rc-cv { color:#2563EB; }
 .rc-auth-sub { color:#606770; font-size:var(--fs-body); margin:.25rem 0 .9rem; }
 .rc-auth-divider { border-top:1px solid #DADDE1; margin:.9rem 0 1rem; }
 .rc-auth-note { font-size:var(--fs-small); color:#606770; text-align:center; margin-top:.4rem; }
@@ -2250,7 +2300,7 @@ def _render_auth_page(mode: str) -> None:
 
         elif mode == "login":
             # ── Log in ──────────────────────────────────────────────────────
-            render_html('<div class="rc-auth-title">Log in to RankCV</div>'
+            render_html('<div class="rc-auth-title">Log in to Rank<span class="rc-cv">CV</span></div>'
                         '<div class="rc-auth-sub">No password needed &mdash; we\'ll email you a 6-digit code.</div>')
             email_in = st.text_input("Email address", placeholder="Work email address",
                                      key="auth_email_login", label_visibility="collapsed").strip()
@@ -2485,7 +2535,8 @@ _show_flash()
 
 # ─────────────────────────── 3-panel layout ──────────────────────────────────
 render_html('<div id="screening-workspace" style="margin-top:0.8rem;"></div>')
-col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
+with st.container(key="workspace"):
+    col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
 
 # ══════════════════════════ PANEL 1 — Job Description ═════════════════════════
 SAMPLE_ROLES = {
@@ -2660,11 +2711,8 @@ with col2:
             render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 5 demo CVs below…</div>')
 
         render_html("<div style='height:.7rem'></div>")
-        col_btn1, col_btn2 = st.columns([1.15, 1])
-        with col_btn1:
-            run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
-        with col_btn2:
-            demo_btn = st.button("⚡  Try 5 Demo CVs", use_container_width=True)
+        run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
+        demo_btn = st.button("⚡  Try 5 Demo CVs", use_container_width=True)
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
@@ -2858,11 +2906,7 @@ with col3:
 <div style="font-size:var(--fs-small);font-weight:700;color:#64748B;">Top Matches ({len(results)} evaluated)</div>
 <div style="font-size:var(--fs-small);font-weight:700;color:#475569;">{_e(_MODE_LABELS.get(_meta.get('mode_used'), ''))}</div>
 </div>
-<div class="iq-cr-cols">
-<div class="iq-cr-col-sp"></div>
-<div class="iq-cr-col">Match Score</div>
-<div class="iq-cr-col">AI Fit</div>
-</div>""")
+""")
 
             for rank, r in enumerate(results[:5], 1):
                 score    = _score(r)
@@ -2909,11 +2953,7 @@ with col3:
 <div style="font-size:var(--fs-small);font-weight:700;color:#64748B;">Top Matches Preview</div>
 <div style="background:#EFF6FF; color:#2563EB; font-size:var(--fs-small); font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">✨ Sample Preview</div>
 </div>
-<div class="iq-cr-cols">
-<div class="iq-cr-col-sp"></div>
-<div class="iq-cr-col">Match Score</div>
-<div class="iq-cr-col">AI Fit</div>
-</div>
+
 
 """ + _SAMPLE_PREVIEW_HTML + """
 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
@@ -2952,7 +2992,7 @@ if st.session_state.get("show_full") and st.session_state.results:
     st.caption("🔒 Results are kept only for this browser session and are never stored by RankCV. "
                "Download the report below before closing or refreshing the page.")
 
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3, m4 = st.container(key="metrics").columns(4)
     m1.metric("Total Screened", len(results))
     m2.metric("Shortlisted by you", sum(1 for o in _ovs.values() if o.get("status") == "Shortlisted"))
     m3.metric("Avg Match", f"{round(sum(_score(r) for r in results) / len(results), 1)}%")
@@ -2977,9 +3017,10 @@ if st.session_state.get("show_full") and st.session_state.results:
 """)
 
     BATCH_SIZE = 3
+    _podium = st.container(key="podium")
     for b_start in range(0, len(_showcase), BATCH_SIZE):
         batch = _showcase[b_start: b_start + BATCH_SIZE]
-        _pod_cols = st.columns(len(batch))
+        _pod_cols = _podium.columns(BATCH_SIZE)
         for i_in_batch, c_r in enumerate(batch):
             p_i = b_start + i_in_batch
             p_t, p_c, pb_c, p_col = (_PODIUM_THEMES[p_i] if p_i < len(_PODIUM_THEMES)
@@ -3084,16 +3125,19 @@ if st.session_state.get("show_full") and st.session_state.results:
 
     _PAGE = 20
     _pages = max(1, -(-len(_ranked) // _PAGE))
-    with _fc3:
-        _pg = st.number_input("Page", min_value=1, max_value=_pages, value=1, step=1,
-                              key=f"res_page_{_run}", label_visibility="collapsed",
-                              disabled=_pages == 1, help=f"{_pages} page(s) of {_PAGE}")
+    _pg = 1
+    if _pages > 1:
+        with _fc3:
+            _pg = st.number_input("Page", min_value=1, max_value=_pages, value=1, step=1,
+                                  key=f"res_page_{_run}", label_visibility="collapsed",
+                                  help=f"{_pages} pages of {_PAGE}")
     _shown = _ranked[(_pg - 1) * _PAGE: _pg * _PAGE]
 
     render_html(
         f'<div class="iq-results-hdr">'
         f'<span class="iq-results-hdr-title">📋 All Candidate Profiles &amp; Recruiter Review</span>'
-        f'<span class="iq-results-count">{len(_ranked)} match &middot; page {_pg}/{_pages}</span>'
+        f'<span class="iq-results-count">{len(_ranked)} candidate{"s" if len(_ranked) != 1 else ""}'
+        f'{f" &middot; page {_pg}/{_pages}" if _pages > 1 else ""}</span>'
         f'</div>'
     )
 
@@ -3121,8 +3165,8 @@ if st.session_state.get("show_full") and st.session_state.results:
         c_ov = _ovs.setdefault(c_idx, {"status": "Under Review", "score_delta": 0, "notes": "", "decided_at": ""})
 
         medal = _MEDALS.get(rank, f"#{rank}")
-        exp_label = (f"{medal}  {name}   ·   {s_lbl}/10  {s_stars}   ·   {_BAND_BADGE[band][1]}"
-                     f"   ·   Decision: {c_ov.get('status', 'Under Review')}")
+        exp_label = (f"{medal}  {name}  ·  {s_lbl}/10  ·  {_BAND_BADGE[band][1]}"
+                     f"  ·  {c_ov.get('status', 'Under Review')}")
 
         str_html = "".join(f'<span class="iq-tag iq-tag-g">&#10003; {_e(s)}</span>' for s in strengths) \
                    or '<span class="iq-tag iq-tag-m">None noted</span>'
@@ -3315,7 +3359,7 @@ render_html("""
 <div class="iq-cand-mini-role">6+ yrs &bull; Data &amp; AI</div>
 </div>
 </div>
-<span class="iq-score-pill iq-score-pill-green">94% Match</span>
+<span class="iq-score-pill iq-score-pill-green">96% Match</span>
 </div>
 <div class="iq-cand-mini-row">
 <div class="iq-cand-mini-left">
@@ -3325,7 +3369,7 @@ render_html("""
 <div class="iq-cand-mini-role">8+ yrs &bull; Business</div>
 </div>
 </div>
-<span class="iq-score-pill iq-score-pill-green">88% Match</span>
+<span class="iq-score-pill iq-score-pill-green">94% Match</span>
 </div>
 <div class="iq-cand-mini-row">
 <div class="iq-cand-mini-left">
@@ -3335,7 +3379,27 @@ render_html("""
 <div class="iq-cand-mini-role">5+ yrs &bull; Security &amp; Cloud</div>
 </div>
 </div>
+<span class="iq-score-pill iq-score-pill-green">88% Match</span>
+</div>
+<div class="iq-cand-mini-row">
+<div class="iq-cand-mini-left">
+<span class="iq-medal iq-medal-num">4</span>
+<div>
+<div class="iq-cand-mini-name">Candidate D</div>
+<div class="iq-cand-mini-role">7+ yrs &bull; Finance &amp; Operations</div>
+</div>
+</div>
 <span class="iq-score-pill iq-score-pill-blue">82% Match</span>
+</div>
+<div class="iq-cand-mini-row">
+<div class="iq-cand-mini-left">
+<span class="iq-medal iq-medal-num">5</span>
+<div>
+<div class="iq-cand-mini-name">Candidate E</div>
+<div class="iq-cand-mini-role">4+ yrs &bull; Sales &amp; Customer Success</div>
+</div>
+</div>
+<span class="iq-score-pill iq-score-pill-blue">70% Match</span>
 </div>
 </div>
 </div>
@@ -3352,13 +3416,19 @@ render_html("""
 <span>#</span><span>Candidate</span><span>Score</span><span>Recommendation</span>
 </div>
 <div class="iq-excel-data-row">
-<span>1</span><span>Candidate A</span><span style="font-weight:700;color:#10B981">94%</span><span>Highly Recommended</span>
+<span>1</span><span>Candidate A</span><span style="font-weight:700;color:#10B981">96%</span><span>Highly Recommended</span>
 </div>
 <div class="iq-excel-data-row">
-<span>2</span><span>Candidate B</span><span style="font-weight:700;color:#10B981">88%</span><span>Recommend Screen</span>
+<span>2</span><span>Candidate B</span><span style="font-weight:700;color:#10B981">94%</span><span>Recommend Screen</span>
 </div>
 <div class="iq-excel-data-row">
-<span>3</span><span>Candidate C</span><span style="font-weight:700;color:#2563EB">82%</span><span>Consider / Interview</span>
+<span>3</span><span>Candidate C</span><span style="font-weight:700;color:#10B981">88%</span><span>Recommend Screen</span>
+</div>
+<div class="iq-excel-data-row">
+<span>4</span><span>Candidate D</span><span style="font-weight:700;color:#2563EB">82%</span><span>Consider / Interview</span>
+</div>
+<div class="iq-excel-data-row">
+<span>5</span><span>Candidate E</span><span style="font-weight:700;color:#2563EB">70%</span><span>Review</span>
 </div>
 </div>
 <div class="iq-excel-footer">
