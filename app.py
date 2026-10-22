@@ -1643,6 +1643,25 @@ button[kind="primary"]:has(div:contains("Passed")) {
 
 st.markdown(build_css(), unsafe_allow_html=True)
 st.markdown("""<style>
+/* Signed-out navbar: HTML nav + real Streamlit buttons on one row */
+.st-key-navrow { border-bottom:1px solid #E2E8F0; background:#F5F7FB; padding:.35rem 0 .45rem; flex-wrap:nowrap !important; }
+.st-key-navrow .iq-nav { border-bottom:none !important; padding:.6rem 0 !important; background:transparent !important; }
+.st-key-navrow > [data-testid="stElementContainer"]:first-child { flex:1 1 auto !important; min-width:0; }
+.st-key-navrow .iq-logo { margin-right:1.6rem; }
+.st-key-navrow .iq-nav-center { gap:1.5rem; }
+.st-key-navrow .stButton > button[kind] { padding:.44rem 1.05rem !important; font-size:.84rem !important;
+  border-radius:8px !important; white-space:nowrap; }
+.st-key-navrow .st-key-nav_login .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
+  border:1.5px solid #BFDBFE !important; box-shadow:none !important; }
+/* Legal links rendered as small text buttons that open pop-ups */
+[class*="st-key-legal_links_"] .stButton > button[kind] { background:transparent !important; box-shadow:none !important;
+  border:none !important; color:#475569 !important; padding:.1rem .25rem !important; font-size:.78rem !important;
+  font-weight:500 !important; text-decoration:underline !important; min-height:0 !important; }
+[class*="st-key-legal_links_"] .stButton > button[kind]:hover { color:#2563EB !important; transform:none !important; }
+.iq-legal-prefix { font-size:.78rem; color:#64748B; }
+.st-key-legal_links_signup { margin-top:-.4rem; }
+.st-key-auth_back .stButton > button[kind], .st-key-legal_back .stButton > button[kind] { background:transparent !important;
+  box-shadow:none !important; border:none !important; color:#2563EB !important; font-weight:700 !important; padding:.2rem .3rem !important; }
 @media (max-width: 768px) {
   .iq-nav-email { display:none !important; }
   .iq-nav > div:last-child { gap:.4rem !important; }
@@ -1670,11 +1689,22 @@ def _startup_housekeeping() -> bool:
 _startup_housekeeping()
 
 
-def _render_footer() -> None:
-    links = " &middot; ".join(
-        f'<a href="?page={slug}" target="_self" style="color:#475569;">{_e(title)}</a>'
-        for slug, title in LEGAL_PAGES.items()
-    )
+@st.dialog("RankCV", width="large")
+def _legal_dialog(page: str) -> None:
+    st.markdown(render_legal_page(page))
+
+
+def _legal_links(where: str, pages=None, prefix: str = "", labels=None) -> None:
+    """Legal pages as in-app pop-ups (no page reload, nothing typed is lost)."""
+    with st.container(key=f"legal_links_{where}", horizontal=True, horizontal_alignment="center", gap="small"):
+        if prefix:
+            render_html(f'<span class="iq-legal-prefix">{_e(prefix)}</span>')
+        for slug in (pages or LEGAL_PAGES):
+            if st.button((labels or {}).get(slug, LEGAL_PAGES[slug]), key=f"legal_{where}_{slug}", type="tertiary"):
+                _legal_dialog(slug)
+
+
+def _render_footer(where: str = "main") -> None:
     parts = [config.COMPANY_NAME]
     if config.COMPANY_NUMBER:
         parts.append(f"Registered in England and Wales No. {config.COMPANY_NUMBER}")
@@ -1684,22 +1714,22 @@ def _render_footer() -> None:
         parts.append(f"ICO registration {config.ICO_REG_NUMBER}")
     parts.append(config.CONTACT)
     details = " &middot; ".join(_e(x) for x in parts)
-    render_html(f"""
-<div class="iq-foot">
-<div class="iq-foot-txt">RankCV &middot; AI CV Screening &amp; Candidate Ranking Platform</div>
-<div class="iq-foot-txt" style="margin-top:.4rem;">{links}</div>
-<div class="iq-foot-txt" style="margin-top:.4rem;font-size:.75rem;">{details}</div>
-</div>
-""")
+    render_html('<div class="iq-foot"><div class="iq-foot-txt">'
+                'RankCV &middot; AI CV Screening &amp; Candidate Ranking Platform</div></div>')
+    _legal_links(f"footer_{where}")
+    render_html(f'<div class="iq-foot-txt" style="text-align:center;font-size:.75rem;margin:.2rem 0 1rem;">'
+                f'{details}</div>')
 
 
 # ─────────────────────────── Legal pages (?page=…) ───────────────────────────
 _page = st.query_params.get("page", "")
 if _page in LEGAL_PAGES:
-    render_html('<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>'
-                '<div><a href="./" target="_self" class="iq-nav-link">&larr; Back to RankCV</a></div></div>')
+    render_html('<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div></div>')
+    if st.button("← Back to RankCV", key="legal_back", type="tertiary"):
+        del st.query_params["page"]
+        st.rerun()
     st.markdown(render_legal_page(_page))
-    _render_footer()
+    _render_footer("legal")
     st.stop()
 
 
@@ -2053,7 +2083,11 @@ def _start_code(email: str, *, company: str = "", terms: bool = False, notice: s
 
 def _render_auth_page(mode: str) -> None:
     st.markdown(_AUTH_CSS, unsafe_allow_html=True)
-    render_html('<div class="rc-auth-top"><span></span><a href="./" target="_self">&larr; Back to RankCV</a></div>')
+    with st.container(key="auth_back", horizontal=True, horizontal_alignment="right"):
+        if st.button("← Back to RankCV", key="btn_auth_back", type="tertiary"):
+            st.session_state.auth_pending_email = ""
+            del st.query_params["auth"]
+            st.rerun()
     hero, card = st.columns([1.15, 1], gap="large")
     with hero:
         render_html(f"""
@@ -2134,8 +2168,10 @@ def _render_auth_page(mode: str) -> None:
             company_in = st.text_input("Company", placeholder="Company name (optional)",
                                        key="auth_company_signup", label_visibility="collapsed").strip()
             terms_ok = st.checkbox(
-                "I agree to the [Terms](?page=terms) and [Data Processing Agreement](?page=dpa), "
-                "and I've read the [Privacy Notice](?page=privacy).", key="auth_terms_signup")
+                "I agree to the Terms of Service and Data Processing Agreement, "
+                "and I've read the Privacy Notice.", key="auth_terms_signup")
+            _legal_links("signup", ["terms", "dpa", "privacy"], prefix="Read:",
+                         labels={"terms": "Terms", "dpa": "DPA", "privacy": "Privacy"})
             if st.button("Sign Up", type="primary", use_container_width=True, key="btn_signup"):
                 ok, msg = validate_email(email_in)
                 if not ok:
@@ -2153,7 +2189,7 @@ def _render_auth_page(mode: str) -> None:
                     st.session_state["auth_email_login"] = email_in
                     _go_auth("login")
 
-    _render_footer()
+    _render_footer("auth")
     st.stop()
 
 
@@ -2183,7 +2219,24 @@ _nav_cta = (
 )
 
 # ─────────────────────────── Navbar ──────────────────────────────────────────
-render_html(f"""
+_NAV_LINKS = """
+  <div class="iq-nav-center">
+    <a href="#screening-workspace" class="iq-nav-link">Screen CVs</a>
+    <a href="#how-it-works" class="iq-nav-link">How It Works</a>
+    <a href="#features" class="iq-nav-link">Features</a>
+    <a href="#pricing" class="iq-nav-link">Pricing</a>
+    <a href="#security" class="iq-nav-link">Security &amp; GDPR</a>
+    <a href="#faq" class="iq-nav-link">FAQ</a>
+  </div>"""
+if not _is_auth:
+    with st.container(key="navrow", horizontal=True, vertical_alignment="center", gap="small"):
+        render_html(f'<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>{_NAV_LINKS}<div></div></div>')
+        if st.button("Log in", key="nav_login"):
+            _go_auth("login")
+        if st.button("Sign up free", key="nav_signup", type="primary"):
+            _go_auth("signup")
+else:
+  render_html(f"""
 <div class="iq-nav">
   <div class="iq-logo">Rank<b>CV</b></div>
   <div class="iq-nav-center">
@@ -2308,14 +2361,13 @@ with sec_c3:
     with st.popover("⚖️ GDPR & Legal"):
         st.markdown("### ⚖️ How RankCV handles candidate data")
         st.markdown(f"""
-- **Roles:** your organisation is the **controller** of candidate data. RankCV ({config.COMPANY_NAME}) is your **processor** under our [Data Processing Agreement](?page=dpa).
+- **Roles:** your organisation is the **controller** of candidate data. RankCV ({config.COMPANY_NAME}) is your **processor** under our Data Processing Agreement.
 - **AI provider:** in Cloud AI mode, redacted CV text is sent to OpenAI (US) as our sub-processor, or under your own agreement if you use your own key. The Private Engine sends nothing to any AI provider.
 - **Storage:** uploaded files are deleted as soon as their text is extracted. Results stay in your session's memory only and are never written to our database.
 - **Human oversight (Article 22):** scores are decision support. Every candidate starts as *Under Review*; a recruiter must record each decision.
 - **Law:** England and Wales.
-
-[Privacy Notice](?page=privacy) · [Terms](?page=terms) · [Sub-processors](?page=subprocessors) · [Cookies](?page=cookies)
 """)
+        _legal_links("popover")
 
 
 # ─────────────────────────── Client Authentication ───────────────────────────
@@ -3685,8 +3737,7 @@ _faq_items = [
      "personal links, dates of birth and common protected-characteristic fields are redacted automatically. Under "
      "OpenAI's API terms this data is not used to train models and is kept for up to 30 days for abuse monitoring. "
      "In <b>Private Engine</b> mode no CV content leaves our server. You can also use your own OpenAI key. "
-     "See our <a href=\"?page=privacy\" target=\"_self\">Privacy Notice</a> and "
-     "<a href=\"?page=subprocessors\" target=\"_self\">sub-processors</a>."),
+     "See the <b>Privacy Notice</b> and <b>Sub-processors</b> links at the bottom of this page."),
     ("Does RankCV integrate with my ATS?",
      "RankCV works alongside your ATS: upload a batch, review the ranking, and export the shortlist to Excel, which "
      "most ATS and CRM tools can import. Direct integrations are not available yet."),
@@ -3700,7 +3751,7 @@ _faq_items = [
      "<li><b>Storage limitation:</b> CV files are deleted after each run and results are not stored in our database.</li>"
      "<li><b>Accountability:</b> the Excel report records which engine scored each CV and which decisions a recruiter "
      "actually made, with timestamps.</li>"
-     "<li><b>Processor terms:</b> our <a href=\"?page=dpa\" target=\"_self\">Data Processing Agreement</a> applies to every account.</li>"
+     "<li><b>Processor terms:</b> our <b>Data Processing Agreement</b> (link at the bottom of this page) applies to every account.</li>"
      "</ul>"),
     ("How fast is the batch screening process?",
      "The Private Engine scores a batch in seconds. Cloud AI scores CVs in parallel batches of about ten; a batch of "

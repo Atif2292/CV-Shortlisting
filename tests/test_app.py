@@ -69,12 +69,21 @@ def test_screening_requires_sign_in():
     assert not at.session_state.results
 
 
-def test_navbar_and_cta_offer_log_in_and_sign_up():
+def test_navbar_and_cta_offer_log_in_and_sign_up_without_reloading():
     at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
-    nav = next(m.value for m in at.markdown if 'class="iq-nav"' in m.value)
-    assert 'href="?auth=login"' in nav and 'href="?auth=signup"' in nav
+    html_out = "\n".join(m.value for m in at.markdown if m.allow_html)
+    assert "?auth=" not in html_out and "?page=" not in html_out        # no links that reload the app
     labels = [b.label for b in at.button]
-    assert "Log in" in labels and "Sign up free" in labels
+    assert labels.count("Log in") == 2 and labels.count("Sign up free") == 2
+    next(b for b in at.button if b.key == "nav_signup").click().run()
+    assert any(t.label == "Work email" for t in at.text_input)
+
+
+def test_legal_pages_open_as_pop_ups():
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
+    next(b for b in at.button if b.key == "legal_footer_main_terms").click().run()
+    assert not at.exception, at.exception
+    assert "Terms of Service" in "\n".join(m.value for m in at.markdown)
 
 
 def test_demo_runs_offline_and_defaults_everyone_to_under_review():

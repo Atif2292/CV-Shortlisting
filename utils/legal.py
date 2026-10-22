@@ -43,7 +43,7 @@ This notice explains how we handle two kinds of personal data:
 1. **Account data** about recruiters who use RankCV. We are the **controller** of this data.
 2. **Candidate data** contained in CVs that customers upload. The customer (the hiring
    organisation) is the **controller**; we act as their **processor** under our
-   [Data Processing Agreement](?page=dpa).
+   **Data Processing Agreement**.
 
 ## 1. Account data (we are the controller)
 
@@ -87,7 +87,7 @@ about a candidate is made (UK GDPR Article 22).
 
 OpenAI processes data in the United States. Our application host ({c.HOSTING_PROVIDER}) may also
 process data outside the UK. Transfers rely on the UK Extension to the EU–US Data Privacy Framework
-and/or the UK International Data Transfer Addendum. See [Sub-processors](?page=subprocessors).
+and/or the UK International Data Transfer Addendum. See **Sub-processors**.
 
 ## 4. Security
 
@@ -120,7 +120,7 @@ These terms are between you (the business using RankCV) and {_company_block()}
    reviewing every result before acting on it.
 3. **Your responsibilities.** You are the controller of candidate data. You must have a lawful
    basis to process the CVs you upload, give candidates an appropriate privacy notice, and
-   handle candidate requests. Our [Data Processing Agreement](?page=dpa) forms part of these
+   handle candidate requests. Our **Data Processing Agreement** forms part of these
    terms.
 4. **Plans and billing.** The free trial includes {c.PLAN_QUOTAS['trial']} CV evaluations, once
    per organisation email. Paid plans are billed monthly in advance through Stripe and include
@@ -171,7 +171,7 @@ The Processor will:
 3. Apply appropriate technical and organisational measures (Art. 32), including encryption
    in transit, per-run temporary storage deleted at the end of every run, no persistence of
    CV content in databases, and restricted production access.
-4. Use only the sub-processors listed on the [Sub-processors](?page=subprocessors) page and
+4. Use only the sub-processors listed on the **Sub-processors** page and
    give at least 30 days' notice of changes, during which the Controller may object.
 5. Assist the Controller with data-subject requests, DPIAs and security obligations.
 6. Notify the Controller without undue delay, and in any event within 48 hours, after
