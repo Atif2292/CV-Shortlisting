@@ -1686,10 +1686,7 @@ button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumb
 /* Hero extras */
 .iq-hero-note { font-size:var(--fs-body); color:#0F172A; font-weight:600; margin-top:.7rem; }
 .iq-hero-trust { text-align:center; font-size:var(--fs-small); color:#047857; font-weight:600; margin:-.3rem 0 .2rem; }
-.st-key-hero_demo { margin-top:-.6rem; }
-.st-key-hero_demo .stButton > button[kind] { background:transparent !important; box-shadow:none !important; border:none !important;
-  color:#2563EB !important; font-weight:700 !important; text-decoration:underline !important; padding:.2rem .4rem !important; min-height:0 !important; }
-.st-key-hero_demo .stButton > button[kind]:hover { color:#1D4ED8 !important; transform:none !important; }
+
 
 /* Balanced grids */
 .iq-bento-grid { grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
@@ -1743,6 +1740,54 @@ button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumb
   .iq-cr-scroll::-webkit-scrollbar { width:6px; }
   .iq-cr-scroll::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:99px; }
 }
+
+/* ── Pricing cards ── */
+.iq-price-sec { max-width:980px !important; }
+.rc-plans { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1.6rem; max-width:920px;
+  margin:2rem auto 0; align-items:stretch; }
+.rc-plan { position:relative; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:18px;
+  padding:2rem 1.8rem 1.6rem; display:flex; flex-direction:column; box-shadow:0 4px 18px rgba(15,23,42,.05); }
+.rc-plan--featured { border:2px solid #2563EB; box-shadow:0 14px 36px rgba(37,99,235,.14); }
+.rc-plan-pop { position:absolute; top:-.95rem; left:50%; transform:translateX(-50%); background:#2563EB; color:#FFFFFF;
+  font-size:var(--fs-small); font-weight:800; padding:.32rem 1rem; border-radius:999px; white-space:nowrap;
+  box-shadow:0 4px 12px rgba(37,99,235,.3); }
+.rc-plan-name { font-size:var(--fs-h3); font-weight:800; color:#0F172A; }
+.rc-plan-desc { font-size:var(--fs-body); color:#64748B; line-height:1.5; margin:.3rem 0 1.1rem; min-height:3em; }
+.rc-plan-price { display:flex; align-items:baseline; gap:.35rem; }
+.rc-plan-amt { font-size:2.9rem; font-weight:900; color:#0F172A; letter-spacing:-.03em; line-height:1; }
+.rc-plan-per { font-size:var(--fs-body); color:#64748B; font-weight:600; }
+.rc-plan-billing { font-size:var(--fs-small); color:#64748B; margin-top:.4rem; }
+a.rc-plan-cta, a.rc-plan-cta:link, a.rc-plan-cta:visited { display:block; text-align:center; margin:1.25rem 0 1.4rem;
+  padding:.85rem 1rem; border-radius:12px; font-weight:800; font-size:var(--fs-body); text-decoration:none !important;
+  background:#2563EB; color:#FFFFFF !important; border:1.5px solid #2563EB; box-shadow:0 6px 16px rgba(37,99,235,.28);
+  transition:background .15s ease, transform .15s ease; }
+a.rc-plan-cta:hover { background:#1D4ED8; transform:translateY(-1px); color:#FFFFFF !important; }
+a.rc-plan-cta--outline, a.rc-plan-cta--outline:link, a.rc-plan-cta--outline:visited { background:#FFFFFF;
+  color:#2563EB !important; box-shadow:none; }
+a.rc-plan-cta--outline:hover { background:#EFF6FF; color:#1D4ED8 !important; }
+.rc-plan-incl { font-size:var(--fs-small); font-weight:800; color:#0F172A; text-transform:uppercase; letter-spacing:.08em;
+  padding-top:1.1rem; border-top:1px solid #EEF2F7; margin-bottom:.75rem; }
+.rc-plan-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.7rem; flex:1; }
+.rc-plan-list li { display:flex; align-items:flex-start; gap:.65rem; font-size:var(--fs-body); color:#334155; line-height:1.45; margin:0; }
+.rc-plan-list li b { color:#0F172A; }
+.rc-check { flex-shrink:0; width:1.3rem; height:1.3rem; border-radius:50%; background:#DCFCE7; color:#16A34A;
+  display:inline-flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:900; margin-top:.1rem; }
+.rc-plan-note { font-size:var(--fs-small); color:#64748B; text-align:center; margin-top:1.25rem; }
+@media (max-width: 760px) {
+  .rc-plans { grid-template-columns:1fr; gap:2.1rem; max-width:460px; }
+  .rc-plan { padding:1.8rem 1.3rem 1.4rem; }
+  .rc-plan-desc { min-height:0; }
+}
+
+/* ── Hero "Try 5 demo CVs" as a proper secondary button ── */
+.st-key-hero_demo { margin:.15rem 0 .1rem; }
+.st-key-hero_demo .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
+  border:1.5px solid #BFDBFE !important; border-radius:999px !important; padding:.55rem 1.35rem !important;
+  min-height:0 !important; font-weight:700 !important; text-decoration:none !important;
+  box-shadow:0 2px 8px rgba(37,99,235,.10) !important; }
+.st-key-hero_demo .stButton > button[kind]:hover { background:#EFF6FF !important; border-color:#2563EB !important;
+  color:#1D4ED8 !important; transform:translateY(-1px) !important; }
+.st-key-hero_demo .stButton > button[kind] p { color:inherit !important; font-weight:700 !important; }
 
 /* Invisible style/script blocks shouldn't take up layout space (styles still apply) */
 [data-testid="stElementContainer"]:has(style), [data-testid="stElementContainer"]:has(script) { display:none !important; }
@@ -2438,7 +2483,7 @@ render_html(f"""
 </div>
 """)
 with st.container(key="hero_demo", horizontal=True, horizontal_alignment="center"):
-    if st.button("▶  Try 5 demo CVs", key="hero_demo_btn", type="tertiary"):
+    if st.button("▶  Try 5 demo CVs", key="hero_demo_btn"):
         st.session_state.run_demo = True
 render_html('<div class="iq-hero-trust">&#10003; Explainable scores. You make the final decision.</div>')
 
@@ -3668,68 +3713,42 @@ render_html(f"""
     <div class="iq-price-sub">{_ACTIVATION}. Cancel anytime. Human-review workflow and GDPR audit sheet included in every plan.</div>
   </div>
 
-  <div class="iq-price-grid">
-    <!-- Plan 1: Professional -->
-    <div class="iq-plan-card">
-      <div>
-        <span class="iq-plan-badge iq-badge-starter">Boutique &amp; In-House</span>
-        <div class="iq-plan-name">Professional</div>
-        <div class="iq-plan-desc">Plug-and-play AI screening for in-house recruiters &amp; boutique teams.</div>
-        <div class="iq-plan-price-row">
-          <div class="iq-plan-price-wrap">
-            <span class="iq-plan-curr">&pound;</span>
-            <span class="iq-plan-amt">{_PRO_P}</span>
-            <span class="iq-plan-period">/ month</span>
-          </div>
-          <div class="iq-plan-annual-sub">Billed monthly &bull; cancel anytime</div>
-        </div>
-        <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>{_PRO_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>AI scoring</b> with strengths &amp; concerns for every CV</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top candidate podium</b> &amp; Excel shortlist report</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>GDPR Article 22</b> review workflow &amp; audit sheet</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard support</b> &amp; {_ACTIVATION.lower()}</span></li>
-        </ul>
-      </div>
-      <div>
-        <a class="iq-plan-btn iq-btn-primary" href="{_e(_stripe_pro_url)}" target="_blank" rel="noopener">
-          Subscribe to Pro &nbsp;&rarr;
-        </a>
-        <div class="iq-guarantee">&#128274; {_TRIAL_Q} CV free trial first &bull; Cancel anytime</div>
-      </div>
+  <div class="rc-plans">
+    <!-- Professional -->
+    <div class="rc-plan">
+      <div class="rc-plan-name">Professional</div>
+      <div class="rc-plan-desc">AI screening for in-house recruiters and boutique teams.</div>
+      <div class="rc-plan-price"><span class="rc-plan-amt">&pound;{_PRO_P}</span><span class="rc-plan-per">/ month</span></div>
+      <div class="rc-plan-billing">Billed monthly &middot; cancel anytime</div>
+      <a class="rc-plan-cta rc-plan-cta--outline" href="{_e(_stripe_pro_url)}" target="_blank" rel="noopener">Subscribe to Pro &rarr;</a>
+      <div class="rc-plan-incl">What&rsquo;s included</div>
+      <ul class="rc-plan-list">
+        <li><span class="rc-check">&#10003;</span><span><b>{_PRO_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>AI scoring</b> with strengths &amp; concerns for every CV</span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>Top-candidate podium</b> &amp; Excel shortlist report</span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>GDPR Article 22</b> review workflow &amp; audit sheet</span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>Standard support</b> &amp; {_ACTIVATION.lower()}</span></li>
+      </ul>
+      <div class="rc-plan-note">&#128274; {_TRIAL_Q} CV free trial first &middot; cancel anytime</div>
     </div>
 
-    <!-- Plan 2: Agency -->
-    <div class="iq-plan-card featured">
-      <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem;">
-          <span class="iq-plan-badge iq-badge-agency">&#9733; Agency &amp; Scale-up</span>
-          <span style="font-size:var(--fs-small);font-weight:800;color:#2563EB;background:#EFF6FF;border:1px solid #BFDBFE;padding:.15rem .45rem;border-radius:5px;">FOUNDING LOCK</span>
-        </div>
-        <div class="iq-plan-name">Agency</div>
-        <div class="iq-plan-desc">High-volume screening for staffing firms &amp; agencies.</div>
-        <div class="iq-plan-price-row">
-          <div class="iq-plan-price-wrap">
-            <span class="iq-plan-curr">&pound;</span>
-            <span class="iq-plan-amt">{_AG_P}</span>
-            <span class="iq-plan-period">/ month</span>
-          </div>
-          <div class="iq-plan-annual-sub">Billed monthly &bull; cancel anytime</div>
-        </div>
-        <ul class="iq-plan-features">
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon-gold">&#9889;</span><span><b>{_AG_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Everything in Professional</b> included</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Excel export</b> ready to import into any ATS</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Shortlist reports</b> ready to share with clients</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Priority support</b> &amp; 1 guided setup session</span></li>
-        </ul>
-      </div>
-      <div>
-        <a class="iq-plan-btn iq-btn-agency" href="{_e(_stripe_agency_url)}" target="_blank" rel="noopener">
-          Subscribe to Agency &nbsp;&rarr;
-        </a>
-        <div class="iq-guarantee">&#128274; First 20 customers lock this price for 12 months</div>
-      </div>
+    <!-- Agency -->
+    <div class="rc-plan rc-plan--featured">
+      <div class="rc-plan-pop">&#9733; Founding offer</div>
+      <div class="rc-plan-name">Agency</div>
+      <div class="rc-plan-desc">High-volume screening for staffing firms and agencies.</div>
+      <div class="rc-plan-price"><span class="rc-plan-amt">&pound;{_AG_P}</span><span class="rc-plan-per">/ month</span></div>
+      <div class="rc-plan-billing">Billed monthly &middot; cancel anytime</div>
+      <a class="rc-plan-cta" href="{_e(_stripe_agency_url)}" target="_blank" rel="noopener">Subscribe to Agency &rarr;</a>
+      <div class="rc-plan-incl">What&rsquo;s included</div>
+      <ul class="rc-plan-list">
+        <li><span class="rc-check">&#10003;</span><span><b>{_AG_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>Everything in Professional</b></span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>Excel export</b> ready to import into any ATS</span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>Shortlist reports</b> ready to share with clients</span></li>
+        <li><span class="rc-check">&#10003;</span><span><b>Priority support</b> &amp; 1 guided setup session</span></li>
+      </ul>
+      <div class="rc-plan-note">&#128274; First 20 customers keep this price for 12 months</div>
     </div>
   </div>
 
