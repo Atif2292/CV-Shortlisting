@@ -43,7 +43,7 @@ from utils.account_tracker import (  # noqa: E402
 from utils.mailer import send_login_code, email_configured  # noqa: E402
 from utils.legal import PAGES as LEGAL_PAGES, render_page as render_legal_page  # noqa: E402
 from utils.report import (  # noqa: E402
-    BAND_LABELS, MODE_LABELS as _MODE_LABELS, build_excel_report, fit_band as _fit_band, score as _score,
+    BAND_LABELS, build_excel_report, fit_band as _fit_band, score as _score,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -1734,6 +1734,16 @@ button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumb
   .iq-det-cols { grid-template-columns:1fr !important; gap:.9rem !important; }
 }
 
+/* Workspace: three panels of equal height; the ranking list scrolls inside its card */
+@media (min-width: 1101px) {
+  .st-key-panel_jd, .st-key-panel_cv, .st-key-panel_rank { height:680px !important; min-height:680px !important;
+    max-height:680px !important; flex:0 0 680px !important; overflow-y:auto; }
+  .iq-cr-scroll { max-height:448px; overflow-y:auto; padding-right:.35rem; margin-right:-.35rem;
+    scrollbar-width:thin; scrollbar-color:#CBD5E1 transparent; }
+  .iq-cr-scroll::-webkit-scrollbar { width:6px; }
+  .iq-cr-scroll::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:99px; }
+}
+
 /* Invisible style/script blocks shouldn't take up layout space (styles still apply) */
 [data-testid="stElementContainer"]:has(style), [data-testid="stElementContainer"]:has(script) { display:none !important; }
 
@@ -2601,7 +2611,7 @@ def _on_role_select():
         st.session_state["jd_paste"] = SAMPLE_ROLES.get(sel, "")
 
 with col1:
-    with st.container(border=True):
+    with st.container(border=True, key="panel_jd"):
         render_html("""
 <div class="iq-phead">
   <div class="iq-pnum">1</div>Job Description
@@ -2667,7 +2677,7 @@ with col1:
 
 # ══════════════════════════ PANEL 2 — Upload CVs ══════════════════════════════
 with col2:
-    with st.container(border=True):
+    with st.container(border=True, key="panel_cv"):
         _ca = st.session_state.client_auth
         if _ca.get("logged_in"):
             _c_tier, _c_rem = _ca["tier"], _ca["remaining"]
@@ -2828,7 +2838,7 @@ def _flash_run_outcome(results, skipped, run_meta) -> None:
 
 
 with col3:
-    with st.container(border=True):
+    with st.container(border=True, key="panel_rank"):
         render_html("""
 <div class="iq-phead">
   <div class="iq-pnum">3</div>Candidate Rankings
@@ -2904,10 +2914,10 @@ with col3:
             render_html(f"""
 <div class="iq-cr-head">
 <div style="font-size:var(--fs-small);font-weight:700;color:#64748B;">Top Matches ({len(results)} evaluated)</div>
-<div style="font-size:var(--fs-small);font-weight:700;color:#475569;">{_e(_MODE_LABELS.get(_meta.get('mode_used'), ''))}</div>
 </div>
 """)
 
+            _rows_html = []
             for rank, r in enumerate(results[:5], 1):
                 score    = _score(r)
                 name     = r.get("candidate_name") or "Unknown"
@@ -2920,7 +2930,7 @@ with col3:
                     sk_html += f'<span class="iq-cr-skmore">+{extra}</span>'
                 rb_cls, rb_txt = _BAND_BADGE[_fit_band(r)]
 
-                render_html(f"""
+                _rows_html.append(f"""
 <div class="iq-cr-row">
 <div class="iq-cr-rank">{rank}</div>
 <div class="iq-cr-main">
@@ -2938,6 +2948,7 @@ with col3:
 <div class="iq-cr-sk-row">{sk_html}</div>
 </div>
 </div>""")
+            render_html('<div class="iq-cr-scroll">' + "".join(_rows_html) + '</div>')
 
             render_html('<div class="iq-cr-footer"></div>')
             if st.button("View All Candidates →", use_container_width=True, key="view_full_btn"):
@@ -2955,7 +2966,7 @@ with col3:
 </div>
 
 
-""" + _SAMPLE_PREVIEW_HTML + """
+<div class="iq-cr-scroll">""" + _SAMPLE_PREVIEW_HTML + """</div>
 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
 <div style="font-size:var(--fs-small); color:#475569; font-weight:600;">
 💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 5 Demo CVs</b> in Panel 2 to screen sample resumes.
