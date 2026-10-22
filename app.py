@@ -2137,7 +2137,7 @@ def _render_auth_page(mode: str) -> None:
   <ul class="rc-auth-points">
     <li>🎁 {_TRIAL_Q} free CV evaluations &mdash; no card needed</li>
     <li>🔒 Contact details redacted before AI scoring</li>
-    <li>⚖️ UK GDPR audit report with every shortlist</li>
+    <li>⚖️ GDPR audit report with every shortlist</li>
   </ul>
 </div>""")
 
@@ -2347,7 +2347,7 @@ render_html("""
 <div id="security" class="iq-sec-bar">
   <div class="iq-sec-top">
     <div class="iq-sec-title">
-      <span>🛡️ UK GDPR Privacy Controls &amp; Screening Engine</span>
+      <span>🛡️ GDPR-Ready Privacy Controls &amp; Screening Engine</span>
     </div>
     <div class="iq-sec-badges">
       <span class="iq-sec-pill iq-pill-green">🔒 PII Redaction Before AI Scoring</span>
@@ -3141,7 +3141,7 @@ if st.session_state.get("show_full") and st.session_state.results:
             render_html("""
 <div class="iq-override-card">
   <div class="iq-override-title">
-    <span>⚖️ Recruiter Oversight &amp; Decision (UK GDPR Art. 22)</span>
+    <span>⚖️ Recruiter Oversight &amp; Decision (GDPR Art. 22)</span>
   </div>
   <div style="font-size:.76rem;color:#64748B;margin-bottom:.5rem;">
     The AI score is advice only. Review the candidate and record your own decision.
@@ -3173,7 +3173,7 @@ if st.session_state.get("show_full") and st.session_state.results:
                    or st.session_state.client_auth.get("contact_email") or "Customer")
     _xl_bytes = build_excel_report(results, _ovs, _meta, st.session_state.get("audit_stats", {}), _controller)
     st.download_button(
-        "⬇️  Download Shortlist Report with UK GDPR Audit Log (.xlsx)",
+        "⬇️  Download Shortlist Report with GDPR Audit Log (.xlsx)",
         data=_xl_bytes,
         file_name=f"rankcv_results_{_run}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -3562,7 +3562,7 @@ render_html(f"""
   <div class="iq-price-hdr">
     <div class="iq-price-eye">Transparent Pricing</div>
     <div class="iq-price-h2">Simple Plans for Fast-Moving Hiring Teams</div>
-    <div class="iq-price-sub">{_ACTIVATION}. Cancel anytime. Human-review workflow and UK GDPR audit sheet included in every plan.</div>
+    <div class="iq-price-sub">{_ACTIVATION}. Cancel anytime. Human-review workflow and GDPR audit sheet included in every plan.</div>
   </div>
 
   <div class="iq-price-grid">
@@ -3584,7 +3584,7 @@ render_html(f"""
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>{_PRO_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Cloud AI or Private Engine</b> &mdash; optional own OpenAI key</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Top candidate podium</b> &amp; Excel shortlist report</span></li>
-          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>UK GDPR Article 22</b> review workflow &amp; audit sheet</span></li>
+          <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>GDPR Article 22</b> review workflow &amp; audit sheet</span></li>
           <li class="iq-plan-feat-item"><span class="iq-feat-icon">&#10003;</span><span><b>Standard support</b> &amp; {_ACTIVATION.lower()}</span></li>
         </ul>
       </div>
@@ -3656,7 +3656,7 @@ render_html(f"""
     <span class="iq-pay-pill"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-right:2px"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.08 1.74-.95 2.76.99.08 2.04-.51 2.68-1.26z"/></svg>Apple Pay</span>
     <span class="iq-pay-pill" style="font-weight:800;color:#1A1F71">VISA</span>
     <span class="iq-pay-pill"><span style="color:#EB001B">&#9679;</span><span style="color:#F79E1B;margin-left:-4px">&#9679;</span> Mastercard</span>
-    <span class="iq-pay-pill">UK Debit Cards</span>
+    <span class="iq-pay-pill">Debit &amp; Credit Cards</span>
     <span class="iq-pay-pill" style="color:#6366F1;font-weight:800;">&#128274; Secure payments by Stripe</span>
   </div>
 </div>
@@ -3677,7 +3677,7 @@ _faq_items = [
     ("What is included in the free trial?",
      f"Sign up with your work email to screen <b>{_TRIAL_Q} candidate CVs free&mdash;no credit card required</b>. "
      "You get 0&ndash;100 match scores, strengths &amp; concerns for every candidate, the recruiter review workflow, "
-     "and the Excel shortlist report with its UK GDPR audit sheet."),
+     "and the Excel shortlist report with its GDPR audit sheet."),
     ("What are the plan limits?",
      f"<b>Professional</b> includes <b>{_PRO_Q:,} CVs per month</b> and <b>Agency</b> includes <b>{_AG_Q:,} CVs per month</b>, "
      f"screened in batches of up to {config.MAX_BATCH_CVS}. Your allowance resets at the start of each billing period. "
@@ -3699,7 +3699,7 @@ _faq_items = [
     ("Does RankCV integrate with my ATS?",
      "RankCV works alongside your ATS: upload a batch, review the ranking, and export the shortlist to Excel, which "
      "most ATS and CRM tools can import. Direct integrations are not available yet."),
-    ("How does RankCV help hiring teams comply with UK GDPR?",
+    ("How does RankCV help hiring teams comply with GDPR and privacy laws?",
      "RankCV is a <b>decision-support tool</b>:"
      '<ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0; line-height:1.6;">'
      "<li><b>Article 22 human review:</b> no candidate is rejected automatically. Every candidate starts as "
@@ -3721,7 +3721,7 @@ render_html(f"""
 <div class="iq-faq-hdr">
 <div class="iq-faq-eye">Frequently Asked Questions</div>
 <div class="iq-faq-h2">Got Questions? We&rsquo;ve Got Answers</div>
-<div class="iq-faq-sub">Everything you need to know about plans, CV limits, candidate data privacy, and UK GDPR Article 22.</div>
+<div class="iq-faq-sub">Everything you need to know about plans, CV limits, candidate data privacy, and GDPR Article 22.</div>
 </div>
 <div class="iq-faq-list">
 {"".join(_faq(q, a) for q, a in _faq_items)}

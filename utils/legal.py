@@ -81,13 +81,13 @@ When you screen CVs:
   only and is never stored or logged.
 
 RankCV gives decision support only. Scores must be reviewed by a person before any decision
-about a candidate is made (UK GDPR Article 22).
+about a candidate is made (Article 22 of the UK and EU GDPR).
 
 ## 3. International transfers
 
 OpenAI processes data in the United States. Our application host ({c.HOSTING_PROVIDER}) may also
-process data outside the UK. Transfers rely on the UK Extension to the EU–US Data Privacy Framework
-and/or the UK International Data Transfer Addendum. See **Sub-processors**.
+process data outside your country. Transfers from the UK and EEA rely on the EU–US Data Privacy Framework
+(and its UK Extension), EU Standard Contractual Clauses and/or the UK International Data Transfer Addendum. See **Sub-processors**.
 
 ## 4. Security
 
@@ -99,7 +99,7 @@ codes; access to production systems limited to authorised staff.
 You can ask to access, correct, delete or export your account data, or object to processing,
 by contacting us ({c.CONTACT}). Candidates should contact the hiring organisation (the
 controller) first; we will help that organisation respond. You can also complain to the
-Information Commissioner's Office (ico.org.uk).
+data-protection authority in your country (in the UK, the Information Commissioner's Office, ico.org.uk).
 """
 
 
@@ -146,7 +146,7 @@ These terms are between you (the business using RankCV) and {_company_block()}
 
 def _dpa() -> str:
     return f"""
-# Data Processing Agreement (UK GDPR Article 28)
+# Data Processing Agreement (GDPR Article 28)
 
 *Last updated: {c.LEGAL_LAST_UPDATED}*
 
@@ -181,8 +181,8 @@ The Processor will:
 8. Make available information needed to demonstrate compliance and allow reasonable audits
    on 30 days' notice.
 
-International transfers to sub-processors outside the UK are made under the UK
-International Data Transfer Addendum or the UK Extension to the EU–US Data Privacy Framework.
+International transfers to sub-processors outside the UK/EEA are made under EU Standard Contractual Clauses,
+the UK International Data Transfer Addendum or the EU–US Data Privacy Framework (and its UK Extension).
 
 Contact for data-protection matters: {c.CONTACT}.
 """

@@ -1,6 +1,6 @@
 """
 utils/report.py
-Excel shortlist report with a UK GDPR audit sheet that records what actually happened.
+Excel shortlist report with a GDPR audit sheet that records what actually happened.
 """
 
 import datetime
@@ -111,8 +111,8 @@ def build_excel_report(results: List[Dict[str, Any]], overrides: Dict[Any, Dict[
     if run_meta.get("fallback_reason"):
         engine += f" — fallback reason: {run_meta['fallback_reason']}"
     audit_rows = [
-        ("Statutory Framework", "UK GDPR & Data Protection Act 2018"),
-        ("Governing Jurisdiction", "England and Wales"),
+        ("Statutory Framework", "UK GDPR, EU GDPR and other applicable data-protection laws"),
+        ("Service Terms", "RankCV Terms of Service and Data Processing Agreement"),
         ("Data Controller", controller or "Customer"),
         ("Data Processor", f"{config.COMPANY_NAME} (RankCV), under the RankCV Data Processing Agreement"),
         ("Run ID / Time", f"{run_meta.get('run_id', '')} · {run_meta.get('started_at', '')}"),
@@ -126,7 +126,7 @@ def build_excel_report(results: List[Dict[str, Any]], overrides: Dict[Any, Dict[
         ("Article 5(1)(e) Storage Limitation",
          "CV files were held only in a per-run temporary folder and deleted once text was extracted. "
          "Results are kept in the browser session's memory only and are not stored in RankCV's database."),
-        ("Equality Act 2010",
+        ("Anti-Discrimination",
          "Scoring compares skills, experience and qualifications with the job description. "
          "Common protected-characteristic fields are redacted before Cloud AI scoring (best-effort). "
          "Recruiters should check results for possible bias before deciding."),
@@ -142,6 +142,6 @@ def build_excel_report(results: List[Dict[str, Any]], overrides: Dict[Any, Dict[
         ws = xw.sheets["RankCV Results"]
         _style(ws, "2563EB", 52, [7, 22, 28, 12, 14, 18, 20, 12, 12, 30, 28, 36, 36, 50], "top")
         ws.freeze_panes = "A2"
-        df_audit.to_excel(xw, index=False, sheet_name="UK GDPR Audit")
-        _style(xw.sheets["UK GDPR Audit"], "0F766E", 40, [34, 95], "center")
+        df_audit.to_excel(xw, index=False, sheet_name="GDPR Audit")
+        _style(xw.sheets["GDPR Audit"], "0F766E", 40, [34, 95], "center")
     return buf.getvalue()

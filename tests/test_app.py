@@ -142,7 +142,7 @@ def test_excel_export_neutralises_formulas_and_reports_real_review_state():
     assert res.loc[0, "Recruiter Decision"] == "Under Review"
     assert res.loc[0, "Decision Recorded (UTC)"] == "Not reviewed"
     assert res.loc[1, "Final Score"] == "90%" and res.loc[1, "Recruiter Notes"] == "'@ref"
-    audit = sheets["UK GDPR Audit"].set_index("Audit Parameter")["Record"]
+    audit = sheets["GDPR Audit"].set_index("Audit Parameter")["Record"]
     assert audit["Article 22 Human Oversight"].startswith("1 of 2")
     assert audit["External AI Sub-processor"] == "None (Private Engine)"
     assert "VERIFIED" not in " ".join(audit.astype(str))
