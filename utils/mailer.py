@@ -34,8 +34,9 @@ def _brevo_request(method: str, path: str, payload=None):
     req = urllib.request.Request(
         f"{_BREVO_API}{path}",
         data=json.dumps(payload).encode("utf-8") if payload is not None else None,
+        # Brevo's firewall rejects Python's default User-Agent (Cloudflare error 1010)
         headers={"api-key": config.BREVO_API_KEY, "Content-Type": "application/json",
-                 "Accept": "application/json"},
+                 "Accept": "application/json", "User-Agent": "RankCV/1.0 (+https://rankcv.io)"},
         method=method,
     )
     return urllib.request.urlopen(req, timeout=15)

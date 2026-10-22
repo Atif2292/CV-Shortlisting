@@ -31,6 +31,7 @@ def brevo(monkeypatch):
 def _fake_brevo(monkeypatch, senders, calls):
     def fake_urlopen(req, timeout=15):
         calls.append((req.get_method(), req.full_url, json.loads(req.data) if req.data else None))
+        assert "RankCV" in req.get_header("User-agent", "")       # Brevo blocks Python's default UA
         if req.full_url.endswith("/senders"):
             return _Resp(json.dumps({"senders": senders}).encode(), 200)
         return _Resp(b'{"messageId":"x"}', 201)
