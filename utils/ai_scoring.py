@@ -92,10 +92,21 @@ JD_JUNK_TERMS = {
     "opportunities", "career", "office", "familiar", "comfortable", "hiring", "wanted", "include",
     "includes", "compassionate", "passionate", "enthusiastic", "friendly", "reliable", "hardworking",
     "proactive", "self", "starter", "join", "joining", "help", "helping", "make", "making",
+    "solution", "solutions",
 }
 
 _SENIORITY_WORDS = {"senior", "junior", "lead", "principal", "staff", "head", "mid", "level", "entry",
                     "chief", "associate", "trainee", "intern", "graduate"}
+# Words that appear in job titles across every profession ("Sales Manager", "Solutions Architect"), so on
+# their own they never prove a candidate works in the advertised field
+_GENERIC_TITLE_WORDS = {"manager", "management", "solutions", "solution", "services", "service", "specialist",
+                        "executive", "officer", "assistant", "consultant", "coordinator", "representative",
+                        "team", "years", "year", "experience", "experienced", "wanted", "required", "needed",
+                        "hiring", "role", "position", "vacancy", "opportunity", "remote", "hybrid", "permanent",
+                        "contract", "time"}
+# A title like "Sales Manager with 6 years IT sales experience" or "Sales Manager - IT Solutions":
+# only the part before the qualifier names the job
+_TITLE_QUALIFIER_RE = re.compile(r"\s+(?:with|for|at|in|to)\s+|\s[-–—|]\s|[,(:]|\d")
 
 # ── Standard resume structure section markers ──
 CV_SECTION_MARKERS = {
@@ -1491,9 +1502,13 @@ def _mock_rank_batch(candidates: list, job_context: dict) -> list:
     if not domain_terms:
         domain_terms = extract_universal_domain_terms(jd_desc or target_title)
 
-    # Seniority words ("senior", "lead") never count as a title match ("Senior Barista")
-    title_words = [w for w in re.findall(r"\b[a-z]{3,}\b", title_lower)
+    # Seniority words ("senior", "lead") never count as a title match ("Senior Barista"), and generic
+    # words ("manager", "solutions") only count when the title has nothing more specific
+    title_core = _TITLE_QUALIFIER_RE.split(title_lower, maxsplit=1)[0].strip() or title_lower
+    title_words = [w for w in re.findall(r"\b[a-z]{3,}\b", title_core)
                    if w not in STOPWORDS and w not in _SENIORITY_WORDS]
+    specific_title_words = [w for w in title_words if w not in _GENERIC_TITLE_WORDS]
+    title_words = specific_title_words or title_words
 
     ranked = []
 
@@ -1547,8 +1562,13 @@ def _mock_rank_batch(candidates: list, job_context: dict) -> list:
         domain_relevance = (title_match_ratio * 0.4) + (max(domain_ratio, req_ctx_ratio) * 0.6)
 
         # Check for severe cross-domain mismatch (e.g. Developer applying for Dental, Nurse, Chef, Sales, Legal)
-        is_domain_mismatch = (domain_relevance < 0.12 and not has_title_match
-                              and (len(domain_terms) >= 3 or len(req_skills) >= 3))
+        # Short JDs ("Sales Manager, 6 years") give few terms, so there zero overlap of any kind is required.
+        # A CV that never mentions the job's own profession word ("sales") needs more than one stray
+        # skill (a developer who integrated a CRM) to count as relevant.
+        mismatch_cutoff = 0.25 if specific_title_words else 0.12
+        is_domain_mismatch = (domain_relevance < mismatch_cutoff and not has_title_match
+                              and (len(domain_terms) >= 3 or len(req_skills) >= 3
+                                   or (specific_title_words and domain_relevance == 0)))
 
         if is_domain_mismatch:
             # Candidate is in an unrelated discipline: cap score strictly between 4% and 15%

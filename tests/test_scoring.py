@@ -759,3 +759,38 @@ def test_experience_years_from_date_ranges_when_not_stated():
     text = ("Experience\nEngineer — A (2015–2018)\nEngineer — B (2018–2020)\n"
             "Education\nB.Sc. — Uni (2011–2015)")
     assert ai_scoring._extract_experience_years(text) == 5
+
+
+# ── Cross-profession JDs: tech CVs must not score well for a Sales role ─────────
+SALES_CV = (
+    "James Carter\nSUMMARY\nIT Sales Manager with 8 years of B2B technology sales experience, exceeding quota.\n"
+    "EXPERIENCE\nSales Manager | CloudServe Ltd (2019-Present)\n"
+    "- Led 6 account executives selling SaaS and IT services to enterprise clients, 120% quota attainment.\n"
+    "- Built pipeline through new business development and managed key accounts in Salesforce CRM.\n"
+    "Account Executive | TechSupply UK (2016-2019)\n"
+    "- Managed the full sales cycle for IT solutions; account management for 40 clients.\n"
+    "EDUCATION\nBA (Hons) Business Management, University of Leeds\n"
+)
+
+
+@pytest.mark.parametrize("jd", [
+    "Sales Manager with 6 years IT sales experience",
+    "Sales Manager - IT Solutions\nRequirements: 6+ years IT sales, quota attainment, CRM, negotiation, "
+    "account management.",
+])
+def test_demo_tech_cvs_score_weak_for_sales_role(jd):
+    from utils.pdf_parser import extract_pdf_text
+    ctx = extract_job_context(jd)
+    cands = [extract_resume_keywords(cv_text=extract_pdf_text(str(p)), required_skills=ctx["skills"],
+                                     filename=p.name)
+             for p in sorted((ROOT / "dummy_cvs_pdf").glob("*.pdf"))]
+    results = rank_candidates_batch(cands, ctx, offline_mode=True)
+    # Includes the backend CV that mentions "AWS Certified Solutions Architect"
+    assert all(r["match_score"] <= 15 for r in results), [(r["candidate_name"], r["match_score"]) for r in results]
+
+
+def test_sales_cv_scores_strong_for_short_sales_jd():
+    ctx = extract_job_context("Sales Manager with 6 years IT sales experience")
+    cand = extract_resume_keywords(cv_text=SALES_CV, required_skills=ctx["skills"])
+    [result] = rank_candidates_batch([cand], ctx, offline_mode=True)
+    assert result["fit_band"] == "strong"

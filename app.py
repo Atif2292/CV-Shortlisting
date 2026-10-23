@@ -1049,6 +1049,10 @@ a.iq-nav-demo:active {
 }
 .iq-score-pill-green { background: #DCFCE7; color: #15803D; }
 .iq-score-pill-blue { background: #DBEAFE; color: #1D4ED8; }
+.iq-cand-mini-left { min-width: 0; }
+.iq-cand-mini-row .iq-lb-pill { min-width: 6.4rem; display: flex; flex-direction: column; align-items: center; line-height: 1.25; flex-shrink: 0; margin-left: .5rem; }
+.iq-cand-mini-row .iq-lb-pill b { display: block; font-size: .85rem; font-weight: 800; }
+.iq-cand-mini-row .iq-lb-pill span { display: block; }
 
 .iq-excel-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: .55rem; }
 .iq-excel-hdr-row {
@@ -1063,7 +1067,9 @@ a.iq-nav-demo:active {
     border-bottom: 1px solid #F1F5F9; align-items: center;
 }
 .iq-excel-data-row:last-child { border-bottom: none; }
-.iq-excel-footer { display: flex; justify-content: space-between; align-items: center; font-size: .66rem; color: #64748B; }
+.iq-excel-footer { display: flex; justify-content: space-between; align-items: center; gap: .5rem; font-size: .66rem; color: #64748B; }
+.iq-excel-footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iq-excel-footer .iq-dl-badge { white-space: nowrap; flex-shrink: 0; }
 .iq-dl-badge {
     background: #10B981; color: #FFFFFF; font-weight: 700;
     font-size: .62rem; padding: .2rem .45rem; border-radius: 4px;
@@ -1702,7 +1708,7 @@ button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumb
 .iq-bento-grid { grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
 .iq-terms-grid { grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
 @media (max-width: 760px) {
-  .iq-bento-grid, .iq-terms-grid { grid-template-columns:1fr !important; }
+  .iq-bento-grid, .iq-terms-grid { grid-template-columns:minmax(0, 1fr) !important; }
 }
 
 /* Top-candidate cards: badge sits above the name instead of on top of it */
@@ -2020,15 +2026,15 @@ _BAND_REC_CSS = {
 
 # Illustrative candidates for the idle "Top Matches Preview" (mixed sectors on purpose)
 _SAMPLE_CANDIDATES = [
-    ("Candidate A", "Data &amp; AI", "10+ years", 96, "strong",
+    ("Alex", "Data &amp; AI", "10+ years", 96, "strong",
      ["Python", "SQL", "Power BI", "Generative AI", "Azure"]),
-    ("Candidate B", "Business", "15+ years", 94, "strong",
+    ("Ben", "Business", "15+ years", 94, "strong",
      ["Project Management", "Stakeholder Management", "Agile", "Budgeting", "Business Analysis"]),
-    ("Candidate C", "Security &amp; Cloud", "6+ years", 88, "strong",
+    ("Carla", "Security &amp; Cloud", "6+ years", 88, "strong",
      ["Cybersecurity", "AWS", "DevOps", "Automation", "Risk &amp; Compliance"]),
-    ("Candidate D", "Finance &amp; Operations", "12+ years", 82, "strong",
+    ("Dion", "Finance &amp; Operations", "12+ years", 82, "strong",
      ["Financial Analysis", "Budgeting", "Power BI", "Forecasting", "Process Improvement"]),
-    ("Candidate E", "Sales &amp; Customer Success", "3+ years", 70, "good",
+    ("Emma", "Sales &amp; Customer Success", "3+ years", 70, "good",
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
 _SAMPLE_PREVIEW_HTML = "".join(
@@ -2042,6 +2048,29 @@ _SAMPLE_PREVIEW_HTML = "".join(
 </div></div>
 '''
     for i, (name, sector, years, score, band, skills) in enumerate(_SAMPLE_CANDIDATES, 1)
+)
+# Landing-page mockups use the same sample candidates, so years, scores and labels always agree
+_MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;"}
+_LEADERBOARD_HTML = "".join(
+    f'''<div class="iq-cand-mini-row">
+<div class="iq-cand-mini-left">
+<span class="iq-medal{"" if i in _MEDALS else " iq-medal-num"}">{_MEDALS.get(i, i)}</span>
+<div>
+<div class="iq-cand-mini-name">{name}</div>
+<div class="iq-cand-mini-role">{years.replace(" years", " yrs")} &bull; {sector}</div>
+</div>
+</div>
+<span class="iq-cr-rbadge iq-lb-pill {_BAND_BADGE[band][0]}"><b>{score}%</b><span>{_BAND_BADGE[band][1]}</span></span>
+</div>
+'''
+    for i, (name, sector, years, score, band, _skills) in enumerate(_SAMPLE_CANDIDATES, 1)
+)
+_REPORT_ROWS_HTML = "".join(
+    f'''<div class="iq-excel-data-row">
+<span>{i}</span><span>{name}</span><span style="font-weight:700;color:{_BAND_COLOUR[band]}">{score}%</span><span>{_BAND_BADGE[band][1]}</span>
+</div>
+'''
+    for i, (name, _sector, _years, score, band, _skills) in enumerate(_SAMPLE_CANDIDATES, 1)
 )
 
 
@@ -2936,6 +2965,8 @@ with col3:
                 _store_run(results, audit, meta)
                 _flash("info", "Demo: 5 sample CVs scored instantly. Sign up to screen your own CVs.")
                 _flash_run_outcome(results, skipped, meta)
+                # The hero button sits far above the results, so bring the rankings into view
+                st.session_state.scroll_to_results = True
                 st.rerun()
 
         # ── Real screening ───────────────────────────────────────────────────
@@ -3353,9 +3384,10 @@ if st.session_state.get("show_full") and st.session_state.results:
   <div style="font-size:var(--fs-body);color:#64748B;max-width:540px;margin:0 auto 1.1rem;line-height:1.6">
     RankCV helps recruitment &amp; HR teams screen, score and shortlist CVs in bulk &mdash; with a recruiter in control of every decision.
   </div>
-  <a class="iq-bp" href="mailto:{_e(config.SUPPORT_EMAIL)}?subject=RankCV%20walkthrough" target="_blank" rel="noopener" style="padding:.65rem 1.6rem;font-size:var(--fs-body)">
+  <a class="iq-bp" href="mailto:{_e(config.SUPPORT_EMAIL)}?subject=RankCV%20walkthrough" target="_top" style="padding:.65rem 1.6rem;font-size:var(--fs-body)">
     Book a Quick Walkthrough &nbsp;&rarr;
   </a>
+  <div style="font-size:var(--fs-small);color:#64748B;margin-top:.6rem">or email <b>{_e(config.SUPPORT_EMAIL)}</b></div>
 </div>
 """)
 
@@ -3446,56 +3478,7 @@ render_html("""
 <div class="iq-bento-sub">Surfaces your best applicants with medals, match percentages, and clear hiring recommendations.</div>
 </div>
 <div class="iq-mockup-box">
-<div class="iq-cand-mini-row">
-<div class="iq-cand-mini-left">
-<span class="iq-medal">&#129351;</span>
-<div>
-<div class="iq-cand-mini-name">Candidate A</div>
-<div class="iq-cand-mini-role">6+ yrs &bull; Data &amp; AI</div>
-</div>
-</div>
-<span class="iq-score-pill iq-score-pill-green">96% Match</span>
-</div>
-<div class="iq-cand-mini-row">
-<div class="iq-cand-mini-left">
-<span class="iq-medal">&#129352;</span>
-<div>
-<div class="iq-cand-mini-name">Candidate B</div>
-<div class="iq-cand-mini-role">8+ yrs &bull; Business</div>
-</div>
-</div>
-<span class="iq-score-pill iq-score-pill-green">94% Match</span>
-</div>
-<div class="iq-cand-mini-row">
-<div class="iq-cand-mini-left">
-<span class="iq-medal">&#129353;</span>
-<div>
-<div class="iq-cand-mini-name">Candidate C</div>
-<div class="iq-cand-mini-role">5+ yrs &bull; Security &amp; Cloud</div>
-</div>
-</div>
-<span class="iq-score-pill iq-score-pill-green">88% Match</span>
-</div>
-<div class="iq-cand-mini-row">
-<div class="iq-cand-mini-left">
-<span class="iq-medal iq-medal-num">4</span>
-<div>
-<div class="iq-cand-mini-name">Candidate D</div>
-<div class="iq-cand-mini-role">7+ yrs &bull; Finance &amp; Operations</div>
-</div>
-</div>
-<span class="iq-score-pill iq-score-pill-blue">82% Match</span>
-</div>
-<div class="iq-cand-mini-row">
-<div class="iq-cand-mini-left">
-<span class="iq-medal iq-medal-num">5</span>
-<div>
-<div class="iq-cand-mini-name">Candidate E</div>
-<div class="iq-cand-mini-role">4+ yrs &bull; Sales &amp; Customer Success</div>
-</div>
-</div>
-<span class="iq-score-pill iq-score-pill-blue">70% Match</span>
-</div>
+__LEADERBOARD_ROWS__
 </div>
 </div>
 
@@ -3510,25 +3493,11 @@ render_html("""
 <div class="iq-excel-hdr-row">
 <span>#</span><span>Candidate</span><span>Score</span><span>Recommendation</span>
 </div>
-<div class="iq-excel-data-row">
-<span>1</span><span>Candidate A</span><span style="font-weight:700;color:#10B981">96%</span><span>Highly Recommended</span>
-</div>
-<div class="iq-excel-data-row">
-<span>2</span><span>Candidate B</span><span style="font-weight:700;color:#10B981">94%</span><span>Recommend Screen</span>
-</div>
-<div class="iq-excel-data-row">
-<span>3</span><span>Candidate C</span><span style="font-weight:700;color:#10B981">88%</span><span>Recommend Screen</span>
-</div>
-<div class="iq-excel-data-row">
-<span>4</span><span>Candidate D</span><span style="font-weight:700;color:#2563EB">82%</span><span>Consider / Interview</span>
-</div>
-<div class="iq-excel-data-row">
-<span>5</span><span>Candidate E</span><span style="font-weight:700;color:#2563EB">70%</span><span>Review</span>
-</div>
+__REPORT_ROWS__
 </div>
 <div class="iq-excel-footer">
-<span>&#128196; Shortlist_Candidate_Report.xlsx</span>
-<span class="iq-dl-badge">&#10515; Ready</span>
+<span>&#128196; Shortlist_Report.xlsx</span>
+<span class="iq-dl-badge">&#10515; Download</span>
 </div>
 </div>
 </div>
@@ -3559,7 +3528,7 @@ render_html("""
 </div>
 </div>
 </div>
-""")
+""".replace("__LEADERBOARD_ROWS__", _LEADERBOARD_HTML).replace("__REPORT_ROWS__", _REPORT_ROWS_HTML))
 
 
 # ─────────────────────────── Testimonials ────────────────────────────────────
@@ -3721,6 +3690,8 @@ def _checkout_url(base: str) -> str:
     return f"{base}{'&' if '?' in base else '?'}prefilled_email={quote(email)}"
 
 
+# The plan buttons open with target="_top": Stripe Checkout can't load inside a frame, and in-app browsers
+# (WhatsApp, Instagram) often block new tabs opened from inside the rankcv.io frame
 _stripe_pro_url = _checkout_url(config.STRIPE_PRO_URL)
 _stripe_agency_url = _checkout_url(config.STRIPE_AGENCY_URL)
 _PRO_Q, _AG_Q = config.PLAN_QUOTAS["pro"], config.PLAN_QUOTAS["agency"]
@@ -3759,7 +3730,7 @@ render_html(f"""
       <div class="rc-plan-desc">AI screening for in-house recruiters and boutique teams.</div>
       <div class="rc-plan-price"><span class="rc-plan-amt">&pound;{_PRO_P}</span><span class="rc-plan-per">/ month</span></div>
       <div class="rc-plan-billing">Billed monthly &middot; cancel anytime</div>
-      <a class="rc-plan-cta rc-plan-cta--outline" href="{_e(_stripe_pro_url)}" target="_blank" rel="noopener">Subscribe to Pro &rarr;</a>
+      <a class="rc-plan-cta rc-plan-cta--outline" href="{_e(_stripe_pro_url)}" target="_top" rel="noopener">Subscribe to Pro &rarr;</a>
       <div class="rc-plan-incl">What&rsquo;s included</div>
       <ul class="rc-plan-list">
         <li><span class="rc-check">&#10003;</span><span><b>{_PRO_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
@@ -3778,7 +3749,7 @@ render_html(f"""
       <div class="rc-plan-desc">High-volume screening for staffing firms and agencies.</div>
       <div class="rc-plan-price"><span class="rc-plan-amt">&pound;{_AG_P}</span><span class="rc-plan-per">/ month</span></div>
       <div class="rc-plan-billing">Billed monthly &middot; cancel anytime</div>
-      <a class="rc-plan-cta" href="{_e(_stripe_agency_url)}" target="_blank" rel="noopener">Subscribe to Agency &rarr;</a>
+      <a class="rc-plan-cta" href="{_e(_stripe_agency_url)}" target="_top" rel="noopener">Subscribe to Agency &rarr;</a>
       <div class="rc-plan-incl">What&rsquo;s included</div>
       <ul class="rc-plan-list">
         <li><span class="rc-check">&#10003;</span><span><b>{_AG_Q:,} CVs per month</b> (up to {config.MAX_BATCH_CVS} per batch)</span></li>
@@ -3909,3 +3880,20 @@ if _cw is not None:
         )
     except TypeError:
         log.warning("This Streamlit version can't run scripts in st.html; sign-in won't persist across refreshes")
+
+
+# ─────────────────────────── Scroll to results ───────────────────────────────
+if st.session_state.pop("scroll_to_results", False):
+    try:
+        # The nonce makes each run's script unique so Streamlit re-executes it on repeat demo clicks.
+        # The panel may mount a moment after the script, so retry briefly.
+        st.html(
+            f"<script>/* {uuid.uuid4().hex[:8]} */(function go(n){{"
+            "var el=document.querySelector('.st-key-panel_rank');"
+            "if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}"
+            "else if(n>0){setTimeout(function(){go(n-1);},100);}"
+            "})(20);</script>",
+            unsafe_allow_javascript=True,
+        )
+    except TypeError:
+        pass

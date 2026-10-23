@@ -64,7 +64,7 @@ def test_home_page_has_no_false_claims():
     for hidden in ("Bring Your Own Key", "Private Engine", "GDPR &amp; Legal", "own OpenAI"):
         assert hidden not in text, hidden
     assert not any("Cloud AI" in r.label for r in at.radio)
-    for sample in ("Candidate A", "Candidate E", "Generative AI", "Commercial Awareness"):
+    for sample in ("Alex", "Emma", "Generative AI", "Commercial Awareness"):
         assert sample in text
 
 
@@ -248,3 +248,57 @@ def test_hero_copy_and_demo_link():
     next(b for b in at.button if b.key == "hero_demo_btn").click().run()
     assert not at.exception, at.exception
     assert len(at.session_state.results) == 5
+
+
+def _signed_in(monkeypatch, email="lead@acme-recruit.co.uk"):
+    sent = {}
+    import utils.mailer as mailer
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(mailer, "send_login_code", lambda to, code: sent.update(code=code) or True)
+    at = _auth_page("signup")
+    _text(at, "Work email").set_value(email)
+    next(c for c in at.checkbox if "Terms" in c.label).check()
+    _button(at, "Sign Up").click().run()
+    _text(at, "6-digit code").set_value(sent["code"])
+    _button(at, "Continue").click().run()
+    assert at.session_state.client_auth["logged_in"]
+    return at
+
+
+def test_signed_in_upload_screen_and_quota(monkeypatch):
+    root = Path(APP).parent
+    at = _signed_in(monkeypatch)
+    jd = next(t for t in at.text_area if "job description" in t.placeholder.lower())
+    jd.set_value("Senior Python Backend Engineer with 5 years experience in FastAPI, Django and AWS").run()
+
+    pdfs = sorted((root / "dummy_cvs_pdf").glob("*.pdf"))[:2]
+    docx = sorted((root / "dummy_cvs").glob("*.docx"))[:1]
+    files = [(p.name, p.read_bytes(), "application/pdf") for p in pdfs]
+    files += [(p.name, p.read_bytes(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+              for p in docx]
+    files.append(("shopping.txt", b"milk\neggs\nbread\nbutter\napples\n", "text/plain"))
+    next(u for u in at.file_uploader if u.proto.multiple_files).set_value(files).run()
+    _button(at, "Screen Candidates").click().run()
+    assert not at.exception, at.exception
+
+    results = at.session_state.results
+    assert len(results) >= 3
+    assert not at.session_state.run_meta.get("demo")
+    # Only scored CVs use quota, and the account matches the session
+    auth = at.session_state.client_auth
+    assert auth["resumes_used"] == auth["max_resumes"] - auth["remaining"]
+    assert 3 <= auth["resumes_used"] <= 4
+    assert any("Download Shortlist Report" in d.label for d in at.get("download_button"))
+
+
+def test_upload_over_remaining_quota_is_blocked(monkeypatch):
+    root = Path(APP).parent
+    at = _signed_in(monkeypatch, "big@acme-recruit.co.uk")
+    pdfs = sorted((root / "dummy_cvs_pdf").glob("*.pdf"))
+    files = [(f"{i}_{p.name}", p.read_bytes(), "application/pdf") for i in range(2) for p in pdfs][:11]
+    next(u for u in at.file_uploader if u.proto.multiple_files).set_value(files).run()
+    assert "this run is limited to 10 CVs" in _all_markdown(at)
+    _button(at, "Screen Candidates").click().run()
+    assert not at.exception, at.exception
+    assert not at.session_state.results
+    assert at.session_state.client_auth["resumes_used"] == 0
