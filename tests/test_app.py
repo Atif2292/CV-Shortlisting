@@ -64,7 +64,7 @@ def test_home_page_has_no_false_claims():
     for hidden in ("Bring Your Own Key", "Private Engine", "GDPR &amp; Legal", "own OpenAI"):
         assert hidden not in text, hidden
     assert not any("Cloud AI" in r.label for r in at.radio)
-    for sample in ("Alex", "Emma"):
+    for sample in ("Candidate A", "Candidate E"):
         assert sample in text
 
 

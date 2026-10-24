@@ -2032,15 +2032,15 @@ _BAND_REC_CSS = {
 
 # Illustrative candidates for the landing-page mockups (mixed sectors on purpose)
 _SAMPLE_CANDIDATES = [
-    ("Alex", "Data &amp; AI", "10+ years", 96, "strong",
+    ("Candidate A", "Data &amp; AI", "10+ years", 96, "strong",
      ["Python", "SQL", "Power BI", "Generative AI", "Azure"]),
-    ("Ben", "Business", "15+ years", 94, "strong",
+    ("Candidate B", "Business", "15+ years", 94, "strong",
      ["Project Management", "Stakeholder Management", "Agile", "Budgeting", "Business Analysis"]),
-    ("Carla", "Security &amp; Cloud", "6+ years", 88, "strong",
+    ("Candidate C", "Security &amp; Cloud", "6+ years", 88, "strong",
      ["Cybersecurity", "AWS", "DevOps", "Automation", "Risk &amp; Compliance"]),
-    ("Dion", "Finance &amp; Operations", "12+ years", 82, "strong",
+    ("Candidate D", "Finance &amp; Operations", "12+ years", 82, "strong",
      ["Financial Analysis", "Budgeting", "Power BI", "Forecasting", "Process Improvement"]),
-    ("Emma", "Sales &amp; Customer Success", "3+ years", 70, "good",
+    ("Candidate E", "Sales &amp; Customer Success", "3+ years", 70, "good",
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
 # Landing-page mockups use the same sample candidates, so years, scores and labels always agree
