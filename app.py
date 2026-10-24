@@ -2866,8 +2866,12 @@ def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
                     file_notes.append((fname, note))
                 if not text.strip():
                     raise ValueError("has no readable text (it may be a scanned image)")
-                candidates.append(extract_resume_keywords(
-                    cv_text=text, required_skills=job_context.get("skills", ""), filename=fname))
+                cand = extract_resume_keywords(
+                    cv_text=text, required_skills=job_context.get("skills", ""), filename=fname)
+                if demo:
+                    # Sample CVs carry first names only ("01_Alex.pdf"), which the name parser won't accept
+                    cand["name"] = Path(fname).stem.split("_", 1)[-1]
+                candidates.append(cand)
             except ValueError as ex:
                 skipped.append((fname, str(ex)))
             except Exception:

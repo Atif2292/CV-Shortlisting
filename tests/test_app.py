@@ -302,3 +302,10 @@ def test_upload_over_remaining_quota_is_blocked(monkeypatch):
     assert not at.exception, at.exception
     assert not at.session_state.results
     assert at.session_state.client_auth["resumes_used"] == 0
+
+
+def test_demo_candidates_use_sample_names():
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
+    _button(at, "Try 5 Demo CVs").click().run()
+    names = [r["candidate_name"] for r in at.session_state.results]
+    assert sorted(names) == ["Alex", "Ben", "Carla", "Dion", "Emma"]
