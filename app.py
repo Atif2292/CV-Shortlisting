@@ -1316,6 +1316,12 @@ hr { border-color:#E2E8F0!important; margin:1.5rem 0!important; }
 .iq-cr-bar    { height:3px; background:#E4E8F4; border-radius:99px; overflow:hidden; width:88%; }
 .iq-cr-barfill { height:100%; background:#1F9D6B; border-radius:99px; }
 .iq-cr-rec    { flex-shrink:0; }
+.iq-cr-empty { height:100%; min-height:420px; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center; gap:.5rem; padding:1.5rem; border:1.5px dashed #CBD5E1;
+    border-radius:12px; background:#F8FAFC; }
+.iq-cr-empty-icon { font-size:2rem; }
+.iq-cr-empty-title { font-size:var(--fs-body); font-weight:700; color:#0F172A; }
+.iq-cr-empty-sub { font-size:var(--fs-small); color:#64748B; max-width:260px; line-height:1.5; }
 .iq-cr-rbadge { font-size:.67rem; font-weight:700; padding:.26rem .65rem; border-radius:6px; white-space:nowrap; display:inline-block; }
 .iq-cr-rb-strong { background:#E3F4EC; color:#157A52; }
 .iq-cr-rb-good   { background:#E2F3F2; color:#1C7A78; }
@@ -2024,7 +2030,7 @@ _BAND_REC_CSS = {
 }
 
 
-# Illustrative candidates for the idle "Top Matches Preview" (mixed sectors on purpose)
+# Illustrative candidates for the landing-page mockups (mixed sectors on purpose)
 _SAMPLE_CANDIDATES = [
     ("Alex", "Data &amp; AI", "10+ years", 96, "strong",
      ["Python", "SQL", "Power BI", "Generative AI", "Azure"]),
@@ -2037,18 +2043,6 @@ _SAMPLE_CANDIDATES = [
     ("Emma", "Sales &amp; Customer Success", "3+ years", 70, "good",
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
-_SAMPLE_PREVIEW_HTML = "".join(
-    f'''<div class="iq-cr-row"><div class="iq-cr-rank">{i}</div><div class="iq-cr-main">
-<div class="iq-cr-toprow"><div class="iq-cr-info"><div class="iq-cr-name">{name}</div>
-<div class="iq-cr-sub">{sector} &bull; {years}</div></div>
-<div class="iq-cr-sc"><div class="iq-cr-pct" style="color:{_BAND_COLOUR[band]}">{score}%</div>
-<div class="iq-cr-bar"><div class="iq-cr-barfill" style="width:{score}%;background:{_BAND_COLOUR[band]}"></div></div></div>
-<div class="iq-cr-rec"><span class="iq-cr-rbadge {_BAND_BADGE[band][0]}">{_BAND_BADGE[band][1]}</span></div></div>
-<div class="iq-cr-sk-row">{"".join(f'<span class="iq-cr-sk">{sk}</span>' for sk in skills)}</div>
-</div></div>
-'''
-    for i, (name, sector, years, score, band, skills) in enumerate(_SAMPLE_CANDIDATES, 1)
-)
 # Landing-page mockups use the same sample candidates, so years, scores and labels always agree
 _MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;"}
 _LEADERBOARD_HTML = "".join(
@@ -3053,19 +3047,12 @@ with col3:
             st.error("❌ No candidates could be scored. Check the messages above for each file.")
 
         else:
-            # Idle state — illustrative sample preview
+            # Idle state — nothing screened yet
             render_html("""
-<div class="iq-cr-head">
-<div style="font-size:var(--fs-small);font-weight:700;color:#64748B;">Top Matches Preview</div>
-<div style="background:#EFF6FF; color:#2563EB; font-size:var(--fs-small); font-weight:700; padding:.22rem .6rem; border-radius:6px; border:1px solid #DBEAFE;">✨ Sample Preview</div>
-</div>
-
-
-<div class="iq-cr-scroll">""" + _SAMPLE_PREVIEW_HTML + """</div>
-<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
-<div style="font-size:var(--fs-small); color:#475569; font-weight:600;">
-💡 <b>Sample preview:</b> sign up free to rank your own CVs here.
-</div>
+<div class="iq-cr-empty">
+<div class="iq-cr-empty-icon">&#127942;</div>
+<div class="iq-cr-empty-title">Your ranked candidates will appear here</div>
+<div class="iq-cr-empty-sub">Add a job description, upload CVs, then press <b>Screen Candidates</b>.</div>
 </div>
 """)
 
