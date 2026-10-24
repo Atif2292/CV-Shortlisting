@@ -93,18 +93,6 @@ def test_legal_pages_open_as_pop_ups():
     assert "Terms of Service" in "\n".join(m.value for m in at.markdown)
 
 
-def test_demo_runs_offline_and_defaults_everyone_to_under_review():
-    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
-    _button(at, "Try 5 Demo CVs").click().run()
-    assert not at.exception, at.exception
-    results = at.session_state.results
-    assert len(results) == 5
-    assert at.session_state.run_meta["mode_used"] == "offline"
-    statuses = {o["status"] for o in at.session_state.recruiter_overrides.values()}
-    assert statuses == {"Under Review"}
-    assert all(not o["decided_at"] for o in at.session_state.recruiter_overrides.values())
-
-
 def test_candidate_text_is_html_escaped():
     evil = '<img src=x onerror="alert(1)">'
     at = AppTest.from_file(APP, default_timeout=TIMEOUT)
@@ -239,15 +227,21 @@ def test_sign_up_then_log_in_flow(monkeypatch):
     assert at2.session_state.client_auth["logged_in"]
 
 
-def test_hero_copy_and_demo_link():
+def test_hero_copy_and_no_demo_cvs():
     at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
     text = _all_markdown(at)
     assert "Shortlist top talent in" in text and "RankCV scores and ranks every applicant" in text
     assert "Free account includes 10 CV evaluations. No card needed." in text
     assert "Explainable scores. You make the final decision." in text
-    next(b for b in at.button if b.key == "hero_demo_btn").click().run()
+    assert not any("Demo CVs" in b.label or "demo CVs" in b.label for b in at.button)
+    assert "demo CVs" not in text.replace("Demo CVs", "demo CVs")
+
+
+def test_how_to_use_video_opens():
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
+    next(b for b in at.button if b.key == "hero_video_btn").click().run()
     assert not at.exception, at.exception
-    assert len(at.session_state.results) == 5
+    assert len(at.get("video")) == 1
 
 
 def _signed_in(monkeypatch, email="lead@acme-recruit.co.uk"):
@@ -283,7 +277,9 @@ def test_signed_in_upload_screen_and_quota(monkeypatch):
 
     results = at.session_state.results
     assert len(results) >= 3
-    assert not at.session_state.run_meta.get("demo")
+    statuses = {o["status"] for o in at.session_state.recruiter_overrides.values()}
+    assert statuses == {"Under Review"}
+    assert all(not o["decided_at"] for o in at.session_state.recruiter_overrides.values())
     # Only scored CVs use quota, and the account matches the session
     auth = at.session_state.client_auth
     assert auth["resumes_used"] == auth["max_resumes"] - auth["remaining"]
@@ -303,9 +299,3 @@ def test_upload_over_remaining_quota_is_blocked(monkeypatch):
     assert not at.session_state.results
     assert at.session_state.client_auth["resumes_used"] == 0
 
-
-def test_demo_candidates_use_sample_names():
-    at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
-    _button(at, "Try 5 Demo CVs").click().run()
-    names = [r["candidate_name"] for r in at.session_state.results]
-    assert sorted(names) == ["Alex", "Ben", "Carla", "Dion", "Emma"]

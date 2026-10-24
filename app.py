@@ -1795,7 +1795,7 @@ a.rc-plan-cta--outline:hover { background:#EFF6FF; color:#1D4ED8 !important; }
   .rc-plan-desc { min-height:0; }
 }
 
-/* ── Hero "Try 5 demo CVs" as a proper secondary button ── */
+/* ── Hero "Watch how to use" as a proper secondary button ── */
 .st-key-hero_demo { margin:.15rem 0 .1rem; }
 .st-key-hero_demo .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
   border:1.5px solid #BFDBFE !important; border-radius:999px !important; padding:.55rem 1.35rem !important;
@@ -1857,7 +1857,7 @@ st.markdown("""<style>
 .st-key-navrow [data-testid="stMarkdownContainer"]:has(.iq-nav-right) { margin:0 !important; }
 .st-key-navrow [data-testid="stElementContainer"]:has(.iq-nav-right) { margin:0 !important; }
 @media (max-width: 560px) {
-  /* Phones: the demo button shrinks to a ▶ icon so Log in / Sign up still fit */
+  /* Phones: the How to use button shrinks to a ▶ icon so Log in / Sign up still fit */
   .st-key-navrow .st-key-nav_demo .stButton > button[kind] { padding:.44rem .7rem !important; }
   .st-key-navrow .st-key-nav_demo .stButton > button[kind] strong { display:none !important; }
   .st-key-navrow .iq-nav-acct { display:none !important; }
@@ -1917,7 +1917,7 @@ _startup_housekeeping()
 _DEMO_VIDEO = Path(__file__).parent / "static" / "rankcv-demo.mp4"
 
 
-@st.dialog("See RankCV in 2 minutes", width="large")
+@st.dialog("How to use RankCV", width="large")
 def _demo_video_dialog() -> None:
     st.video(str(_DEMO_VIDEO))
 
@@ -2519,7 +2519,7 @@ _NAV_LINKS = """
 if not _is_auth:
     with st.container(key="navrow", horizontal=True, vertical_alignment="center", gap="small"):
         render_html(f'<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>{_NAV_LINKS}<div></div></div>')
-        if _DEMO_VIDEO.exists() and st.button("▶ **Watch demo**", key="nav_demo"):
+        if _DEMO_VIDEO.exists() and st.button("▶ **How to use**", key="nav_demo"):
             _demo_video_dialog()
         if st.button("Log in", key="nav_login"):
             _go_auth("login")
@@ -2528,7 +2528,7 @@ if not _is_auth:
 else:
     with st.container(key="navrow", horizontal=True, vertical_alignment="center", gap="small"):
         render_html(f'<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>{_NAV_LINKS}<div></div></div>')
-        if _DEMO_VIDEO.exists() and st.button("▶ **Watch demo**", key="nav_demo"):
+        if _DEMO_VIDEO.exists() and st.button("▶ **How to use**", key="nav_demo"):
             _demo_video_dialog()
         render_html(f"""
 <div class="iq-nav-right">
@@ -2546,9 +2546,10 @@ render_html(f"""
 <div class="iq-hero-note">Free account includes {_TRIAL_Q} CV evaluations. No card needed.</div>
 </div>
 """)
-with st.container(key="hero_demo", horizontal=True, horizontal_alignment="center"):
-    if st.button("▶  Try 5 demo CVs", key="hero_demo_btn"):
-        st.session_state.run_demo = True
+if _DEMO_VIDEO.exists():
+    with st.container(key="hero_demo", horizontal=True, horizontal_alignment="center"):
+        if st.button("▶  Watch how to use", key="hero_video_btn"):
+            _demo_video_dialog()
 render_html('<div class="iq-hero-trust">&#10003; Explainable scores. You make the final decision.</div>')
 
 
@@ -2827,15 +2828,14 @@ with col2:
         elif total_uploaded > 0:
             render_html(f'<div class="iq-status-ok">✅ <b>{total_uploaded}/{_max_cvs} CVs selected</b> ready for screening</div>')
         else:
-            render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes or test with 5 demo CVs below…</div>')
+            render_html('<div class="iq-status-wait">⏳ Drag &amp; drop resumes to get started…</div>')
 
         render_html("<div style='height:.7rem'></div>")
         run_btn = st.button("🚀  Screen Candidates", use_container_width=True, type="primary")
-        demo_btn = st.button("⚡  Try 5 Demo CVs", use_container_width=True)
 
 
 # ══════════════════════════ PANEL 3 — Results ═════════════════════════════════
-def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
+def _run_screening(sources, jd: str, *, offline: bool):
     """
     Parse every source inside a private temp folder (deleted on exit, even on error or
     rerun), then score. `sources` is a list of (display_name, Path | UploadedFile).
@@ -2866,12 +2866,8 @@ def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
                     file_notes.append((fname, note))
                 if not text.strip():
                     raise ValueError("has no readable text (it may be a scanned image)")
-                cand = extract_resume_keywords(
-                    cv_text=text, required_skills=job_context.get("skills", ""), filename=fname)
-                if demo:
-                    # Sample CVs carry first names only ("01_Alex.pdf"), which the name parser won't accept
-                    cand["name"] = Path(fname).stem.split("_", 1)[-1]
-                candidates.append(cand)
+                candidates.append(extract_resume_keywords(
+                    cv_text=text, required_skills=job_context.get("skills", ""), filename=fname))
             except ValueError as ex:
                 skipped.append((fname, str(ex)))
             except Exception:
@@ -2912,7 +2908,6 @@ def _run_screening(sources, jd: str, *, offline: bool, demo: bool):
     run_meta = {
         "run_id": run_id,
         "started_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "demo": demo,
         "mode_requested": "offline" if offline else "cloud",
         "mode_used": mode_used,
         "fallback_reason": audit.get("fallback_reason", ""),   # technical; logged, not shown to customers
@@ -2957,22 +2952,6 @@ with col3:
   <div class="iq-pnum">3</div>Candidate Rankings
 </div>""")
 
-        # ── Demo: 5 bundled sample CVs, always on the Private Engine, no quota ──
-        if demo_btn or st.session_state.pop("run_demo", False):
-            demo_files = sorted(Path("dummy_cvs_pdf").glob("*.pdf"))[:5]
-            if not demo_files:
-                st.error("Demo CVs not found on server.")
-            else:
-                _jd = jd_text.strip() or SAMPLE_ROLES["Senior Python Backend Engineer"]
-                results, audit, skipped, meta = _run_screening(
-                    [(p.name, p) for p in demo_files], _jd, offline=True, demo=True)
-                _store_run(results, audit, meta)
-                _flash("info", "Demo: 5 sample CVs scored instantly. Sign up to screen your own CVs.")
-                _flash_run_outcome(results, skipped, meta)
-                # The hero button sits far above the results, so bring the rankings into view
-                st.session_state.scroll_to_results = True
-                st.rerun()
-
         # ── Real screening ───────────────────────────────────────────────────
         if run_btn:
             _ca = st.session_state.client_auth
@@ -3008,7 +2987,7 @@ with col3:
                     try:
                         results, audit, skipped, meta = _run_screening(
                             [(f.name, f) for f in cv_files], active_jd,
-                            offline=st.session_state.get("engine_mode") == "private", demo=False)
+                            offline=st.session_state.get("engine_mode") == "private")
                         # Documents flagged as not being CVs are not charged
                         scored = sum(1 for r in results if _fit_band(r) != "invalid")
                         _store_run(results, audit, meta)
@@ -3085,7 +3064,7 @@ with col3:
 <div class="iq-cr-scroll">""" + _SAMPLE_PREVIEW_HTML + """</div>
 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.7rem .85rem; margin-top:.7rem; text-align:center;">
 <div style="font-size:var(--fs-small); color:#475569; font-weight:600;">
-💡 <b>Interactive Demo Ready:</b> Click <b style="color:#2563EB;">⚡ Try 5 Demo CVs</b> in Panel 2 to screen sample resumes.
+💡 <b>Sample preview:</b> sign up free to rank your own CVs here.
 </div>
 </div>
 """)
@@ -3114,8 +3093,6 @@ if st.session_state.get("show_full") and st.session_state.results:
     _ovs = st.session_state.recruiter_overrides
     render_html("<div style='height:1rem'></div>")
 
-    if _meta.get("demo"):
-        st.info("These are demo results for 5 sample CVs.")
     st.caption("🔒 Results are kept only for this browser session and are never stored by RankCV. "
                "Download the report below before closing or refreshing the page.")
 
@@ -3550,8 +3527,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Tested the pilot on 15 resumes for an engineering role. The top 3 ranked candidates were spot on and it saved me an hour of manual skimming.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Beta Reviewer</div>
-<div class="iq-tpc">Technical Recruitment Agency</div>
+<div class="iq-tpn">Verified Beta User</div>
+<div class="iq-tpc">Recruitment Agency</div>
 </div>
 </div>
 </div>
@@ -3561,8 +3538,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;The strengths and concerns breakdown cuts out the fluff. Really helpful when evaluating a quick batch of applicants on a busy Friday.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Early Access Partner</div>
-<div class="iq-tpc">Fast-Growth Tech Team</div>
+<div class="iq-tpn">Early Access</div>
+<div class="iq-tpc">Retail HR Head</div>
 </div>
 </div>
 </div>
@@ -3572,8 +3549,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Super straightforward. Uploaded CVs, got instant match scores, and downloaded the shortlist report in seconds. Clean, objective, and fast.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Pilot User</div>
-<div class="iq-tpc">Executive Staffing Firm</div>
+<div class="iq-tpn">Verified Pilot</div>
+<div class="iq-tpc">Recruiting Consultant</div>
 </div>
 </div>
 </div>
@@ -3583,8 +3560,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Saved our hiring team roughly 12 hours during our first week screening for two open positions. The candidate fit ranking is remarkably accurate.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Early Access Reviewer</div>
-<div class="iq-tpc">People &amp; Talent Operations</div>
+<div class="iq-tpn">Verified Pilot</div>
+<div class="iq-tpc">Retail HR Head</div>
 </div>
 </div>
 </div>
@@ -3594,8 +3571,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in seconds.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Beta Partner</div>
-<div class="iq-tpc">High-Volume Hiring Agency</div>
+<div class="iq-tpn">Verified Beta User</div>
+<div class="iq-tpc">Recruitment Agency</div>
 </div>
 </div>
 </div>
@@ -3605,8 +3582,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;The objective scorecard gives us complete confidence that we aren&rsquo;t overlooking top candidates due to keyword variations. Truly impressive matching.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Pilot Reviewer</div>
-<div class="iq-tpc">Recruitment Operations Group</div>
+<div class="iq-tpn">Early Access</div>
+<div class="iq-tpc">Recruiting Consultant</div>
 </div>
 </div>
 </div>
@@ -3617,8 +3594,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Tested the pilot on 15 resumes for an engineering role. The top 3 ranked candidates were spot on and it saved me an hour of manual skimming.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Beta Reviewer</div>
-<div class="iq-tpc">Technical Recruitment Agency</div>
+<div class="iq-tpn">Verified Beta User</div>
+<div class="iq-tpc">Recruitment Agency</div>
 </div>
 </div>
 </div>
@@ -3628,8 +3605,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;The strengths and concerns breakdown cuts out the fluff. Really helpful when evaluating a quick batch of applicants on a busy Friday.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Early Access Partner</div>
-<div class="iq-tpc">Fast-Growth Tech Team</div>
+<div class="iq-tpn">Early Access</div>
+<div class="iq-tpc">Retail HR Head</div>
 </div>
 </div>
 </div>
@@ -3639,8 +3616,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Super straightforward. Uploaded CVs, got instant match scores, and downloaded the shortlist report in seconds. Clean, objective, and fast.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Pilot User</div>
-<div class="iq-tpc">Executive Staffing Firm</div>
+<div class="iq-tpn">Verified Pilot</div>
+<div class="iq-tpc">Recruiting Consultant</div>
 </div>
 </div>
 </div>
@@ -3650,8 +3627,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Saved our hiring team roughly 12 hours during our first week screening for two open positions. The candidate fit ranking is remarkably accurate.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Early Access Reviewer</div>
-<div class="iq-tpc">People &amp; Talent Operations</div>
+<div class="iq-tpn">Verified Pilot</div>
+<div class="iq-tpc">Retail HR Head</div>
 </div>
 </div>
 </div>
@@ -3661,8 +3638,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;Works seamlessly beside our existing hiring stack. Just dropped in the resume files, ran the screening, and had interview-ready summaries in seconds.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Beta Partner</div>
-<div class="iq-tpc">High-Volume Hiring Agency</div>
+<div class="iq-tpn">Verified Beta User</div>
+<div class="iq-tpc">Recruitment Agency</div>
 </div>
 </div>
 </div>
@@ -3672,8 +3649,8 @@ render_html("""
 <div class="iq-beta-text">&ldquo;The objective scorecard gives us complete confidence that we aren&rsquo;t overlooking top candidates due to keyword variations. Truly impressive matching.&rdquo;</div>
 <div class="iq-tp">
 <div>
-<div class="iq-tpn">Verified Pilot Reviewer</div>
-<div class="iq-tpc">Recruitment Operations Group</div>
+<div class="iq-tpn">Early Access</div>
+<div class="iq-tpc">Recruiting Consultant</div>
 </div>
 </div>
 </div>
@@ -3847,8 +3824,7 @@ _faq_items = [
      "<li><b>Processor terms:</b> our <b>Data Processing Agreement</b> (link at the bottom of this page) applies to every account.</li>"
      "</ul>"),
     ("How fast is the batch screening process?",
-     "CVs are scored in parallel batches of about ten, so a batch of 50 CVs typically takes around a minute. "
-     "The demo is instant."),
+     "CVs are scored in parallel batches of about ten, so a batch of 50 CVs typically takes around a minute."),
 ]
 
 render_html(f"""
@@ -3884,20 +3860,3 @@ if _cw is not None:
         )
     except TypeError:
         log.warning("This Streamlit version can't run scripts in st.html; sign-in won't persist across refreshes")
-
-
-# ─────────────────────────── Scroll to results ───────────────────────────────
-if st.session_state.pop("scroll_to_results", False):
-    try:
-        # The nonce makes each run's script unique so Streamlit re-executes it on repeat demo clicks.
-        # The panel may mount a moment after the script, so retry briefly.
-        st.html(
-            f"<script>/* {uuid.uuid4().hex[:8]} */(function go(n){{"
-            "var el=document.querySelector('.st-key-panel_rank');"
-            "if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}"
-            "else if(n>0){setTimeout(function(){go(n-1);},100);}"
-            "})(20);</script>",
-            unsafe_allow_javascript=True,
-        )
-    except TypeError:
-        pass

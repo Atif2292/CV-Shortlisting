@@ -30,7 +30,8 @@ utils/
   cleanup.py              Per-run temp folders, random file names, stale-file sweep
   legal.py                Privacy notice, terms, DPA, sub-processors, cookie notice (?page=…)
 tests/                    pytest suite (accounts, scoring, anonymiser, parsers)
-dummy_cvs_pdf/            Sample CVs used by the "Try 5 Demo CVs" button
+dummy_cvs_pdf/            Sample CVs used by the test suite
+static/rankcv-demo.mp4    "Watch how to use" video (hero and navbar buttons)
 Dockerfile                Production image (includes antiword for .doc files)
 ```
 
