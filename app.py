@@ -2037,23 +2037,20 @@ _SAMPLE_CANDIDATES = [
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
 # Landing-page mockups use the same sample candidates, so years, scores and labels always agree
-_MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;"}
-
-
-def _silver_medal(n: int) -> str:
-    """Silver medal with its rank printed on it (the emoji medals stop at 3rd place)."""
+def _rank_medal(n: int) -> str:
+    """Gold medal with its rank printed on it, the same for every place."""
     return (f'<svg class="iq-medal-svg" viewBox="0 0 24 24" aria-label="Rank {n}">'
             '<path d="M8.6 0.5h2.8l1.4 7.5h-2.6z" fill="#2563EB"/><path d="M12.6 0.5h2.8l-1.6 7.5h-2.6z" fill="#DC2626"/>'
-            '<circle cx="12" cy="15.6" r="8" fill="#B8C2CF" stroke="#8E9AAB" stroke-width="1"/>'
-            '<circle cx="12" cy="15.6" r="6.2" fill="#DCE2EA"/>'
+            '<circle cx="12" cy="15.6" r="8" fill="#F2B705" stroke="#C78A00" stroke-width="1"/>'
+            '<circle cx="12" cy="15.6" r="6.2" fill="#FFD54A"/>'
             f'<text x="12" y="19.3" text-anchor="middle" font-size="10" font-weight="800" '
-            f'font-family="Inter, sans-serif" fill="#475569">{n}</text></svg>')
+            f'font-family="Inter, sans-serif" fill="#8A5A00">{n}</text></svg>')
 
 
 _LEADERBOARD_HTML = "".join(
     f'''<div class="iq-cand-mini-row">
 <div class="iq-cand-mini-left">
-<span class="iq-medal">{_MEDALS.get(i) or _silver_medal(i)}</span>
+<span class="iq-medal">{_rank_medal(i)}</span>
 <div>
 <div class="iq-cand-mini-name">{name}</div>
 <div class="iq-cand-mini-role">{years.replace(" years", " yrs")} &bull; {sector}</div>
