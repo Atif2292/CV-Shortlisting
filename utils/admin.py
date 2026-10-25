@@ -38,7 +38,7 @@ def main() -> None:
         print(f"{a['email']}: {a['tier']} ({a['remaining']}/{a['max_resumes']} CVs), "
               f"expires {a.get('plan_expires_at')}")
     elif args.cmd == "sync":
-        a, warn = refresh_entitlements(args.email, force=True)
+        a, warn = refresh_entitlements(args.email, force=True, report=True)
         print(a or "No such account", warn)
 
 

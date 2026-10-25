@@ -299,3 +299,17 @@ def test_upload_over_remaining_quota_is_blocked(monkeypatch):
     assert not at.session_state.results
     assert at.session_state.client_auth["resumes_used"] == 0
 
+
+
+def test_stripe_failure_is_never_shown_to_users(monkeypatch):
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "rk_live_not_connected")
+
+    def boom(email):
+        raise RuntimeError("Could not verify your subscription with Stripe right now.")
+    monkeypatch.setattr(at_mod, "lookup_stripe_plan", boom)
+    at = _signed_in(monkeypatch, "nostripe@acme-recruit.co.uk")
+    _button(at, "Refresh plan").click().run()
+    assert not at.exception, at.exception
+    shown = " ".join([w.value for w in at.warning] + [e.value for e in at.error] + _all_markdown(at).split("\n"))
+    assert "Stripe right now" not in shown
+    assert at.session_state.client_auth["logged_in"]

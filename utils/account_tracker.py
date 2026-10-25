@@ -358,7 +358,8 @@ def refresh_entitlements(email: str, force: bool = False, report: bool = False) 
     """
     Re-check the plan (Stripe at most every 15 min unless forced). Returns (account, warning).
     A failed Stripe check is retried after 5 minutes, and only warns for accounts on a Stripe plan
-    (whose plan can't be confirmed) or when `report` is set, e.g. the user pressed "Refresh plan".
+    (whose plan can't be confirmed) or when `report` is set (the operator's `admin sync`). The app never
+    shows these warnings to users; the failure is logged.
     """
     key = canonical_email(email)
     now = _now()
@@ -481,11 +482,9 @@ def verify_login_code(email: str, code: str, company: str = "",
                 plan_source="trial", resumes_used=0, max_resumes=config.PLAN_QUOTAS["trial"],
                 terms_accepted_at=now, created_at=now, last_login_at=now))
 
-    account, warning = refresh_entitlements(key, force=True)
+    account, _ = refresh_entitlements(key, force=True)   # Stripe problems are logged, never shown to users
     label = config.PLAN_LABELS.get(account.get("tier"), "Free Trial")
     msg = f"Signed in as {addr} · {label} · {account['remaining']}/{account['max_resumes']} CVs left."
-    if warning:
-        msg += f" ({warning} Your previous plan is shown.)"
     return True, msg, account
 
 

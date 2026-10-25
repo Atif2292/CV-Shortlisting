@@ -2269,11 +2269,9 @@ if not st.session_state.client_auth.get("logged_in") and not st.session_state.ge
             _set_auth(_restored)
             st.session_state.session_token = _cookie_token
 
-_acc_warn = ""
-
 # Keep the plan and quota current (also picks up a new or cancelled Stripe subscription)
 if st.session_state.client_auth.get("logged_in"):
-    _acc, _acc_warn = refresh_entitlements(st.session_state.client_auth["email"])
+    _acc, _ = refresh_entitlements(st.session_state.client_auth["email"])   # Stripe problems are logged only
     if _acc:
         _set_auth(_acc)
     else:
@@ -2624,16 +2622,14 @@ if _c_logged_in:
       </div>
     </div>
     """)
-    if _acc_warn:
-        st.warning(_acc_warn)
     col_so0, col_so1, col_so2, col_so3 = st.columns([3, 1.1, 1.1, 1])
     with col_so1:
         if st.button("↻ Refresh plan", key="btn_refresh_plan", use_container_width=True,
                      help="Just subscribed? Pull your plan from Stripe now."):
-            _acc2, _w2 = refresh_entitlements(_ca["email"], force=True, report=True)
+            _acc2, _ = refresh_entitlements(_ca["email"], force=True)
             if _acc2:
                 _set_auth(_acc2)
-            _flash("warning" if _w2 else "success", _w2 or "Plan refreshed.")
+            _flash("success", "Plan refreshed.")
             st.rerun()
     with col_so2:
         if config.STRIPE_PORTAL_URL:
