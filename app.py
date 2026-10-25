@@ -2036,7 +2036,7 @@ _SAMPLE_CANDIDATES = [
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
 # Landing-page mockups use the same sample candidates, so years, scores and labels always agree
-_MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;"}
+_MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;", 4: "&#127941;", 5: "&#127941;"}
 _LEADERBOARD_HTML = "".join(
     f'''<div class="iq-cand-mini-row">
 <div class="iq-cand-mini-left">
