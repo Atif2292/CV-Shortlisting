@@ -1042,6 +1042,7 @@ a.iq-nav-demo:active {
 .iq-cand-mini-row:last-child { border-bottom: none; }
 .iq-cand-mini-left { display: flex; align-items: center; gap: .45rem; }
 .iq-medal { font-size: .95rem; }
+.iq-medal-svg { width: 1.2rem; height: 1.2rem; display: block; }
 .iq-cand-mini-name { font-size: .76rem; font-weight: 800; color: #0F172A; }
 .iq-cand-mini-role { font-size: .66rem; color: #64748B; }
 .iq-score-pill {
@@ -2036,11 +2037,23 @@ _SAMPLE_CANDIDATES = [
      ["Sales &amp; Negotiation", "Customer Service", "CRM", "Communication", "Commercial Awareness"]),
 ]
 # Landing-page mockups use the same sample candidates, so years, scores and labels always agree
-_MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;", 4: "&#127941;", 5: "&#127941;"}
+_MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;"}
+
+
+def _silver_medal(n: int) -> str:
+    """Silver medal with its rank printed on it (the emoji medals stop at 3rd place)."""
+    return (f'<svg class="iq-medal-svg" viewBox="0 0 24 24" aria-label="Rank {n}">'
+            '<path d="M7 1h4l2 7H9z" fill="#3B82F6"/><path d="M13 1h4l-2 7h-4z" fill="#EF4444"/>'
+            '<circle cx="12" cy="15" r="7.5" fill="#CBD5E1" stroke="#94A3B8" stroke-width="1.2"/>'
+            '<circle cx="12" cy="15" r="5.6" fill="#E2E8F0"/>'
+            f'<text x="12" y="18.6" text-anchor="middle" font-size="9.5" font-weight="800" '
+            f'font-family="Inter, sans-serif" fill="#475569">{n}</text></svg>')
+
+
 _LEADERBOARD_HTML = "".join(
     f'''<div class="iq-cand-mini-row">
 <div class="iq-cand-mini-left">
-<span class="iq-medal{"" if i in _MEDALS else " iq-medal-num"}">{_MEDALS.get(i, i)}</span>
+<span class="iq-medal">{_MEDALS.get(i) or _silver_medal(i)}</span>
 <div>
 <div class="iq-cand-mini-name">{name}</div>
 <div class="iq-cand-mini-role">{years.replace(" years", " yrs")} &bull; {sector}</div>
