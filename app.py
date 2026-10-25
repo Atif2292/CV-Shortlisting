@@ -521,6 +521,10 @@ a.iq-nav-demo:active {
     background: rgba(148,163,184,.08); border: 1px solid rgba(148,163,184,.18);
     border-radius: 99px; padding: .3rem .85rem; margin-top: .6rem;
 }
+.iq-status-over {
+    display: block; font-size: .82rem; font-weight: 500; line-height: 1.5; color: #B91C1C;
+    background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: .55rem .85rem; margin-top: .6rem;
+}
 .iq-char { font-size: .77rem; color: #94A3B8; margin-top: -.3rem; display:flex; justify-content:space-between; }
 
 /* ── Result list cards ── */
@@ -2805,12 +2809,12 @@ with col2:
         total_uploaded = len(cv_files or [])
 
         if total_uploaded > _max_cvs:
-            render_html(
-                f'<div class="iq-status-wait" style="background:#FEF2F2;color:#DC2626;border-color:#FCA5A5">'
-                f'⚠️ <b>{total_uploaded} CVs uploaded</b> — this run is limited to {_max_cvs} CVs '
-                f'(your remaining quota, max {config.MAX_BATCH_CVS} per batch). '
-                f'Please remove {total_uploaded - _max_cvs} file(s) or upgrade your plan.</div>'
-            )
+            _over = ('⚠️ <b>You have used all your CV evaluations.</b> Upgrade your plan to keep screening.'
+                     if _max_cvs <= 0 else
+                     f'⚠️ <b>{total_uploaded} CVs uploaded</b> — this run is limited to {_max_cvs} CVs '
+                     f'(your remaining quota, max {config.MAX_BATCH_CVS} per batch). '
+                     f'Please remove {total_uploaded - _max_cvs} file(s) or upgrade your plan.')
+            render_html(f'<div class="iq-status-over">{_over}</div>')
         elif total_uploaded > 0:
             render_html(f'<div class="iq-status-ok">✅ <b>{total_uploaded}/{_max_cvs} CVs selected</b> ready for screening</div>')
         else:

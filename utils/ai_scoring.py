@@ -984,7 +984,15 @@ def _resolve_cloud_credentials(custom_api_key: str = None, base_url: str = None)
 
 
 def _openai_model() -> str:
+    """OPENAI_MODEL from the environment or Streamlit secrets, else the default."""
     model = os.getenv("OPENAI_MODEL", "").strip()
+    if not model:
+        try:
+            import streamlit as st
+            if "OPENAI_MODEL" in st.secrets:
+                model = str(st.secrets["OPENAI_MODEL"]).strip()
+        except Exception:
+            pass
     return model if re.fullmatch(r"[\w.:\-]{1,80}", model or "") else DEFAULT_OPENAI_MODEL
 
 
