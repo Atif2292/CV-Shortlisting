@@ -1042,7 +1042,7 @@ a.iq-nav-demo:active {
 .iq-cand-mini-row:last-child { border-bottom: none; }
 .iq-cand-mini-left { display: flex; align-items: center; gap: .45rem; }
 .iq-medal { font-size: .95rem; }
-.iq-medal-svg { width: 1.2rem; height: 1.2rem; display: block; }
+.iq-medal-svg { width: 1rem; height: 1rem; display: block; margin: 0 auto; }
 .iq-cand-mini-name { font-size: .76rem; font-weight: 800; color: #0F172A; }
 .iq-cand-mini-role { font-size: .66rem; color: #64748B; }
 .iq-score-pill {
@@ -2043,10 +2043,10 @@ _MEDALS = {1: "&#129351;", 2: "&#129352;", 3: "&#129353;"}
 def _silver_medal(n: int) -> str:
     """Silver medal with its rank printed on it (the emoji medals stop at 3rd place)."""
     return (f'<svg class="iq-medal-svg" viewBox="0 0 24 24" aria-label="Rank {n}">'
-            '<path d="M7 1h4l2 7H9z" fill="#3B82F6"/><path d="M13 1h4l-2 7h-4z" fill="#EF4444"/>'
-            '<circle cx="12" cy="15" r="7.5" fill="#CBD5E1" stroke="#94A3B8" stroke-width="1.2"/>'
-            '<circle cx="12" cy="15" r="5.6" fill="#E2E8F0"/>'
-            f'<text x="12" y="18.6" text-anchor="middle" font-size="9.5" font-weight="800" '
+            '<path d="M8.6 0.5h2.8l1.4 7.5h-2.6z" fill="#2563EB"/><path d="M12.6 0.5h2.8l-1.6 7.5h-2.6z" fill="#DC2626"/>'
+            '<circle cx="12" cy="15.6" r="8" fill="#B8C2CF" stroke="#8E9AAB" stroke-width="1"/>'
+            '<circle cx="12" cy="15.6" r="6.2" fill="#DCE2EA"/>'
+            f'<text x="12" y="19.3" text-anchor="middle" font-size="10" font-weight="800" '
             f'font-family="Inter, sans-serif" fill="#475569">{n}</text></svg>')
 
 
