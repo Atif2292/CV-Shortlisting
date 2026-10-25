@@ -212,7 +212,7 @@ def test_sign_up_then_log_in_flow(monkeypatch):
     assert at_mod.account_for_session(token)["email"] == "lead@acme-recruit.co.uk"
 
     # Sign out kills the server-side session
-    _button(at, "Sign Out").click().run()
+    _button(at, "Sign out").click().run()
     assert not at.session_state.client_auth["logged_in"]
     assert at_mod.account_for_session(token) == {}
 
@@ -308,7 +308,6 @@ def test_stripe_failure_is_never_shown_to_users(monkeypatch):
         raise RuntimeError("Could not verify your subscription with Stripe right now.")
     monkeypatch.setattr(at_mod, "lookup_stripe_plan", boom)
     at = _signed_in(monkeypatch, "nostripe@acme-recruit.co.uk")
-    _button(at, "Refresh plan").click().run()
     assert not at.exception, at.exception
     shown = " ".join([w.value for w in at.warning] + [e.value for e in at.error] + _all_markdown(at).split("\n"))
     assert "Stripe right now" not in shown

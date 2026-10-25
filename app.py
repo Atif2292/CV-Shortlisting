@@ -1850,6 +1850,12 @@ st.markdown("""<style>
 .st-key-navrow .iq-nav-center { gap:1.5rem; }
 .st-key-navrow .stButton > button[kind] { padding:.44rem 1.05rem !important; font-size:var(--fs-small) !important;
   border-radius:8px !important; white-space:nowrap; }
+.st-key-navrow .st-key-nav_signout .stButton > button[kind] { background:#FFFFFF !important;
+  border:1.5px solid #CBD5E1 !important; box-shadow:none !important; min-height:0 !important;
+  padding:.68rem 1.1rem !important; border-radius:8px !important; line-height:1.2 !important; }
+.st-key-navrow .st-key-nav_signout .stButton > button[kind] p { color:#334155 !important;
+  font-size:var(--fs-small) !important; line-height:1.2 !important; }
+.st-key-navrow .st-key-nav_signout .stButton > button[kind]:hover { background:#F1F5F9 !important; }
 .st-key-navrow .st-key-nav_login .stButton > button[kind] { background:#2563EB !important; color:#FFFFFF !important;
   border:none !important; box-shadow:0 2px 8px rgba(37,99,235,.28) !important; }
 .st-key-navrow .st-key-nav_login .stButton > button[kind]:hover { background:#1D4ED8 !important; }
@@ -2525,6 +2531,9 @@ else:
   {nav_auth_btn}
   <a class="iq-nav-demo" href="{_nav_cta[0]}"{_nav_cta[2]}><span>{_nav_cta[1]}</span></a>
 </div>""")
+        if st.button("Sign out", key="nav_signout"):
+            _sign_out()
+            st.rerun()
 
 
 # ─────────────────────────── Hero ────────────────────────────────────────────
@@ -2622,22 +2631,11 @@ if _c_logged_in:
       </div>
     </div>
     """)
-    col_so0, col_so1, col_so2, col_so3 = st.columns([3, 1.1, 1.1, 1])
-    with col_so1:
-        if st.button("↻ Refresh plan", key="btn_refresh_plan", use_container_width=True,
-                     help="Just subscribed? Pull your plan from Stripe now."):
-            _acc2, _ = refresh_entitlements(_ca["email"], force=True)
-            if _acc2:
-                _set_auth(_acc2)
-            _flash("success", "Plan refreshed.")
-            st.rerun()
-    with col_so2:
-        if config.STRIPE_PORTAL_URL:
+    # The plan re-syncs with Stripe on its own; Sign out lives in the navbar
+    if config.STRIPE_PORTAL_URL:
+        _, col_bill = st.columns([4, 1])
+        with col_bill:
             st.link_button("Manage billing", config.STRIPE_PORTAL_URL, use_container_width=True)
-    with col_so3:
-        if st.button("🚪 Sign Out", key="btn_signout", use_container_width=True):
-            _sign_out()
-            st.rerun()
 _show_flash()
 
 
