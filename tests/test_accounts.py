@@ -77,6 +77,14 @@ def test_webmail_allowed_when_work_email_rule_switched_off(monkeypatch):
         assert ok and code, (addr, msg)
 
 
+def test_allow_listed_test_email_can_start_trial_with_webmail(monkeypatch):
+    monkeypatch.setattr(config, "TRIAL_ALLOWED_EMAILS", ["tester.one@gmail.com"])
+    ok, msg, code = at.request_login_code("Tester.One@Gmail.com")
+    assert ok and code, msg
+    ok, msg, _ = at.request_login_code("someone.else@gmail.com")   # everyone else still needs a work email
+    assert not ok and "work email" in msg
+
+
 def test_throwaway_inboxes_are_always_refused(monkeypatch):
     monkeypatch.setattr(config, "TRIAL_REQUIRE_WORK_EMAIL", False)
     ok, msg, _ = at.request_login_code("abuse@mailinator.com")

@@ -67,6 +67,8 @@ MAX_FILE_MB = _int_setting("MAX_FILE_MB", 10)
 # Free trials need a company email: free webmail (gmail, outlook…) is refused unless set to "false".
 # Throwaway inboxes are always refused. Paying customers can use any email.
 TRIAL_REQUIRE_WORK_EMAIL = get_setting("TRIAL_REQUIRE_WORK_EMAIL", "true").lower() == "true"
+# Comma-separated addresses (e.g. your own Gmail for testing) that may start a trial with any email
+TRIAL_ALLOWED_EMAILS = [e.strip().lower() for e in get_setting("TRIAL_ALLOWED_EMAILS").split(",") if e.strip()]
 
 # ── Stripe ───────────────────────────────────────────────────────────────────
 STRIPE_SECRET_KEY = get_setting("STRIPE_SECRET_KEY")
