@@ -392,7 +392,7 @@ def request_login_code(email: str) -> Tuple[bool, str, Optional[str]]:
     key = canonical_email(addr)
     domain = addr.rsplit("@", 1)[1]
 
-    allowed = {canonical_email(normalize_email(e)) for e in config.TRIAL_ALLOWED_EMAILS}
+    allowed = {canonical_email(normalize_email(e)) for e in config.trial_allowed_emails()}
     blocked = domain in DISPOSABLE_EMAIL_DOMAINS or (
         config.TRIAL_REQUIRE_WORK_EMAIL and domain in FREE_EMAIL_DOMAINS and key not in allowed)
     if blocked and not get_account(key):

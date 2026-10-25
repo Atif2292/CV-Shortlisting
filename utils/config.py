@@ -7,6 +7,7 @@ Values come from environment variables first, then Streamlit secrets
 """
 
 import os
+import re
 
 
 def get_setting(name: str, default: str = "") -> str:
@@ -67,8 +68,34 @@ MAX_FILE_MB = _int_setting("MAX_FILE_MB", 10)
 # Free trials need a company email: free webmail (gmail, outlook…) is refused unless set to "false".
 # Throwaway inboxes are always refused. Paying customers can use any email.
 TRIAL_REQUIRE_WORK_EMAIL = get_setting("TRIAL_REQUIRE_WORK_EMAIL", "true").lower() == "true"
-# Comma-separated addresses (e.g. your own Gmail for testing) that may start a trial with any email
-TRIAL_ALLOWED_EMAILS = [e.strip().lower() for e in get_setting("TRIAL_ALLOWED_EMAILS").split(",") if e.strip()]
+
+
+def _email_list_setting(name: str) -> list:
+    """A list of emails from an env var or st.secrets: "a@x.com, b@y.com", a TOML list, or a key that was
+    pasted under a [section] in the secrets box."""
+    raw = os.getenv(name) or ""
+    if not raw.strip():
+        try:
+            import streamlit as st
+            raw = st.secrets.get(name, "")
+            if not raw:
+                for section in st.secrets.values():
+                    if hasattr(section, "get") and section.get(name):
+                        raw = section.get(name)
+                        break
+        except Exception:
+            raw = ""
+    items = raw if isinstance(raw, (list, tuple)) else re.split(r"[,;\s]+", str(raw))
+    return [str(e).strip().strip("[]'\"").lower() for e in items if "@" in str(e)]
+
+
+def trial_allowed_emails() -> list:
+    """Addresses (e.g. your own Gmail for testing) that may start a trial with any email. Read on every
+    call so a change in Streamlit's secrets applies without restarting the app."""
+    return TRIAL_ALLOWED_EMAILS or _email_list_setting("TRIAL_ALLOWED_EMAILS")
+
+
+TRIAL_ALLOWED_EMAILS: list = []   # tests can set this directly
 
 # ── Stripe ───────────────────────────────────────────────────────────────────
 STRIPE_SECRET_KEY = get_setting("STRIPE_SECRET_KEY")

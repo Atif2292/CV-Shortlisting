@@ -281,3 +281,10 @@ def test_configured_price_ids_take_precedence(monkeypatch):
 def test_company_email_required_by_default():
     import inspect
     assert 'get_setting("TRIAL_REQUIRE_WORK_EMAIL", "true")' in inspect.getsource(config)
+
+
+def test_allow_list_read_from_settings_at_sign_up_time(monkeypatch):
+    monkeypatch.setattr(config, "TRIAL_ALLOWED_EMAILS", [])
+    monkeypatch.setenv("TRIAL_ALLOWED_EMAILS", '"Tester.Two@gmail.com"')   # added after the app started
+    ok, msg, code = at.request_login_code("testertwo@gmail.com")
+    assert ok and code, msg
