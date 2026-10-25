@@ -38,6 +38,7 @@ CODE_TTL = timedelta(minutes=10)
 CODE_MAX_ATTEMPTS = 5
 CODE_RESEND_SECONDS = 60
 CODE_MAX_PER_HOUR = 5
+STRIPE_RETRY_AFTER_FAILURE = timedelta(minutes=5)
 STRIPE_SYNC_INTERVAL = timedelta(minutes=15)
 MANUAL_PERIOD = timedelta(days=30)
 
@@ -353,8 +354,12 @@ def _roll_manual_period(conn, row: Dict[str, Any], now: datetime) -> None:
             resumes_used=0, period_start=now, period_end=now + MANUAL_PERIOD))
 
 
-def refresh_entitlements(email: str, force: bool = False) -> Tuple[Dict[str, Any], str]:
-    """Re-check the plan (Stripe at most every 15 min unless forced). Returns (account, warning)."""
+def refresh_entitlements(email: str, force: bool = False, report: bool = False) -> Tuple[Dict[str, Any], str]:
+    """
+    Re-check the plan (Stripe at most every 15 min unless forced). Returns (account, warning).
+    A failed Stripe check is retried after 5 minutes, and only warns for accounts on a Stripe plan
+    (whose plan can't be confirmed) or when `report` is set, e.g. the user pressed "Refresh plan".
+    """
     key = canonical_email(email)
     now = _now()
     warning = ""
@@ -374,7 +379,10 @@ def refresh_entitlements(email: str, force: bool = False) -> Tuple[Dict[str, Any
                         plan = lookup_stripe_plan(key)
                     _apply_plan(conn, row, plan, now)
                 except RuntimeError as exc:
-                    warning = str(exc)
+                    if report or row.get("plan_source") == "stripe":
+                        warning = str(exc)
+                    conn.execute(update(accounts).where(accounts.c.email == key).values(
+                        last_stripe_sync=now - STRIPE_SYNC_INTERVAL + STRIPE_RETRY_AFTER_FAILURE))
         row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
     return _view(row), warning
 

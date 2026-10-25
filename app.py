@@ -2630,7 +2630,7 @@ if _c_logged_in:
     with col_so1:
         if st.button("↻ Refresh plan", key="btn_refresh_plan", use_container_width=True,
                      help="Just subscribed? Pull your plan from Stripe now."):
-            _acc2, _w2 = refresh_entitlements(_ca["email"], force=True)
+            _acc2, _w2 = refresh_entitlements(_ca["email"], force=True, report=True)
             if _acc2:
                 _set_auth(_acc2)
             _flash("warning" if _w2 else "success", _w2 or "Plan refreshed.")

@@ -164,8 +164,24 @@ def test_stripe_outage_keeps_existing_plan(monkeypatch):
     def boom(email):
         raise RuntimeError("Stripe down")
     monkeypatch.setattr(at, "lookup_stripe_plan", boom)
-    acc, warn = at.refresh_entitlements("k@acme.co.uk", force=True)
+    acc, warn = at.refresh_entitlements("k@acme.co.uk", force=True, report=True)
     assert acc["tier"] == "trial" and "Stripe down" in warn
+
+
+def test_stripe_outage_is_quiet_for_trial_accounts_and_backs_off(monkeypatch):
+    monkeypatch.setattr(config, "STRIPE_SECRET_KEY", "sk_test_dummy")
+    at.grant_plan("q@acme.co.uk", "trial")
+    calls = []
+
+    def boom(email):
+        calls.append(email)
+        raise RuntimeError("Stripe down")
+    monkeypatch.setattr(at, "lookup_stripe_plan", boom)
+    acc, warn = at.refresh_entitlements("q@acme.co.uk", force=True)   # e.g. at sign-in
+    assert acc["tier"] == "trial" and warn == ""
+    n = len(calls)
+    at.refresh_entitlements("q@acme.co.uk")                           # next page load: no retry yet
+    assert len(calls) == n
 
 
 def test_production_config_rejects_unsafe_defaults(monkeypatch):
