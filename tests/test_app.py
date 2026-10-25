@@ -231,7 +231,7 @@ def test_hero_copy_and_no_demo_cvs():
     at = AppTest.from_file(APP, default_timeout=TIMEOUT).run()
     text = _all_markdown(at)
     assert "Shortlist top talent in" in text and "RankCV scores and ranks every applicant" in text
-    assert "Free account includes 10 CV evaluations. No card needed." in text
+    assert "Free account includes 10 CV evaluations." in text and "No card needed." in text
     assert "Explainable scores. You make the final decision." in text
     assert not any("Demo CVs" in b.label or "demo CVs" in b.label for b in at.button)
     assert "demo CVs" not in text.replace("Demo CVs", "demo CVs")

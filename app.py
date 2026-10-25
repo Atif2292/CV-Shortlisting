@@ -1707,6 +1707,7 @@ button[data-testid="stTab"] p, .stTextInput input, .stTextArea textarea, .stNumb
 
 /* Hero extras */
 .iq-hero-note { font-size:var(--fs-body); color:#0F172A; font-weight:600; margin-top:.7rem; }
+@media (max-width: 640px) { .iq-hero-nocard { display:block; } }
 .iq-hero-trust { text-align:center; font-size:var(--fs-small); color:#047857; font-weight:600; margin:-.3rem 0 .2rem; }
 
 
@@ -1801,7 +1802,7 @@ a.rc-plan-cta--outline:hover { background:#EFF6FF; color:#1D4ED8 !important; }
   .rc-plan-desc { min-height:0; }
 }
 
-/* ── Hero "Watch how to use" as a proper secondary button ── */
+/* ── Hero "Watch demo" as a proper secondary button ── */
 .st-key-hero_demo { margin:.15rem 0 .1rem; }
 .st-key-hero_demo .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
   border:1.5px solid #BFDBFE !important; border-radius:999px !important; padding:.55rem 1.35rem !important;
@@ -1855,17 +1856,10 @@ st.markdown("""<style>
   border:none !important; box-shadow:0 2px 8px rgba(66,183,42,.28) !important; }
 .st-key-navrow .st-key-nav_signup .stButton > button[kind]:hover { background:#36A420 !important; }
 .st-key-navrow .stButton > button[kind] p { color:#FFFFFF !important; font-weight:700 !important; }
-.st-key-navrow .st-key-nav_demo .stButton > button[kind] { background:#FFFFFF !important; color:#2563EB !important;
-  border:1.5px solid #BFDBFE !important; box-shadow:0 1px 3px rgba(15,23,42,.06) !important; }
-.st-key-navrow .st-key-nav_demo .stButton > button[kind]:hover { background:#EFF6FF !important; border-color:#93C5FD !important; }
-.st-key-navrow .st-key-nav_demo .stButton > button[kind] p { color:#2563EB !important; }
 .iq-nav-right { display:flex; align-items:center; gap:.5rem; flex-shrink:0; }
 .st-key-navrow [data-testid="stMarkdownContainer"]:has(.iq-nav-right) { margin:0 !important; }
 .st-key-navrow [data-testid="stElementContainer"]:has(.iq-nav-right) { margin:0 !important; }
 @media (max-width: 560px) {
-  /* Phones: the How to use button shrinks to a ▶ icon so Log in / Sign up still fit */
-  .st-key-navrow .st-key-nav_demo .stButton > button[kind] { padding:.44rem .7rem !important; }
-  .st-key-navrow .st-key-nav_demo .stButton > button[kind] strong { display:none !important; }
   .st-key-navrow .iq-nav-acct { display:none !important; }
   .st-key-navrow { gap:.4rem !important; }
   .st-key-navrow .stButton > button[kind] { padding:.44rem .75rem !important; }
@@ -1873,8 +1867,6 @@ st.markdown("""<style>
 }
 .st-key-navrow .iq-nav-link, .st-key-navrow .iq-logo { white-space:nowrap; }
 @media (max-width: 1440px) { .st-key-navrow .iq-nav-acct .iq-nav-email { display:none !important; } }
-/* Smaller laptops: the plan bar under the hero already shows the account, so the pill steps aside */
-@media (max-width: 1366px) { .st-key-navrow:has(.st-key-nav_demo) .iq-nav-acct { display:none !important; } .st-key-navrow:has(.st-key-nav_demo) .iq-nav-center { gap:1.1rem; } }
 .st-key-navrow .iq-nav-demo { font-size:var(--fs-small) !important; padding:.44rem 1.05rem !important; border-radius:8px !important; white-space:nowrap; }
 /* Legal links rendered as small text buttons that open pop-ups */
 [class*="st-key-legal_links_"] .stButton > button[kind] { background:transparent !important; box-shadow:none !important;
@@ -1923,7 +1915,7 @@ _startup_housekeeping()
 _DEMO_VIDEO = Path(__file__).parent / "static" / "rankcv-demo.mp4"
 
 
-@st.dialog("How to use RankCV", width="large")
+@st.dialog("RankCV demo", width="large")
 def _demo_video_dialog() -> None:
     st.video(str(_DEMO_VIDEO))
 
@@ -2513,8 +2505,6 @@ _NAV_LINKS = """
 if not _is_auth:
     with st.container(key="navrow", horizontal=True, vertical_alignment="center", gap="small"):
         render_html(f'<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>{_NAV_LINKS}<div></div></div>')
-        if _DEMO_VIDEO.exists() and st.button("▶ **How to use**", key="nav_demo"):
-            _demo_video_dialog()
         if st.button("Log in", key="nav_login"):
             _go_auth("login")
         if st.button("Sign up free", key="nav_signup", type="primary"):
@@ -2522,8 +2512,6 @@ if not _is_auth:
 else:
     with st.container(key="navrow", horizontal=True, vertical_alignment="center", gap="small"):
         render_html(f'<div class="iq-nav"><div class="iq-logo">Rank<b>CV</b></div>{_NAV_LINKS}<div></div></div>')
-        if _DEMO_VIDEO.exists() and st.button("▶ **How to use**", key="nav_demo"):
-            _demo_video_dialog()
         render_html(f"""
 <div class="iq-nav-right">
   {nav_auth_btn}
@@ -2537,12 +2525,12 @@ render_html(f"""
 <div class="iq-eye">&#10022; &nbsp;AI resume screening and ranking</div>
 <div class="iq-h1">Shortlist top talent in <span class="bl">minutes</span></div>
 <div class="iq-sub">Upload a job description and CVs. RankCV scores and ranks every applicant, then you review and decide.</div>
-<div class="iq-hero-note">Free account includes {_TRIAL_Q} CV evaluations. No card needed.</div>
+<div class="iq-hero-note">Free account includes {_TRIAL_Q} CV evaluations. <span class="iq-hero-nocard">No card needed.</span></div>
 </div>
 """)
 if _DEMO_VIDEO.exists():
     with st.container(key="hero_demo", horizontal=True, horizontal_alignment="center"):
-        if st.button("▶  Watch how to use", key="hero_video_btn"):
+        if st.button("▶  Watch demo", key="hero_video_btn"):
             _demo_video_dialog()
 render_html('<div class="iq-hero-trust">&#10003; Explainable scores. You make the final decision.</div>')
 
