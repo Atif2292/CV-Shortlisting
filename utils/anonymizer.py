@@ -79,8 +79,8 @@ def _is_name_token(tok: str) -> bool:
     return True
 
 
-def looks_like_name(line: str) -> bool:
-    """True if a line plausibly is a person's full name (Unicode-aware, 2–4 parts)."""
+def looks_like_name(line: str, allow_single: bool = False) -> bool:
+    """True if a line plausibly is a person's name (Unicode-aware, 1–4 parts)."""
     if not line:
         return False
     s = line.strip().strip("•·-–—|:,;")
@@ -92,7 +92,8 @@ def looks_like_name(line: str) -> bool:
     if _CJK_NAME_RE.fullmatch(s):
         return True
     tokens = s.split(" ")
-    if not 2 <= len(tokens) <= 4:
+    min_tokens = 1 if allow_single else 2
+    if not min_tokens <= len(tokens) <= 4:
         return False
     real_parts = 0
     for tok in tokens:
@@ -109,7 +110,7 @@ def looks_like_name(line: str) -> bool:
         if first.lower() != first.upper() and not first.isupper():
             return False
         real_parts += 1
-    return real_parts >= 2
+    return real_parts >= min_tokens
 
 
 # ── UK & International PII Regex Patterns ──
@@ -314,20 +315,25 @@ def collect_name_terms(text: str, candidate_name: str = "", email: str = "") -> 
     text = text or ""
     first = next((ln.strip() for ln in text.splitlines() if ln.strip()), "")
     for piece in [first] + [p.strip() for p in first.split("|")]:
-        if looks_like_name(piece):
+        if looks_like_name(piece, allow_single=False):
             names.append(piece.strip().strip("•·-–—|:,;").strip())
             break
     for m in _NAME_LABEL_RE.finditer(text):
-        if looks_like_name(m.group(1)):
-            names.append(m.group(1).strip())
+        val = m.group(1).strip()
+        if looks_like_name(val, allow_single=True):
+            names.append(val)
     emails = [email] if email else []
     emails += EMAIL_REGEX.findall(text)
     for em in emails:
         local = em.split("@", 1)[0]
-        bits = [b for b in re.split(r"[._\-]+", local) if b]
+        user_alpha = re.sub(r"\d+", "", local).strip("._-")
+        bits = [b for b in re.split(r"[._\-]+", user_alpha) if b]
         if len(bits) == 2 and all(b.isalpha() and len(b) >= 2 for b in bits):
             if not any(b.lower() in NAME_STOPWORDS for b in bits):
                 names.append(f"{bits[0].title()} {bits[1].title()}")
+        elif len(bits) == 1 and bits[0].isalpha() and len(bits[0]) >= 2:
+            if bits[0].lower() not in NAME_STOPWORDS:
+                names.append(bits[0].title())
     return list(dict.fromkeys(names))
 
 
@@ -492,6 +498,14 @@ def anonymize_candidate_batch(candidates: List[Dict[str, Any]]) -> Tuple[List[Di
     for idx, cand in enumerate(candidates):
         cand = cand or {}
         given_name = str(cand.get("name") or "").strip()
+        if not given_name or given_name.lower() in ("candidate", "unknown"):
+            try:
+                from utils.ai_scoring import _extract_name
+                extracted = _extract_name(cand.get("cv_snippet") or "", cand.get("filename") or "")
+                if extracted and extracted.lower() not in ("candidate", "unknown"):
+                    given_name = extracted
+            except Exception:
+                pass
         real_name = given_name or f"Candidate #{idx + 1}"
         real_email = str(cand.get("email") or "")
         anon_label = f"Candidate #{idx + 1}"

@@ -755,6 +755,22 @@ def test_name_extraction_keeps_unicode(text, name):
     assert ai_scoring._extract_name(text) == name
 
 
+@pytest.mark.parametrize("text, filename, expected_name", [
+    ("Sandeep\nSoftware Engineer", "cv.pdf", "Sandeep"),
+    ("SANDEEP\nSales Manager", "cv.pdf", "SANDEEP"),
+    ("Sandeep - Sales Manager\nIT experience", "cv.pdf", "Sandeep"),
+    ("Sandeep | IT Sales\nsandeep@gmail.com", "cv.pdf", "Sandeep"),
+    ("Name: Sandeep\nEmail: sandeep@gmail.com", "cv.pdf", "Sandeep"),
+    ("Some CV text without name", "Sandeep.pdf", "Sandeep"),
+    ("Some CV text without name", "Sandeep_CV.pdf", "Sandeep"),
+    ("Some CV text without name", "Sandeep_Sales_6Yrs.pdf", "Sandeep"),
+    ("sandeep@gmail.com\nSales experience", "cv.pdf", "Sandeep"),
+    ("sandeep.kumar@gmail.com\nSales experience", "cv.pdf", "Sandeep Kumar"),
+])
+def test_name_extraction_single_names_and_filenames(text, filename, expected_name):
+    assert ai_scoring._extract_name(text, filename=filename) == expected_name
+
+
 def test_experience_years_from_date_ranges_when_not_stated():
     text = ("Experience\nEngineer — A (2015–2018)\nEngineer — B (2018–2020)\n"
             "Education\nB.Sc. — Uni (2011–2015)")

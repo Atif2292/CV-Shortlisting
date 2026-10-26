@@ -668,36 +668,76 @@ _NAME_LABEL_RE = re.compile(r"^(?:full\s+)?(?:name|nom|nombre|nome)\s*[:：]\s*(
 
 def _extract_name(cv_text: str, filename: str = "") -> str:
     """Extract candidate name from CV text, filename, or email prefix (Unicode names kept intact)."""
-    # 1. Inspect first 5 non-empty lines of CV text (and the cells of a header-table row)
     lines = [l.strip() for l in (cv_text or "").splitlines() if l.strip()]
+
+    # 1. First pass: look for multi-token full names in first 10 lines
+    for line in lines[:10]:
+        if line.lower().strip(" :") in _NAME_SKIP_HEADERS:
+            continue
+        # Split on common header separators: pipes, bullets, tabs, dashes, slashes, multiple spaces
+        pieces = [line] + [p.strip() for p in re.split(r"\s*[-–—|•·\t/]\s*|\s{2,}", line) if p.strip()]
+        for piece in pieces:
+            clean_piece = re.sub(r"\([^)]*\)", "", piece).strip(" \t•·-–—|:,;")
+            m = _NAME_LABEL_RE.match(clean_piece)
+            if m:
+                clean_piece = m.group(1).strip()
+            if looks_like_name(clean_piece, allow_single=False):
+                return re.sub(r"\s+", " ", clean_piece)
+
+    # 2. Look for labelled names (e.g. "Name: Sandeep") even if single token
+    for line in lines[:10]:
+        m = _NAME_LABEL_RE.search(line)
+        if m:
+            val = re.sub(r"\([^)]*\)", "", m.group(1)).strip(" \t•·-–—|:,;")
+            val = re.split(r"\s*[-–—|•·\t/]\s*", val)[0].strip()
+            if val and looks_like_name(val, allow_single=True):
+                return re.sub(r"\s+", " ", val)
+
+    # 3. Look for single-token name on the very first non-header line
     for line in lines[:5]:
         if line.lower().strip(" :") in _NAME_SKIP_HEADERS:
             continue
-        for piece in [line] + [p.strip() for p in re.split(r"\s[|•·]\s|\t", line)]:
-            m = _NAME_LABEL_RE.match(piece)
-            if m:
-                piece = m.group(1).strip()
-            piece = piece.strip(" \t•·-–—|:,;")
-            if looks_like_name(piece):
-                return re.sub(r"\s+", " ", piece)
+        pieces = [line] + [p.strip() for p in re.split(r"\s*[-–—|•·\t/]\s*|\s{2,}", line) if p.strip()]
+        for piece in pieces:
+            clean_piece = re.sub(r"\([^)]*\)", "", piece).strip(" \t•·-–—|:,;")
+            if clean_piece and looks_like_name(clean_piece, allow_single=True):
+                return re.sub(r"\s+", " ", clean_piece)
+        break
 
-    # 2. Extract from filename if available
+    # 4. Extract from filename if available
     if filename:
         stem = Path(filename).stem
-        clean_stem = re.sub(r'^\d+[\s_-]*', '', stem)
-        clean_stem = re.sub(r'[\s_-]*(?:resume|cv|profile|final)[\s_-]*', ' ', clean_stem, flags=re.IGNORECASE)
-        clean_stem = re.sub(r'[_.\-\s]+', ' ', clean_stem).strip()
-        if clean_stem and looks_like_name(clean_stem.title()):
+        clean_stem = re.sub(r"^\d+[\s_-]*", "", stem)
+        clean_stem = re.sub(r"[\s_-]*(?:resume|cv|profile|final|updated|latest|v\d+)[\s_-]*", " ", clean_stem, flags=re.IGNORECASE)
+        clean_stem = re.sub(r"[_.\-\s]+", " ", clean_stem).strip()
+
+        # Try full multi-token name from filename
+        if clean_stem and looks_like_name(clean_stem.title(), allow_single=False):
             return clean_stem.title()
 
-    # 3. Extract from email prefix
-    m = re.search(r'([\w\.]+)@[\w\.-]+\.\w+', cv_text or "")
+        # Try parts from filename (e.g. "Sandeep_Sales_Manager" -> "Sandeep")
+        for chunk in re.split(r"[-–—_|\s]+", stem):
+            chunk_clean = re.sub(r"(?i)^(?:resume|cv|profile|final|updated|latest|v\d+|\d+)$", "", chunk).strip()
+            if chunk_clean and looks_like_name(chunk_clean.title(), allow_single=True):
+                return chunk_clean.title()
+
+        if clean_stem and looks_like_name(clean_stem.title(), allow_single=True):
+            return clean_stem.title()
+
+    # 5. Extract from email prefix
+    m = re.search(r"([\w\.-]+)@[\w\.-]+\.\w+", cv_text or "")
     if m:
-        parts = m.group(1).split('.')
+        user = m.group(1)
+        user_alpha = re.sub(r"\d+", "", user).strip("._-")
+        parts = [p for p in re.split(r"[._\-]+", user_alpha) if p]
         if len(parts) == 2 and all(p.isalpha() and len(p) >= 2 for p in parts):
-            candidate = f"{parts[0].title()} {parts[1].title()}"
-            if looks_like_name(candidate):
-                return candidate
+            cand = f"{parts[0].title()} {parts[1].title()}"
+            if looks_like_name(cand, allow_single=False):
+                return cand
+        elif len(parts) == 1 and parts[0].isalpha() and len(parts[0]) >= 2:
+            cand = parts[0].title()
+            if looks_like_name(cand, allow_single=True):
+                return cand
 
     return "Candidate"
 
@@ -886,6 +926,7 @@ def extract_resume_keywords(cv_text: str, required_skills: str = "", filename: s
     return {
         "name":                    _extract_name(cv_text, filename),
         "email":                   _extract_email(cv_text),
+        "filename":                filename,
         "skills_detected":         all_skills,
         "required_skills_matched": matched_required,
         "experience_years":        _extract_experience_years(cv_text),
