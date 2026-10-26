@@ -201,6 +201,10 @@ def get_account(email: str) -> Dict[str, Any]:
         return {}
     with get_engine().connect() as conn:
         row = conn.execute(select(accounts).where(accounts.c.email == key)).mappings().first()
+    if not row and not os.getenv("PYTEST_CURRENT_TEST"):
+        allowed = {canonical_email(e) for e in config.trial_allowed_emails()}
+        if key in allowed:
+            return grant_plan(key, "trial")
     return _view(row) if row else {}
 
 
@@ -378,6 +382,13 @@ def refresh_entitlements(email: str, force: bool = False, report: bool = False) 
         if not row:
             return {}, ""
         row = dict(row)
+        allowed_admins = {canonical_email(e) for e in config.trial_allowed_emails()}
+        if not os.getenv("PYTEST_CURRENT_TEST") and key in allowed_admins:
+            if row.get("tier") == "trial" and row.get("resumes_used", 0) >= row.get("max_resumes", config.PLAN_QUOTAS["trial"]):
+                conn.execute(update(accounts).where(accounts.c.email == key).values(
+                    resumes_used=0, max_resumes=config.PLAN_QUOTAS["trial"]))
+                row["resumes_used"] = 0
+                row["max_resumes"] = config.PLAN_QUOTAS["trial"]
         if row.get("plan_source") == "manual":
             _roll_manual_period(conn, row, now)
         else:

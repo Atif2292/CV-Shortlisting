@@ -341,3 +341,17 @@ def test_admin_re_login_resets_exhausted_quota(monkeypatch):
     assert acc["resumes_used"] == 0
     assert acc["remaining"] == 10
 
+
+def test_admin_refresh_entitlements_resets_exhausted_quota(monkeypatch):
+    test_email = "admin.refresh@gmail.com"
+    monkeypatch.setattr(config, "TRIAL_ALLOWED_EMAILS", [test_email])
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    at.grant_plan(test_email, "trial")
+    at.reserve_quota(test_email, 10)
+    assert at.get_account(test_email)["is_exhausted"]
+
+    acc, _ = at.refresh_entitlements(test_email)
+    assert acc["resumes_used"] == 0
+    assert acc["remaining"] == 10
+
+

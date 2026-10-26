@@ -89,7 +89,7 @@ def _email_list_setting(name: str) -> list:
     return [str(e).strip().strip("[]'\"").lower() for e in items if "@" in str(e)]
 
 
-DEFAULT_TRIAL_ALLOWED_EMAILS = ["mohdatif2292@gmail.com"]
+DEFAULT_TRIAL_ALLOWED_EMAILS = ["mohdatif2292@gmail.com", "theaicoach24@gmail.com"]
 
 
 def trial_allowed_emails() -> list:
