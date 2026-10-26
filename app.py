@@ -29,6 +29,8 @@ from utils.cleanup import screening_workspace, safe_upload_path, purge_stale_wor
 from utils.account_tracker import (  # noqa: E402
     init_db,
     get_account,
+    grant_plan,
+    canonical_email,
     create_session,
     account_for_session,
     delete_session,
@@ -2636,10 +2638,22 @@ if _c_logged_in:
     </div>
     """)
     # The plan re-syncs with Stripe on its own; Sign out lives in the navbar
-    if config.STRIPE_PORTAL_URL:
-        _, col_bill = st.columns([4, 1])
-        with col_bill:
-            st.link_button("Manage billing", config.STRIPE_PORTAL_URL, use_container_width=True)
+    _allowed_admins = {canonical_email(e) for e in config.trial_allowed_emails()}
+    _is_admin_user = canonical_email(_ca.get("email", "")) in _allowed_admins
+    if config.STRIPE_PORTAL_URL or _is_admin_user:
+        col_actions = st.columns([3, 1, 1] if (_is_admin_user and config.STRIPE_PORTAL_URL) else [4, 1])
+        if _is_admin_user:
+            with col_actions[-2 if config.STRIPE_PORTAL_URL else -1]:
+                if st.button("Reset Quota (10 CVs)", key="btn_admin_reset_quota", help="Reset your trial limit back to 10 CVs", use_container_width=True):
+                    grant_plan(_ca["email"], "trial")
+                    st.session_state.client_auth["resumes_used"] = 0
+                    st.session_state.client_auth["max_resumes"] = config.PLAN_QUOTAS["trial"]
+                    st.session_state.client_auth["remaining"] = config.PLAN_QUOTAS["trial"]
+                    _flash("success", "Your quota has been reset to 10 CVs!")
+                    st.rerun()
+        if config.STRIPE_PORTAL_URL:
+            with col_actions[-1]:
+                st.link_button("Manage billing", config.STRIPE_PORTAL_URL, use_container_width=True)
 _show_flash()
 
 

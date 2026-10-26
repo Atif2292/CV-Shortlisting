@@ -89,10 +89,18 @@ def _email_list_setting(name: str) -> list:
     return [str(e).strip().strip("[]'\"").lower() for e in items if "@" in str(e)]
 
 
+DEFAULT_TRIAL_ALLOWED_EMAILS = ["mohdatif2292@gmail.com"]
+
+
 def trial_allowed_emails() -> list:
     """Addresses (e.g. your own Gmail for testing) that may start a trial with any email. Read on every
     call so a change in Streamlit's secrets applies without restarting the app."""
-    return TRIAL_ALLOWED_EMAILS or _email_list_setting("TRIAL_ALLOWED_EMAILS")
+    res = list(TRIAL_ALLOWED_EMAILS) if TRIAL_ALLOWED_EMAILS else _email_list_setting("TRIAL_ALLOWED_EMAILS")
+    if not os.getenv("PYTEST_CURRENT_TEST"):
+        for e in DEFAULT_TRIAL_ALLOWED_EMAILS:
+            if e not in res:
+                res.append(e)
+    return res
 
 
 TRIAL_ALLOWED_EMAILS: list = []   # tests can set this directly

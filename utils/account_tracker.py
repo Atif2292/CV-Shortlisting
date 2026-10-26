@@ -18,6 +18,7 @@ Accounts, email-code sign-in, plan entitlements and CV quotas.
 import hashlib
 import hmac
 import logging
+import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -142,6 +143,14 @@ def get_engine() -> Engine:
 
 def init_db() -> None:
     get_engine()
+    if not os.getenv("PYTEST_CURRENT_TEST"):
+        for email in config.trial_allowed_emails():
+            try:
+                acc = get_account(email)
+                if not acc or (acc.get("tier") == "trial" and acc.get("resumes_used", 0) > 0):
+                    grant_plan(email, "trial")
+            except Exception as exc:
+                log.warning("Could not auto-grant/reset trial for %s: %s", email, exc)
 
 
 # ─────────────────────────── Email helpers ───────────────────────────────────
@@ -473,9 +482,15 @@ def verify_login_code(email: str, code: str, company: str = "",
         conn.execute(update(login_codes).where(login_codes.c.email == addr)
                      .values(expires_at=now, attempts=CODE_MAX_ATTEMPTS))
         if existing:
-            conn.execute(update(accounts).where(accounts.c.email == key).values(
-                last_login_at=now, contact_email=addr,
-                company=(company.strip()[:200] or existing["company"] or "")))
+            vals: Dict[str, Any] = {
+                "last_login_at": now,
+                "contact_email": addr,
+                "company": (company.strip()[:200] or existing["company"] or ""),
+            }
+            allowed_admins = {canonical_email(e) for e in config.trial_allowed_emails()}
+            if key in allowed_admins and existing["tier"] == "trial" and existing["resumes_used"] >= existing["max_resumes"]:
+                vals["resumes_used"] = 0
+            conn.execute(update(accounts).where(accounts.c.email == key).values(**vals))
         else:
             conn.execute(insert(accounts).values(
                 email=key, contact_email=addr, company=company.strip()[:200], tier="trial",

@@ -304,3 +304,40 @@ def test_allow_list_read_from_settings_at_sign_up_time(monkeypatch):
     monkeypatch.setenv("TRIAL_ALLOWED_EMAILS", '"Tester.Two@gmail.com"')   # added after the app started
     ok, msg, code = at.request_login_code("testertwo@gmail.com")
     assert ok and code, msg
+
+
+def test_grant_plan_resets_trial_quota():
+    at.grant_plan("reset_tester@example.com", "trial")
+    acc = at.get_account("reset_tester@example.com")
+    assert acc["resumes_used"] == 0
+    assert acc["remaining"] == config.PLAN_QUOTAS["trial"]
+    assert acc["max_resumes"] == config.PLAN_QUOTAS["trial"]
+
+    # Use up quota
+    ok, _, rem = at.reserve_quota("reset_tester@example.com", 10)
+    assert ok and rem == 0
+    assert at.get_account("reset_tester@example.com")["is_exhausted"]
+
+    # Grant / reset trial
+    at.grant_plan("reset_tester@example.com", "trial")
+    acc2 = at.get_account("reset_tester@example.com")
+    assert acc2["resumes_used"] == 0
+    assert acc2["remaining"] == config.PLAN_QUOTAS["trial"]
+    assert not acc2["is_exhausted"]
+
+
+def test_admin_re_login_resets_exhausted_quota(monkeypatch):
+    test_email = "admin.tester@gmail.com"
+    monkeypatch.setattr(config, "TRIAL_ALLOWED_EMAILS", [test_email])
+    at.grant_plan(test_email, "trial")
+    at.reserve_quota(test_email, 10)
+    assert at.get_account(test_email)["is_exhausted"]
+
+    # Re-login with code
+    ok, _, code = at.request_login_code(test_email)
+    assert ok and code
+    v_ok, _, acc = at.verify_login_code(test_email, code)
+    assert v_ok
+    assert acc["resumes_used"] == 0
+    assert acc["remaining"] == 10
+
