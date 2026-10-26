@@ -2160,6 +2160,11 @@ def _read_cv_with_notes(path: str, fname: str):
         return text, notes
     if ext == ".docx":
         text, flags = extract_docx_text_with_flags(path)
+        if not text.strip():
+            try:
+                text = _extract_doc_file(path)
+            except Exception:
+                pass
         if flags.get("hidden_runs_dropped"):
             notes.append("contained hidden or tiny text, which was ignored")
         if flags.get("chars_truncated"):

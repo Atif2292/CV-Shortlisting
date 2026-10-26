@@ -311,6 +311,25 @@ def extract_docx_text_with_flags(file_path: str) -> tuple[str, dict]:
         body = extractor.blocks(doc.element.body)
 
         text_parts = headers + [ln for ln in body if ln.strip()] + [f for f in footers if f not in body]
+
+        if not text_parts:
+            # Fallback to standard paragraphs and tables if blocks extraction returned nothing
+            fallback_lines = []
+            for p in doc.paragraphs:
+                if p.text.strip():
+                    fallback_lines.append(p.text.strip())
+            for tbl in doc.tables:
+                for row in tbl.rows:
+                    row_cells = [c.text.strip() for c in row.cells if c.text.strip()]
+                    dedup = []
+                    for c in row_cells:
+                        if not dedup or c != dedup[-1]:
+                            dedup.append(c)
+                    if dedup:
+                        fallback_lines.append(" | ".join(dedup))
+            if fallback_lines:
+                text_parts = fallback_lines
+
         flags["hidden_runs_dropped"] = extractor.hidden_runs
         flags["textboxes"] = extractor.textboxes
 

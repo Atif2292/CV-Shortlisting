@@ -54,10 +54,14 @@ NAME_STOPWORDS = {
     # Document / organisation words ("TAX INVOICE", "Job Description", "Acme Ltd")
     "invoice", "receipt", "tax", "bill", "order", "statement", "shopping", "list", "job", "description",
     "title", "role", "position", "company", "ltd", "limited", "inc", "llc", "pvt", "university", "college",
-    "school", "institute", "bank", "dear", "regards", "sincerely",
+    "school", "institute", "bank", "dear", "regards", "sincerely", "document", "doc", "docx", "file",
+    "attachment", "confidential", "draft", "version", "revision", "footer", "cell", "table", "row", "column",
     # Generic e-mail local parts
     "info", "admin", "hello", "mail", "jobs", "careers", "hr", "test", "user", "dev", "ops",
     "office", "team", "support", "noreply",
+    # Common 2-3 letter acronyms and degrees (never single-token names)
+    "as", "it", "pm", "qa", "ba", "se", "vp", "md", "ceo", "cto", "cfo", "coo",
+    "crm", "erp", "b2b", "b2c", "pmp", "mba", "bca", "mca", "btech", "mtech",
 }
 
 # Lower-case particles allowed inside names ("Ludwig van Beethoven", "Maria de la Cruz").
@@ -109,6 +113,12 @@ def looks_like_name(line: str, allow_single: bool = False) -> bool:
         # Cased scripts must be capitalised; caseless scripts (Devanagari, Arabic…) pass.
         if first.lower() != first.upper() and not first.isupper():
             return False
+        # If single-token name, must be at least 3 letters and not an all-caps short acronym (e.g. AS, IT, HR, MBA, CRM)
+        if len(tokens) == 1:
+            if len(core) < 3:
+                return False
+            if core.isupper() and len(core) <= 3:
+                return False
         real_parts += 1
     return real_parts >= min_tokens
 
