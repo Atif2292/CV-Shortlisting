@@ -16,6 +16,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -60,17 +61,19 @@ st.set_page_config(
 )
 
 
-# Send direct visits to the raw *.streamlit.app address on to the public domain. When the app is
-# embedded on rankcv.io, window.top is cross-origin, the check throws and nothing happens.
+# Send direct visits to the raw *.streamlit.app address on to the public domain.
+# When embedded in an iframe (window.top !== window), do nothing to prevent sandbox security errors.
 if config.PUBLIC_URL.startswith("https://"):
     try:
-        st.html(
-            "<script>(function(){try{var t=window.top;"
-            "if(/\\.streamlit\\.app$/.test(t.location.hostname)){t.location.replace("
-            + json.dumps(config.PUBLIC_URL) + ");}}catch(e){}})();</script>",
-            unsafe_allow_javascript=True,
+        components.html(
+            "<script>(function(){try{"
+            "if(window.top===window&&/\\.streamlit\\.app$/.test(window.location.hostname)){"
+            "window.location.replace(" + json.dumps(config.PUBLIC_URL) + ");}"
+            "}catch(e){}})();</script>",
+            height=0,
+            width=0,
         )
-    except TypeError:
+    except Exception:
         pass
 
 
@@ -3853,12 +3856,35 @@ if _cw is not None:
     try:
         # On https the app may run inside the rankcv.io frame (a different site), where browsers only
         # keep cookies marked SameSite=None + Secure + Partitioned (CHIPS). Locally (http) use Lax.
-        st.html(
+        components.html(
             "<script>document.cookie = " + json.dumps(f"{_SESSION_COOKIE}=") + " + " + json.dumps(_token)
             + f' + "; Max-Age={int(_max_age)}; Path=/"'
             + ' + (location.protocol === "https:" ? "; SameSite=None; Secure; Partitioned" : "; SameSite=Lax");'
             + "</script>",
-            unsafe_allow_javascript=True,
+            height=0,
+            width=0,
         )
-    except TypeError:
-        log.warning("This Streamlit version can't run scripts in st.html; sign-in won't persist across refreshes")
+    except Exception as exc:
+        log.warning("Could not write session cookie: %s", exc)
+
+
+# ─────────────────────────── Signal ready to parent iframe ───────────────────
+try:
+    components.html(
+        """<script>
+        (function() {
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: "rankcv_ready" }, "*");
+                }
+                if (window.top && window.top !== window) {
+                    window.top.postMessage({ type: "rankcv_ready" }, "*");
+                }
+            } catch (e) {}
+        })();
+        </script>""",
+        height=0,
+        width=0,
+    )
+except Exception:
+    pass
